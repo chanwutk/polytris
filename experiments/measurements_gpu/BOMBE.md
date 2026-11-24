@@ -46,9 +46,9 @@ cp -a --reflink=always /data/cwkt/data/bombe-revision/mirror/polyis-cache/jnc0 \
 ```sh
 # On bombe, in a detached tmux session for anything long.
 cd /work/cwkt/projects/tetris
-measurements-gpu/bombe_container.sh <GPU 0-6> /data/cwkt/data/bombe-revision/scratch/<track> '<command>' >> <log> 2>&1
+experiments/measurements_gpu/bombe_container.sh <GPU 0-6> /data/cwkt/data/bombe-revision/scratch/<track> '<command>' >> <log> 2>&1
 # Smoke test: GPU, tetris, all 17 Cython modules, duckdb, mounts, Gurobi.
-measurements-gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision/scratch/<track> 'python measurements-gpu/bombe_check.py'
+experiments/measurements_gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision/scratch/<track> 'python experiments/measurements_gpu/bombe_check.py'
 ```
 
 - It refuses to start unless the GPU shows 0% utilization, under 100 MiB, and no compute process in three samples 1 s
@@ -61,7 +61,7 @@ measurements-gpu/bombe_container.sh 4 /data/cwkt/data/bombe-revision/scratch/<tr
 - `CONFIG=/scratch/global.yaml`, copied from `configs/global.yaml` on first use and then kept, so a track can narrow
   `EXEC.DATASETS` without touching the checkout's config (which ace's runs read).
 - Only the chosen GPU is visible (`--gpus device=G`), as `cuda:0`. A script that takes a GPU index or sets
-  `CUDA_VISIBLE_DEVICES` itself (for example `measurements-gpu/r9o2_preparation_cost.py --gpu`) must be given `0`.
+  `CUDA_VISIBLE_DEVICES` itself (for example `experiments/measurements_gpu/r9o2_preparation_cost.py --gpu`) must be given `0`.
   `BOMBE_GPU`, `BOMBE_CPUS`, and `BOMBE_RUN` carry the physical index, CPU set, and run id.
 - Each run writes `<scratch>/samples/<run>.json`, a summary with the GPU, NUMA node, CPU set, image id, start, end,
   exit code, and `contaminated`. It is true when any sample saw a live compute process on the GPU whose cgroup is
@@ -133,6 +133,6 @@ portal.gurobi.com and replaces `~/.gurobi/gurobi.lic`. Everything else in `bombe
   in each run's summary.
 - `/work` (NFS) reads reach about 75 MB/s for one stream and are latency-bound on small files; read inputs from the
   mirror, not `/work`, during timed runs.
-- `measurements-gpu/r9o2_preparation_cost.py` names ace host paths (`OTIF_HOST_DATASET=/work/cwkt/data/otif-dataset`,
+- `experiments/measurements_gpu/r9o2_preparation_cost.py` names ace host paths (`OTIF_HOST_DATASET=/work/cwkt/data/otif-dataset`,
   OTIF and LEAP code under `/work`); the same paths exist on bombe through NFS, and the mirror holds the OTIF dataset.
 - ultralytics warns that `/root/.config` is not writable and uses `/tmp/Ultralytics`; this is harmless.

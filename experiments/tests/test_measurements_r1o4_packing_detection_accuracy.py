@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from measurements import r1o4_packing_detection_accuracy as pa
+from experiments.measurements import r1o4_packing_detection_accuracy as pa
 from tetris.io import cache, store
 
 

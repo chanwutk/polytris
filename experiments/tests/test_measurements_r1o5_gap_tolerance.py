@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import measurements.common as common
-from measurements import r1o5_gap_tolerance as gt
+import experiments.measurements.common as common
+from experiments.measurements import r1o5_gap_tolerance as gt
 from tetris.io import cache, store
 
 

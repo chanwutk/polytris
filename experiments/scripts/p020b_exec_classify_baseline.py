@@ -25,7 +25,7 @@ config = get_config()
 TILE_SIZES: list[int] = config['EXEC']['TILE_SIZES']
 CLASSIFIERS: list[str] = [c for c in config['EXEC']['CLASSIFIERS'] if c != 'Perfect']
 DATASETS: list[str] = config['EXEC']['DATASETS']
-# Baseline comparison is only run at sample_rate=1 (see evaluation/p205).
+# Baseline comparison is only run at sample_rate=1 (see experiments/evaluation/p205).
 SAMPLE_RATES: list[int] = [1]
 BATCH_SIZE: int = 16
 

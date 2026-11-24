@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
-"""R1.O2 and R9.O2: LEAP rerun on our test clips and LEAP/OTIF preparation cost, from measurements-gpu/r1o2_leap_otif_rerun.py.
+"""R1.O2 and R9.O2: LEAP rerun on our test clips and LEAP/OTIF preparation cost, from experiments/measurements_gpu/r1o2_leap_otif_rerun.py.
 
-Depends on measurements-gpu/r1o2_leap_otif_rerun.py (run on bombe), whose outputs are in
+Depends on experiments/measurements_gpu/r1o2_leap_otif_rerun.py (run on bombe), whose outputs are in
 measurements-results/r1o2_leap_otif_rerun/raw/; fails with a clear error when they are missing. The GPU script
 reran LEAP's inference (LEAP's own main.py loop, unchanged, in the env of the container the scored runs used) on our
 15 FPS test clips with the scored runs' configs, detectors (YOLOv5x for CalDoT and Amsterdam in place of LEAP's
@@ -20,7 +20,7 @@ What this script reports per dataset:
                root dataset's ground truth on clip frame round(frame x scale) + lag: per scale (0.5, 1, 2) at lag 0
                and per lag (-3..3) at scale 1, the mean best IoU per observation and the share with IoU >= 0.5.
                LEAP's frame f is our frame f when scale 1 and lag 0 score best.
-  hota         TrackEval (HOTA and Count, configured as evaluation/p141_otif_accuracy.py configures it, against the
+  hota         TrackEval (HOTA and Count, configured as experiments/evaluation/p141_otif_accuracy.py configures it, against the
                root dataset's 003_groundtruth, in a temporary directory) on three readings of the rerun:
                  raw      only the observations, each at its frame with LEAP's object id
                  linear   the observations linearly interpolated between consecutive observations of an object
@@ -66,9 +66,9 @@ from pathlib import Path
 
 import duckdb
 
-from evaluation.manifests import list_split_videos
-from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id, transform_tracking_json
-from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, file_record, metric_summary,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id, transform_tracking_json
+from experiments.measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, file_record, metric_summary,
                                  output_path, query_dicts, results_dir, rounded, trackeval_rerun, write_json)
 from tetris.io import cache
 from tetris.utilities import register_tracked_detections, save_tracking_results
@@ -111,7 +111,7 @@ CURVE_FIELDS = ('detector', 'segmentation', 'tracker', 'runtime', 'valid_accurac
 # Steps whose outputs only evaluate the system being prepared, per system: LEAP's test-clip pseudo labels stand in for
 # ground truth in LEAP's evaluation and the re-identification evaluation set; LEAP's training never reads them.
 EVALUATION_ONLY_STEPS = {'leap': ('labels_test',)}
-# bombe's GPUs per NUMA node (measurements-gpu/BOMBE.md).
+# bombe's GPUs per NUMA node (experiments/measurements_gpu/BOMBE.md).
 NODE_GPUS = {0: (0, 1, 2, 3), 1: (4, 5, 6)}
 # Largest box-coordinate difference (pixels) at which a regenerated pseudo-label line still agrees with the scored one.
 LABEL_PAIR_PX = 1.0
@@ -190,7 +190,7 @@ def raw_paths(raw_dir: Path, dataset: str) -> dict[str, Path]:
     """The GPU script's files for one dataset, checked to exist."""
     # Every role must be present, or the GPU script has not finished this dataset.
     paths = {role: raw_dir / dataset / name for role, name in RAW_FILES.items()}
-    assert_files_exist(paths.values(), f'{dataset} outputs of measurements-gpu/r1o2_leap_otif_rerun.py (run its '
+    assert_files_exist(paths.values(), f'{dataset} outputs of experiments/measurements_gpu/r1o2_leap_otif_rerun.py (run its '
                                        'setup, scored, leap, and export actions on bombe)')
     return paths
 
@@ -505,7 +505,7 @@ def load_prep(con: duckdb.DuckDBPyConnection, prep_dir: Path) -> dict:
     GPU script defines, per system, in order, from prep/steps.json), and the step lists."""
     # The step lists the GPU script runs, so a missing record shows as a missing step.
     steps_path = prep_dir / 'steps.json'
-    assert_files_exist([steps_path], 'raw/prep/steps.json of measurements-gpu/r1o2_leap_otif_rerun.py (run its prep action)')
+    assert_files_exist([steps_path], 'raw/prep/steps.json of experiments/measurements_gpu/r1o2_leap_otif_rerun.py (run its prep action)')
     steps = json.loads(steps_path.read_text())
     con.execute('CREATE OR REPLACE TABLE prep_expected (system VARCHAR, step VARCHAR, step_order BIGINT)')
     con.executemany('INSERT INTO prep_expected VALUES (?, ?, ?)', [(system, step, i) for system, names in steps.items() for i, step in enumerate(names)])
@@ -789,7 +789,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     # The GPU script's manifest (inputs, images, env provenance).
     manifest_path = args.raw_dir / 'manifest.json'
-    assert_files_exist([manifest_path], 'raw/manifest.json of measurements-gpu/r1o2_leap_otif_rerun.py (run setup)')
+    assert_files_exist([manifest_path], 'raw/manifest.json of experiments/measurements_gpu/r1o2_leap_otif_rerun.py (run setup)')
     manifest = json.loads(manifest_path.read_text())
     sections, tasks, records = {}, [], [file_record(manifest_path)]
     with tempfile.TemporaryDirectory(prefix='r1o2_leap_otif_rerun_') as tmp:

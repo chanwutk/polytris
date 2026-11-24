@@ -13,14 +13,14 @@ import pandas as pd
 import pytest
 import yaml
 
-from evaluation import p121_throughput_compute as p121
-from measurements import common
-from measurements import r9o2_preparation_cost as prep
+from experiments.evaluation import p121_throughput_compute as p121
+from experiments.measurements import common
+from experiments.measurements import r9o2_preparation_cost as prep
 from tetris.io import cache
 
 
 # The GPU plan lives in a directory whose name is not a package name, so load it from its path.
-GPU_PLAN_PATH = Path(__file__).resolve().parent.parent / 'measurements-gpu' / 'r9o2_preparation_cost.py'
+GPU_PLAN_PATH = Path(__file__).resolve().parent.parent / 'measurements_gpu' / 'r9o2_preparation_cost.py'
 # The shell driver that runs the plan on bombe and collects its records.
 DRIVER_PATH = GPU_PLAN_PATH.with_name('r9o2_preparation_retiming.sh')
 spec = importlib.util.spec_from_file_location('r9o2_gpu_plan', GPU_PLAN_PATH)
@@ -246,9 +246,9 @@ def test_file_times_matches_os_stat(tmp_path):
 
 
 def test_file_times_is_shared_by_the_measurement_and_the_gpu_plan():
-    # One implementation in measurements/common.py; the plan no longer imports the measurement module.
+    # One implementation in experiments/measurements/common.py; the plan no longer imports the measurement module.
     assert prep.file_times is common.file_times and gpu_plan.file_times is common.file_times
-    assert 'measurements.r9o2_preparation_cost' not in GPU_PLAN_PATH.read_text()
+    assert 'experiments.measurements.r9o2_preparation_cost' not in GPU_PLAN_PATH.read_text()
 
 
 # ---------------------------------------------------------------- work units and their process time
@@ -925,7 +925,7 @@ def test_gpu_plan_dry_run_executes_and_writes_nothing(tmp_path, monkeypatch, cap
     assert out.startswith('DRY RUN')
     config = tmp_path / 'scratch' / 'configs' / 'caldot1-y05.yaml'
     # CPU steps first, with no GPU visible and p110 at P110_CPU_COUNT CPUs; GPU steps on the launcher's only GPU, 0.
-    assert f"CONFIG={config} CUDA_VISIBLE_DEVICES='' PYTHON_CPU_COUNT=20 python evaluation/p110_accuracy_compute.py --valid" in out
+    assert f"CONFIG={config} CUDA_VISIBLE_DEVICES='' PYTHON_CPU_COUNT=20 python experiments/evaluation/p110_accuracy_compute.py --valid" in out
     assert f'CONFIG={config} CUDA_VISIBLE_DEVICES=0 python scripts/p012_tune_create_training_data.py' in out
     assert out.index('p110_accuracy_compute') < out.index('p012_tune_create_training_data')
     # p011 and p016 are optional.
@@ -1237,7 +1237,7 @@ def test_gpu_plan_cpu_jiffies_reads_every_cpu():
     assert len(jiffies) == os.cpu_count() and all(0 <= busy <= total for busy, total in jiffies.values())
 
 
-# ---------------------------------------------------------------- re-timing records (measurements-gpu --run)
+# ---------------------------------------------------------------- re-timing records (experiments/measurements_gpu --run)
 
 
 # The launcher's summary of the run every test record belongs to.
@@ -1246,7 +1246,7 @@ LAUNCHER_RUN = dict(run='g4-x', host='bombe', gpu=4, numa_node=1, cpus='20-39,60
 
 
 def retiming_dir(tmp_path, records, files, loads, launchers=(LAUNCHER_RUN,)):
-    """The four re-timing files measurements-gpu/r9o2_preparation_retiming.sh collects."""
+    """The four re-timing files experiments/measurements_gpu/r9o2_preparation_retiming.sh collects."""
     directory = tmp_path / 'retiming'
     directory.mkdir(parents=True)
     write_lines(directory / 'timings.jsonl', records)

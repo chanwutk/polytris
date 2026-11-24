@@ -132,26 +132,26 @@ QUERY_DATA_ACCESSORS = {
 
 # Map throughput stages to their originating script paths so exclusion rules stay readable.
 STAGE_TO_SCRIPT_PATH = {
-    '001_preprocess_groundtruth_detection': 'preprocess/p003_preprocess_groundtruth_detection.py',
-    '002_preprocess_groundtruth_tracking': 'preprocess/p003_preprocess_groundtruth_tracking.py',
+    '001_preprocess_groundtruth_detection': 'experiments/preprocess/p003_preprocess_groundtruth_detection.py',
+    '002_preprocess_groundtruth_tracking': 'experiments/preprocess/p003_preprocess_groundtruth_tracking.py',
     '011_tune_detect': 'scripts/p011_tune_detect.py',
     '012_tune_create_training_data': 'scripts/p012_tune_create_training_data.py',
     '013_tune_train_classifier': 'scripts/p014_tune_train_classifier.py',
-    '020_exec_classify': 'scripts/p020_exec_classify.py',
-    '022_exec_prune_polyominoes': 'scripts/p022_exec_prune_polyominoes.py',
-    '030_exec_compress': 'scripts/p030_exec_compress.py',
-    '040_exec_detect': 'scripts/p040_exec_detect.py',
-    '050_exec_uncompress': 'scripts/p050_exec_uncompress.py',
-    '060_exec_track': 'scripts/p060_exec_track.py',
+    '020_exec_classify': 'experiments/scripts/p020_exec_classify.py',
+    '022_exec_prune_polyominoes': 'experiments/scripts/p022_exec_prune_polyominoes.py',
+    '030_exec_compress': 'experiments/scripts/p030_exec_compress.py',
+    '040_exec_detect': 'experiments/scripts/p040_exec_detect.py',
+    '050_exec_uncompress': 'experiments/scripts/p050_exec_uncompress.py',
+    '060_exec_track': 'experiments/scripts/p060_exec_track.py',
 }
 
 # Keep global runtime exclusions here so the policy stays centralized and easy to extend.
 EXCLUDED_RUNTIME_OPS_BY_SCRIPT = {
     # Exclude reference video decoding, matching the extraction boundary used for Tetris.
-    'preprocess/p003_preprocess_groundtruth_detection.py': {'read'},
-    # 'scripts/p022_exec_prune_polyominoes.py': {'solve_ilp'},
-    'scripts/p020_exec_classify.py': {'read', 'retrieve'},
-    'scripts/p030_exec_compress.py': {'save_collage', 'pack_all_total'},
+    'experiments/preprocess/p003_preprocess_groundtruth_detection.py': {'read'},
+    # 'experiments/scripts/p022_exec_prune_polyominoes.py': {'solve_ilp'},
+    'experiments/scripts/p020_exec_classify.py': {'read', 'retrieve'},
+    'experiments/scripts/p030_exec_compress.py': {'save_collage', 'pack_all_total'},
 }
 
 

@@ -5,7 +5,7 @@ import json
 import duckdb
 import pytest
 
-from measurements import b3d_human_gt_report as report
+from experiments.measurements import b3d_human_gt_report as report
 
 HEADER = ['dataset', 'variant', 'variant_id', 'throughput_fps', 'time', 'HOTA_HOTA', 'HOTA_AssA', 'HOTA_DetA',
           'Count_DetsMAPE', 'Count_TracksMAPE']

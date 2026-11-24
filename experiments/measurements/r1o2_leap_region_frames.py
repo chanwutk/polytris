@@ -7,8 +7,8 @@ from pathlib import Path
 import altair as alt
 import cv2
 
-from evaluation.manifests import list_split_videos
-from measurements.common import DATASET_LABELS
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import DATASET_LABELS
 from tetris.utilities import DATASETS_DIR
 
 

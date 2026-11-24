@@ -5,7 +5,7 @@ import os
 
 import pandas as pd
 
-from evaluation.manifests import (
+from experiments.evaluation.manifests import (
     build_index_video_manifest,
     build_tetris_variant_manifest,
     build_split_video_manifest,

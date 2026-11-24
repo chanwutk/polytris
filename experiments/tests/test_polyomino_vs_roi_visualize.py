@@ -1,6 +1,6 @@
 import numpy as np
 
-from evaluation import p004_polyomino_vs_roi_visualize as module
+from experiments.evaluation import p004_polyomino_vs_roi_visualize as module
 
 
 def test_compute_polyomino_vs_roi_stats_unions_overlapping_component_bboxes(monkeypatch):

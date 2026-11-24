@@ -1,5 +1,5 @@
-# Scripts-vs-pipelines equivalence test (execution/tools/scripts_equivalence.py): global.yaml with the
-# small grid of profiling/tools/compare_scripts.py SMALL_GRID.  Select it with CONFIG=equivalence.yaml.
+# Scripts-vs-pipelines equivalence test (experiments/tools/execution/scripts_equivalence.py): global.yaml with the
+# small grid of experiments/tools/profiling/compare_scripts.py SMALL_GRID.  Select it with CONFIG=equivalence.yaml.
 EXEC:
   DATASETS:
     - caldot1-y05

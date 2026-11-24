@@ -4,8 +4,8 @@ import json
 import numpy as np
 import pytest
 
-from measurements import fixed_ilp_1h
-from measurements import fixed_ilp_unlimited as benchmark
+from experiments.measurements import fixed_ilp_1h
+from experiments.measurements import fixed_ilp_unlimited as benchmark
 from tetris.sample.ilp.gurobi import ILPResult
 
 

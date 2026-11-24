@@ -3,9 +3,9 @@
 """Combined relevance-classifier, packing-accuracy, and packing-efficacy figure for the paper.
 
 This script does **no** recomputation. It reads the p205 classifier comparison
-(``evaluation/p205_compare_classifiers.py``) and the p038 packing efficacy
-(``evaluation/p038_packing_efficacy.py``) from the cache, and the
-ground-truth-tile packing experiment (measurements-gpu/r1o4_oracle_packing.py)
+(``experiments/evaluation/p205_compare_classifiers.py``) and the p038 packing efficacy
+(``experiments/evaluation/p038_packing_efficacy.py``) from the cache, and the
+ground-truth-tile packing experiment (experiments/measurements_gpu/r1o4_oracle_packing.py)
 from the paper's evidence snapshot (``packing.json``, with each dataset's 5%
 HOTA-loss configuration from ``matched_points.json``), and ``hconcat``s:
 
@@ -29,7 +29,7 @@ from typing import Any
 
 # Repo-root anchored constants so the paper-figures copy works regardless of
 # the directory the script is invoked from.
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'generated')
 SCRIPT_ARTIFACT_BASENAME = 'p206_classifier_and_packing'
 
@@ -39,11 +39,11 @@ import numpy as np
 import pandas as pd
 
 from tetris.io import cache
-from evaluation.p201_compare_pareto import (
+from experiments.evaluation.p201_compare_pareto import (
     _add_dataset_display_names,
     _get_dataset_display_sort,
 )
-from evaluation.colors import categorical_color_scale
+from experiments.evaluation.colors import categorical_color_scale
 
 # Subplot geometry: matches p205's per-metric subplot footprint so the
 # stitched figure reads at a familiar density.

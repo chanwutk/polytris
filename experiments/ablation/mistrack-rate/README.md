@@ -29,7 +29,7 @@ Isolated from the main pipeline in `scripts/`.
 | `mistrack_rate/heuristic.py` | Train-side heuristic construction |
 | `mistrack_rate/evaluate.py` | Test-side evaluation (parallel via `multiprocessing.Pool`) |
 | `mistrack_rate/analysis.py` | Pareto annotation and plotting |
-| `tests/test_mistrack_rate_ablation.py` | Unit tests |
+| `experiments/tests/test_mistrack_rate_ablation.py` | Unit tests |
 
 ## Cache Layout
 
@@ -49,13 +49,13 @@ Isolated from the main pipeline in `scripts/`.
 
 ```bash
 # Single dataset
-python ablation/mistrack-rate/run.py --dataset jnc0
-python ablation/mistrack-rate/run.py --dataset jnc0 --no-hota --limit-configs 64
+python experiments/ablation/mistrack-rate/run.py --dataset jnc0
+python experiments/ablation/mistrack-rate/run.py --dataset jnc0 --no-hota --limit-configs 64
 
 # Multi-dataset via wrapper
-bash ablation/mistrack-rate/run.sh
-bash ablation/mistrack-rate/run.sh --all-trackers
-bash ablation/mistrack-rate/run.sh --datasets jnc0,jnc2 --no-hota --limit-configs 64
+bash experiments/ablation/mistrack-rate/run.sh
+bash experiments/ablation/mistrack-rate/run.sh --all-trackers
+bash experiments/ablation/mistrack-rate/run.sh --datasets jnc0,jnc2 --no-hota --limit-configs 64
 ```
 
 Key flags:

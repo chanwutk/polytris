@@ -17,16 +17,16 @@ import duckdb
 import numpy as np
 import torch
 
-from evaluation.manifests import list_split_videos
-from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
-from measurements import r1o4_packing_detection_accuracy as pa
-from measurements.common import DATASET_LABELS
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
+from experiments.measurements import r1o4_packing_detection_accuracy as pa
+from experiments.measurements.common import DATASET_LABELS
 from tetris.io import cache, store
 from tetris.models import detector as detectors
 from tetris.utilities import build_param_str, mark_detections
-from scripts import p030_exec_compress as packing
-from scripts import p040_exec_detect as detection
-from scripts import p050_exec_uncompress as unpacking
+from experiments.scripts import p030_exec_compress as packing
+from experiments.scripts import p040_exec_detect as detection
+from experiments.scripts import p050_exec_uncompress as unpacking
 
 
 TILE_SIZE = 60

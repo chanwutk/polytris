@@ -18,11 +18,11 @@ def main():
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     sys.path.insert(0, str(args.tetris_root))
-    from evaluation.manifests import list_split_videos
-    from measurements import r1o2_leap_native_queries as native
-    from measurements.common import DATASET_LABELS, query_dicts
+    from experiments.evaluation.manifests import list_split_videos
+    from experiments.measurements import r1o2_leap_native_queries as native
+    from experiments.measurements.common import DATASET_LABELS, query_dicts
 
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     raw = args.raw_dir or args.tetris_root / 'measurements-results/r1o2_leap_otif_rerun/raw'
     datasets = args.datasets or list(DATASET_LABELS)
     assert set(datasets) <= DATASET_LABELS.keys(), f'Unknown datasets: {datasets}'

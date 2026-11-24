@@ -35,7 +35,7 @@ import os
 import shutil
 from pathlib import Path
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'generated')
 SCRIPT_ARTIFACT_BASENAME = 'p038_packing_efficacy'
 
@@ -47,13 +47,13 @@ from rich.progress import BarColumn, Progress, TextColumn
 
 from tetris.io import cache
 from tetris.utilities import get_config, parse_execution_param_str
-from evaluation.p036_compress_effectiveness_compute import count_tiles_for_path
-from evaluation.p201_compare_pareto import (
+from experiments.evaluation.p036_compress_effectiveness_compute import count_tiles_for_path
+from experiments.evaluation.p201_compare_pareto import (
     _add_dataset_display_names,
     _get_dataset_display_sort,
 )
-from evaluation.colors import categorical_color_scale
-from evaluation.manifests import list_split_videos
+from experiments.evaluation.colors import categorical_color_scale
+from experiments.evaluation.manifests import list_split_videos
 
 # Fixed experimental knobs -- this chart only makes sense at every-frame
 # compression with the canonical canvas size.

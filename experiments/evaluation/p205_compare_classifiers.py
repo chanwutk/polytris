@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'generated')
 SCRIPT_ARTIFACT_BASENAME = 'p205_compare_classifiers'
 
@@ -20,14 +20,14 @@ import numpy as np
 import pandas as pd
 
 from tetris.io import cache, store
-from evaluation.p201_compare_pareto import (
+from experiments.evaluation.p201_compare_pareto import (
     FACET_SUBPLOT_HEIGHT,
     FACET_SUBPLOT_WIDTH,
     _add_dataset_display_names,
     _get_dataset_display_sort,
 )
-from evaluation.colors import categorical_color_scale
-from evaluation.p121_throughput_compute import excluded_runtime_ops
+from experiments.evaluation.colors import categorical_color_scale
+from experiments.evaluation.p121_throughput_compute import excluded_runtime_ops
 from tetris.utilities import (
     dataset_root_name,
     get_accuracy,

@@ -16,7 +16,7 @@ Seiden propagates labels from its anchors, so y_pred is continuous. LEAP's selec
 Each record carries the run's cost (detector frames, Seiden's time, FPS) from the run's json.
 
 Run inside ace's polyis container:
-  python measurements/r7o3_seiden_score.py --datasets caldot1-y05
+  python experiments/measurements/r7o3_seiden_score.py --datasets caldot1-y05
 Writes measurements-results/r7o3_seiden_score/<dataset>.json.
 """
 import argparse
@@ -30,9 +30,9 @@ from types import SimpleNamespace
 import duckdb
 import numpy as np
 
-from evaluation.manifests import list_split_videos
-from measurements import r1o2_leap_native_queries as native
-from measurements.common import DATASET_LABELS, RESULTS_ROOT, results_dir, write_json
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements import r1o2_leap_native_queries as native
+from experiments.measurements.common import DATASET_LABELS, RESULTS_ROOT, results_dir, write_json
 
 
 # LEAP's evaluator and the §7.3 scoring run whose ground-truth hashes Seiden's ground truth must match.

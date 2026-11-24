@@ -1,19 +1,19 @@
 #!/usr/local/bin/python
 """R1.O3 clean extraction timing (GPU): the reference pipeline and Tetris's operating points rerun on idle GPUs.
 
-REVISION.md finding 3: p121's throughput boundary is asymmetric (it counts the reference's per-frame decode but not
+experiments/REVISION.md finding 3: p121's throughput boundary is asymmetric (it counts the reference's per-frame decode but not
 Tetris's decodes, and counts Tetris's canvas reads), and the cached timing logs were taken on ace's GPUs under other
 users' load. This job reruns, on idle bombe GPUs pinned to their NUMA node, the pipeline's own scripts unchanged, so
-measurements/r1o3_clean_extraction_timing.py can report throughput at several boundaries from clean logs.
+experiments/measurements/r1o3_clean_extraction_timing.py can report throughput at several boundaries from clean logs.
 
-What runs, per dataset (a "unit" is one launcher container, measurements-gpu/bombe_container.sh):
-  reference  preprocess/p002_preprocess_naive_detection.py --test, then preprocess/p002_preprocess_naive_tracking.py
+What runs, per dataset (a "unit" is one launcher container, experiments/measurements_gpu/bombe_container.sh):
+  reference  experiments/preprocess/p002_preprocess_naive_detection.py --test, then experiments/preprocess/p002_preprocess_naive_tracking.py
              --test: the two scripts that write <video>/002_naive/{detection,tracking}_runtime.jsonl, the files
-             evaluation/p120_throughput_gather.py lists as stages 001 and 002 of the reference ('naive'). Before them,
+             experiments/evaluation/p120_throughput_gather.py lists as stages 001 and 002 of the reference ('naive'). Before them,
              the unit decodes every video with cv2 (the default VideoCapture p002 opens, cap.read() per frame, the call
              p002 times as 'read'), timed on its own, DECODE_PASSES times in alternating video order (one pass in
              attempts made before the serial phase): the decode cost both sides are charged at boundary (3).
-  tetris     scripts/p020_exec_classify.py, p022_exec_prune_polyominoes.py (pruning configurations only),
+  tetris     experiments/scripts/p020_exec_classify.py, p022_exec_prune_polyominoes.py (pruning configurations only),
              p030_exec_compress.py, p040_exec_detect.py, p050_exec_uncompress.py, p060_exec_track.py, each --test: the
              scripts that write the 020-060 runtime files p120 lists for one Tetris configuration. Each stage selects
              its work through the test pass's Pareto filter (tetris.pareto.build_pareto_combo_filter), so the unit's
@@ -29,9 +29,9 @@ What runs, per dataset (a "unit" is one launcher container, measurements-gpu/bom
              the unit's container, the unit copies ace's cached p022 outputs (score.jsonl and runtime.jsonl, staged
              by `stage`) into its cache instead of running p022, and its manifest records p022_source 'cache'; with
              a working license p022 runs and p022_source is 'rerun' (its output may then differ from the April cache,
-             REVISION.md finding 6).
+             experiments/REVISION.md finding 6).
   operating  per dataset, the fastest Tetris test configuration within 5% and within 10% HOTA loss of the reference
-  points     (measurements.common.fastest_tetris on the cached tradeoff tables, as r7o1_hota_matched_speedup does).
+  points     (experiments.measurements.common.fastest_tetris on the cached tradeoff tables, as r7o1_hota_matched_speedup does).
 
 Phases:
   parallel   every dataset's reference unit and one unit per distinct operating point, on all test videos. Datasets
@@ -56,7 +56,7 @@ Isolation and records, per unit:
     (from the job's CPU samples, since no other unit of this job runs then).
   - An attempt that is contaminated or, outside the parallel phase, not clean on the CPU side is retried; a unit gets
     at most MAX_ATTEMPTS attempts per invocation of `run --redo`, and MAX_ATTEMPTS in all without --redo. A failed
-    job is not retried. Every attempt is kept; measurements/r1o3_clean_extraction_timing.py chooses among them.
+    job is not retried. Every attempt is kept; experiments/measurements/r1o3_clean_extraction_timing.py chooses among them.
   - Each unit has its own cache (DATA.CACHE_DIR), config (CONFIG), and videos directory (DATA.DATASETS_DIR, symlinks
     to the read-only mirror), so stages that clear their output directories never touch another unit's outputs.
     ProgressBar writes its worker logs to the hard-coded /polyis-cache/LOGS/<script> and clears that directory at
@@ -87,13 +87,13 @@ Writes measurements-results/r1o3_clean_extraction_timing/raw/ (never ace's or th
   units/<unit>/attempt-<n>/logs/<cache-relative runtime file>.gz
   units/<unit>/attempt-<n>/worker-logs/      ProgressBar's worker logs (*.log, gitignored)
   units/<unit>/attempt-<n>/*.log             launcher and stage output (gitignored)
-measurements/r1o3_clean_extraction_timing.py aggregates them.
+experiments/measurements/r1o3_clean_extraction_timing.py aggregates them.
 
 Usage:
-  ace:   docker exec polyis bash -c 'cd /polyis && python measurements-gpu/r1o3_clean_extraction_timing.py plan'
-  ace:   python3 measurements-gpu/r1o3_clean_extraction_timing.py stage
+  ace:   docker exec polyis bash -c 'cd /polyis && python experiments/measurements_gpu/r1o3_clean_extraction_timing.py plan'
+  ace:   python3 experiments/measurements_gpu/r1o3_clean_extraction_timing.py stage
   bombe: tmux new-session -d -s r1o3 'cd /work/cwkt/projects/tetris &&
-           python3 measurements-gpu/r1o3_clean_extraction_timing.py run --phases parallel serial solo >> <log> 2>&1'
+           python3 experiments/measurements_gpu/r1o3_clean_extraction_timing.py run --phases parallel serial solo >> <log> 2>&1'
 """
 import argparse
 import csv
@@ -112,14 +112,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-# This measurement's name, shared with measurements/r1o3_clean_extraction_timing.py.
+# This measurement's name, shared with experiments/measurements/r1o3_clean_extraction_timing.py.
 NAME = 'r1o3_clean_extraction_timing'
 # The checkout (/work/cwkt/projects/tetris on ace and bombe, /polyis inside a container).
-CHECKOUT = Path(__file__).resolve().parent.parent
+CHECKOUT = Path(__file__).resolve().parents[2]
 # This script, relative to the checkout, as the launcher runs it.
-SCRIPT = f'measurements-gpu/{NAME}.py'
+SCRIPT = f'experiments/measurements_gpu/{NAME}.py'
 # Raw outputs inside the measurement's result directory.
-RAW = CHECKOUT / 'measurements-results' / NAME / 'raw'
+RAW = CHECKOUT / 'experiments' / 'measurements-results' / NAME / 'raw'
 # The plan written by `plan` and read by every other subcommand and by the aggregator.
 PLAN_FILE = 'plan.json'
 # Unit attempts: raw/units/<unit>/attempt-<n>/, each with a manifest written last by the job.
@@ -141,7 +141,7 @@ SCRATCH_HOST = BOMBE_ROOT / 'scratch' / NAME
 MIRROR_CACHE = BOMBE_ROOT / 'mirror' / 'polyis-cache'
 SCRATCH_CONTAINER = Path('/scratch')
 # The launcher, and the mirror of ace's polyis-data inside its containers.
-LAUNCHER = CHECKOUT / 'measurements-gpu' / 'bombe_container.sh'
+LAUNCHER = CHECKOUT / 'experiments/measurements_gpu' / 'bombe_container.sh'
 CONTAINER_DATASETS = '/polyis-data/datasets'
 # ace's cache on the ace host (mounted at /polyis-cache in ace's polyis container), and bombe's name seen from ace.
 ACE_CACHE = Path('/data/cwkt/data/polyis-cache')
@@ -185,21 +185,21 @@ EST_STAGE_OVERHEAD_S = 30.0
 # Reference stages: p120's stage name, the script, the stage directory, the runtime file, and the output files whose
 # digests are recorded (all in the runtime file's directory).
 REFERENCE_STAGES = (
-    ('001_preprocess_groundtruth_detection', 'preprocess/p002_preprocess_naive_detection.py', '002_naive',
+    ('001_preprocess_groundtruth_detection', 'experiments/preprocess/p002_preprocess_naive_detection.py', '002_naive',
      'detection_runtime.jsonl', ('detection.jsonl',)),
-    ('002_preprocess_groundtruth_tracking', 'preprocess/p002_preprocess_naive_tracking.py', '002_naive',
+    ('002_preprocess_groundtruth_tracking', 'experiments/preprocess/p002_preprocess_naive_tracking.py', '002_naive',
      'tracking_runtime.jsonl', ('tracking.jsonl',)),
 )
 # Tetris stages, in pipeline order, with the same fields.
 TETRIS_STAGES = (
-    ('020_exec_classify', 'scripts/p020_exec_classify.py', '020_relevancy', 'runtime.jsonl', ('score.jsonl',)),
-    ('022_exec_prune_polyominoes', 'scripts/p022_exec_prune_polyominoes.py', '022_pruned_polyominoes', 'runtime.jsonl',
+    ('020_exec_classify', 'experiments/scripts/p020_exec_classify.py', '020_relevancy', 'runtime.jsonl', ('score.jsonl',)),
+    ('022_exec_prune_polyominoes', 'experiments/scripts/p022_exec_prune_polyominoes.py', '022_pruned_polyominoes', 'runtime.jsonl',
      ('score.jsonl',)),
-    ('030_exec_compress', 'scripts/p030_exec_compress.py', '033_compressed_frames', 'runtime.jsonl', ()),
-    ('040_exec_detect', 'scripts/p040_exec_detect.py', '040_compressed_detections', 'runtimes.jsonl', ('detections.jsonl',)),
-    ('050_exec_uncompress', 'scripts/p050_exec_uncompress.py', '050_uncompressed_detections', 'runtime.jsonl',
+    ('030_exec_compress', 'experiments/scripts/p030_exec_compress.py', '033_compressed_frames', 'runtime.jsonl', ()),
+    ('040_exec_detect', 'experiments/scripts/p040_exec_detect.py', '040_compressed_detections', 'runtimes.jsonl', ('detections.jsonl',)),
+    ('050_exec_uncompress', 'experiments/scripts/p050_exec_uncompress.py', '050_uncompressed_detections', 'runtime.jsonl',
      ('detections.jsonl',)),
-    ('060_exec_track', 'scripts/p060_exec_track.py', '060_uncompressed_tracks', 'runtimes.jsonl', ('tracking.jsonl',)),
+    ('060_exec_track', 'experiments/scripts/p060_exec_track.py', '060_uncompressed_tracks', 'runtimes.jsonl', ('tracking.jsonl',)),
 )
 # Every stage by name: (script, stage directory, runtime file, output files).
 STAGES = {s[0]: s[1:] for s in (*REFERENCE_STAGES, *TETRIS_STAGES)}
@@ -421,7 +421,7 @@ def make_plan(args):
     """Choose the operating points and write raw/plan.json (run inside ace's polyis container)."""
     # Pipeline and measurement code is imported here, since `run` executes this file on a host without it.
     import duckdb
-    from measurements.common import (DATASET_LABELS, fastest_tetris, file_record, host_info, load_test_tradeoff,
+    from experiments.measurements.common import (DATASET_LABELS, fastest_tetris, file_record, host_info, load_test_tradeoff,
                                      load_tradeoff_points)
     from tetris.io import cache, store
     from tetris.utilities import build_param_str, get_video_frame_count

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from measurements import refresh_fixed_reference_timing as timing
+from experiments.measurements import refresh_fixed_reference_timing as timing
 
 
 def test_refresh_uses_counted_reference_ops_and_keeps_measurements(tmp_path, monkeypatch):

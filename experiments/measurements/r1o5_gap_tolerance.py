@@ -43,14 +43,14 @@ Measured, per dataset, tracker, and threshold (every threshold p016 stored):
   - the measured kept fraction of every validated pruning setting: tile-frames kept in
     022_pruned_polyominoes over the ILP's input tile-frames, from 020_relevancy binarized at the
     setting's T_r, summed over the test videos. The cached test outputs follow the rule
-    score >= floor(T_r * 255) (common.RELEVANCE_RULES 'floor', see measurements/r9o3_ilp_instance_sizes.py), not the
+    score >= floor(T_r * 255) (common.RELEVANCE_RULES 'floor', see experiments/measurements/r9o3_ilp_instance_sizes.py), not the
     historical strict rule's score > T_r * 255, and no kept tile-frame falls outside it (kept_outside);
   - diagnostics: relevant tiles whose gap (> 1) rests on no observations at that gap (its rate
     is the 0.5 prior) or on fewer than LOW_EVIDENCE_OBSERVATIONS, and tiles whose gap skips a
     smaller gap that misses the tolerance.
 Validated configurations are the Tetris rows of each dataset's test-split tradeoff table, which
 include tile-padding and canvas-scale variants that share one pruning setting. Their thresholds,
-trackers (pruning uses the tracking tracker's profile, see scripts/p060_exec_track.py), and
+trackers (pruning uses the tracking tracker's profile, see experiments/scripts/p060_exec_track.py), and
 whole-frame sampling rates are counted per threshold, as rows and as distinct pruning settings.
 
 Writes measurements-results/r1o5_gap_tolerance/:
@@ -72,8 +72,8 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from evaluation.manifests import list_split_videos
-from measurements.common import (DATASET_LABELS, RELEVANCE_RULES, assert_files_exist, decode_grids, file_record,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import (DATASET_LABELS, RELEVANCE_RULES, assert_files_exist, decode_grids, file_record,
                                  iso_utc, load_test_tradeoff, query_dicts, results_dir, rounded, write_json)
 from tetris.io import cache
 from tetris.utilities import build_param_str, load_classification_results, load_pruned_classification_results

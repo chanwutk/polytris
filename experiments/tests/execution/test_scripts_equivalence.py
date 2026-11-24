@@ -1,4 +1,4 @@
-"""execution.tools.scripts_equivalence: keeping every p022 run's results, and the configuration grid."""
+"""experiments.tools.execution.scripts_equivalence: keeping every p022 run's results, and the configuration grid."""
 
 from pathlib import Path
 
@@ -54,9 +54,9 @@ def test_grid_has_every_configuration_once():
 def test_p022_runs_one_grid_combination_at_a_time(tmp_path, monkeypatch):
     # Each generated config holds one (sample rate, tolerance, T_r, tracker), pruned branches only; DATA is kept.
     import yaml
-    repo = Path(__file__).resolve().parents[2]
+    repo = Path(__file__).resolve().parents[3]
     (tmp_path / 'configs').mkdir()
-    (tmp_path / 'configs' / 'equivalence.yaml').write_text((repo / 'configs' / 'equivalence.yaml').read_text())
+    (tmp_path / 'configs' / 'equivalence.yaml').write_text((repo / 'experiments' / 'configs' / 'equivalence.yaml').read_text())
     monkeypatch.chdir(tmp_path)
     names = se.single_combo_configs()
     assert len(names) == 2 * 2 * 2 * 2

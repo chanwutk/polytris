@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """Add isolated preparation timings to the saved R9.O2 report, with two detector-reuse assumptions.
 
-Uses measurements-gpu/r9o2_preparation_overheads.py outputs. This is an accounting sensitivity,
+Uses experiments/measurements_gpu/r9o2_preparation_overheads.py outputs. This is an accounting sensitivity,
 not a measured end-to-end serial run. Cached inference costs and published throughput are unchanged.
 """
 import argparse
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import duckdb
 
-from measurements.common import query_dicts, results_dir, write_json
+from experiments.measurements.common import query_dicts, results_dir, write_json
 
 
 BASE_REPORT = Path('measurements-results/r9o2_preparation_cost/preparation_cost.json')

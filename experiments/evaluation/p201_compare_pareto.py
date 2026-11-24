@@ -25,13 +25,13 @@ from tetris.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
 from tetris.io import cache
 from tetris.pareto import compute_pareto_front
 from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
-from evaluation.utilities import SYSTEM_COLOR_DOMAIN
-from evaluation.colors import TETRIS_COLORS, categorical_color_scale
-from evaluation.p200_compare_compute import load_sota_tradeoff_data
+from experiments.evaluation.utilities import SYSTEM_COLOR_DOMAIN
+from experiments.evaluation.colors import TETRIS_COLORS, categorical_color_scale
+from experiments.evaluation.p200_compare_compute import load_sota_tradeoff_data
 
 
 config = get_config()
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PAPER_FIGURES_GENERATED_DIR = os.path.join(REPO_ROOT, 'paper', 'figures', 'generated')
 PRESENTATION_ASSETS_DIR = os.path.join(REPO_ROOT, 'paper', 'slides', 'assets')
 DATASETS = config['EXEC']['DATASETS']

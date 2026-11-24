@@ -1,7 +1,7 @@
 """p050's opt-in filter for detections centered on empty canvas space."""
 import numpy as np
 
-from scripts.p050_exec_uncompress import unpack_detections
+from experiments.scripts.p050_exec_uncompress import unpack_detections
 
 TILE = 10
 # A 2x3-tile canvas with one polyomino (group 1) in the left column, placed from source tile (5, 7) of frame 3.

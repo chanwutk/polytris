@@ -4,7 +4,7 @@ import json
 import numpy as np
 import pytest
 
-from measurements.r1o2_leap_sampling_diagnostics import (
+from experiments.measurements.r1o2_leap_sampling_diagnostics import (
     assign_boxes, box_iou, continuity_by_stationarity, derive_tracks, oracle_interpolation,
 )
 
@@ -65,7 +65,7 @@ def test_sampling_exposure_is_distinct_from_identity_fragmentation():
 
 
 def test_pattern_anchors_count_missing_frames_as_failures(tmp_path, monkeypatch):
-    import measurements.r1o2_leap_sampling_diagnostics as diagnostics
+    import experiments.measurements.r1o2_leap_sampling_diagnostics as diagnostics
     monkeypatch.setattr(diagnostics, 'ROOT', tmp_path)
     monkeypatch.setattr(diagnostics, 'canonical_leap_result', lambda dataset: None)
     directory = tmp_path / 'measurements-results/r1o2_leap_matched/raw/caldot1-y05'
@@ -90,7 +90,7 @@ def test_pattern_anchors_count_missing_frames_as_failures(tmp_path, monkeypatch)
 
 
 def test_diagnostics_use_selected_raw_run_for_metadata_and_pattern_export(tmp_path, monkeypatch):
-    import measurements.r1o2_leap_sampling_diagnostics as diagnostics
+    import experiments.measurements.r1o2_leap_sampling_diagnostics as diagnostics
     monkeypatch.setattr(diagnostics, 'ROOT', tmp_path)
     chosen = tmp_path/'reviewed/raw/caldot1-y05'
     monkeypatch.setattr(diagnostics, 'canonical_leap_result', lambda dataset:

@@ -6,13 +6,13 @@ import duckdb
 import numpy as np
 import pytest
 
-from measurements import r9o2_preparation_overheads as overheads
+from experiments.measurements import r9o2_preparation_overheads as overheads
 
 
 @pytest.fixture
 def gpu():
     # Import the standalone runner without executing a benchmark or touching CUDA.
-    path = Path(__file__).resolve().parents[1] / 'measurements-gpu/r9o2_preparation_overheads.py'
+    path = Path(__file__).resolve().parents[1] / 'measurements_gpu/r9o2_preparation_overheads.py'
     spec = importlib.util.spec_from_file_location('preparation_overheads_gpu', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -160,7 +160,7 @@ def test_classifier_reuses_checkpoint_and_cleans_up_private_compiler_workers(tmp
 
 @pytest.mark.parametrize('recomputed', ['original', 'different'])
 def test_tables_keep_saved_frontier_even_when_cost_probe_differs(tmp_path, monkeypatch, gpu, recomputed):
-    from evaluation import p130_tradeoff_compute as tradeoff, p135_pareto_extract as pareto
+    from experiments.evaluation import p130_tradeoff_compute as tradeoff, p135_pareto_extract as pareto
     from tetris.io import cache
 
     # Isolate all output paths and keep the original selection CSV immutable.

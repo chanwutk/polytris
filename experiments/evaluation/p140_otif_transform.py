@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from evaluation.manifests import build_split_video_manifest
+from experiments.evaluation.manifests import build_split_video_manifest
 from tetris.io import cache
 from tetris.utilities import get_config, get_video_frame_count, register_tracked_detections, save_tracking_results
 

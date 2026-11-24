@@ -334,7 +334,7 @@ def main():
 
     df = collect_data(videosets)
     if df.empty:
-        print("No data found. Run scripts/p022t_exec_prune_timelimit.sh first.")
+        print("No data found. Run experiments/scripts/p022t_exec_prune_timelimit.sh first.")
         return
 
     # Output directory for all charts from this evaluation.

@@ -25,7 +25,7 @@ Operator ablation (ablation_speedup.json)
   The R7.O1 sentence "adding polyomino pruning on top of relevance classification and packing
   raises the average speedup over the reference pipeline from 6.7x to 11.1x (within the 5%
   HOTA-loss bound)" quotes the Section 7.2 macros ablationOneSpeedupAvg and
-  ablationTwoSpeedupAvg, written by evaluation/p204_ablation_stats.py. That script restricts
+  ablationTwoSpeedupAvg, written by experiments/evaluation/p204_ablation_stats.py. That script restricts
   Tetris's test configurations by tetris.ablation.ABLATION_CONDITIONS (no_both: s = 1 and no
   polyomino pruning; no_sampling: s = 1 with pruning; full: every knob), takes each dataset's
   fastest configuration within the bound, and averages its speedup over datasets.
@@ -42,7 +42,7 @@ Checks
   compared as well (manuscript_check), which will differ by design once B3D is re-scored.
 
 Inputs are the test-split tradeoff tables (Tetris and the reference, from p130), the SOTA
-tables (OTIF and LEAP, from p142) through measurements.common.system_configs, and the raw LEAP
+tables (OTIF and LEAP, from p142) through experiments.measurements.common.system_configs, and the raw LEAP
 stat CSVs (checks only) and SOTA outputs under --sota-dir. HOTA is scored against the cached ground truth.
 For B3D1-B3D4 that ground truth is automatic, so every B3D number here must be recomputed
 once R1.O1's human-verified labels replace it.
@@ -61,12 +61,12 @@ from datetime import datetime, timezone
 import duckdb
 import pandas as pd
 
-from evaluation import p203_compare_stats as p203
-from evaluation import p204_ablation_stats as p204
+from experiments.evaluation import p203_compare_stats as p203
+from experiments.evaluation import p204_ablation_stats as p204
 from tetris.ablation import ABLATION_CONDITIONS
-from evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
+from experiments.evaluation.p140_otif_transform import build_expected_test_video_manifest, dataset_name_in_sota
 from tetris.leap_results import canonical_leap_result
-from measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, accuracy_matched, arrange_matched,
+from experiments.measurements.common import (DATASET_LABELS, PRIOR_SYSTEMS, accuracy_matched, arrange_matched,
                                  assert_files_exist, bound_specs, choose, file_record, load_test_tradeoff,
                                  matched_stats, operating_points, plain, print_operating_points, query_dicts,
                                  results_dir, rounded, system_configs, write_json)
@@ -540,7 +540,7 @@ def macro_values(speedups: list[dict], ratios: list[dict], matched: list[dict], 
 
 
 def p203_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
-    """{bound: {macro: value}} from evaluation/p203_compare_stats.py's own functions on the same inputs."""
+    """{bound: {macro: value}} from experiments/evaluation/p203_compare_stats.py's own functions on the same inputs."""
     # The relative bounds p203 names a macro for.
     named = {name: spec['loss'] for name, spec in specs.items() if macro_suffix(spec['loss']) is not None}
     # Nothing to compare without one.
@@ -561,7 +561,7 @@ def p203_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
 
 
 def p204_reference(datasets: list[str], specs: dict[str, dict]) -> dict:
-    """{bound: {ablation macro: value}} from evaluation/p204_ablation_stats.py's own functions on the same inputs."""
+    """{bound: {ablation macro: value}} from experiments/evaluation/p204_ablation_stats.py's own functions on the same inputs."""
     # p204's test rows (Perfect dropped).
     tetris, naive = p204.load_tetris_and_naive_test_data(datasets)
     # The report, filled below.
@@ -768,7 +768,7 @@ def main():
                  'CSV, so decoding is excluded, with repeated runs of a video averaged; checked against the raw CSV '
                  '(leap_checks.runtime).',
             prior_fps='Prior systems\' throughput is the test split\'s frame count (our clips) over their runtime, as '
-                      'in evaluation/p200_compare_compute.py and p203, not the frames the system decoded.'),
+                      'in experiments/evaluation/p200_compare_compute.py and p203, not the frames the system decoded.'),
         ratios='Speedups and ratios divide unrounded throughputs, then round to 0.1 (common.operating_points).',
         accuracy_matched='p203\'s rule: the fastest prior point meeting the bound if its HOTA is not above Tetris\'s, '
                          'else the most accurate Pareto-optimal prior point with HOTA not above Tetris\'s, which may '
@@ -799,7 +799,7 @@ def main():
                       'fronts (p135); candidates gives each pool\'s size. Part of the rise from no_both to no_sampling '
                       'reflects a larger pool.',
             source=('R7.O1 response sentence "6.7x to 11.1x" = ablationOneSpeedupAvg (no_both) and ablationTwoSpeedupAvg '
-                    '(no_sampling) from evaluation/p204_ablation_stats.py, 5% bound, Section 7.2 l.375-386.'),
+                    '(no_sampling) from experiments/evaluation/p204_ablation_stats.py, 5% bound, Section 7.2 l.375-386.'),
             conditions={c.name: dict(label=c.label, sample_rates=c.sample_rates,
                                      tracking_accuracy_thresholds=c.tracking_accuracy_thresholds) for c in ABLATION_CONDITIONS},
             checks='port_check against p204.compute_ablation_stats at every bound (must match); manuscript_check '

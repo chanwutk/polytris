@@ -8,11 +8,11 @@ import duckdb
 import numpy as np
 import pytest
 
-from measurements import r9o1_matched_timing as mt
+from experiments.measurements import r9o1_matched_timing as mt
 
 
-# The GPU job, loaded from its file (measurements-gpu is not a package).
-GPU_PATH = Path(__file__).resolve().parent.parent / 'measurements-gpu' / 'r9o1_matched_timing.py'
+# The GPU job, loaded from its file (experiments/measurements_gpu is not a package).
+GPU_PATH = Path(__file__).resolve().parent.parent / 'measurements_gpu' / 'r9o1_matched_timing.py'
 gpu_spec = importlib.util.spec_from_file_location('r9o1_matched_timing_gpu', GPU_PATH)
 gpu = importlib.util.module_from_spec(gpu_spec)
 gpu_spec.loader.exec_module(gpu)
@@ -299,7 +299,7 @@ def test_log_derived_must_cover_every_dataset(world):
 def test_missing_gpu_outputs_name_the_gpu_job(world):
     # No manifest.
     (world['raw'] / mt.MANIFEST).unlink()
-    with pytest.raises(AssertionError, match='measurements-gpu/r9o1_matched_timing.py'):
+    with pytest.raises(AssertionError, match='experiments/measurements_gpu/r9o1_matched_timing.py'):
         mt.load_manifest(world['raw'], None)
 
 

@@ -1,6 +1,6 @@
 # profiling: pipeline-parallel validation sweep
 
-Replaces the validation pass of `scripts/run.sh` (p020 -> p060 over the full parameter grid on the valid
+Replaces the validation pass of `experiments/scripts/run.sh` (p020 -> p060 over the full parameter grid on the valid
 videoset, then p110 accuracy and p120/p121 throughput, then Pareto selection) with one pipeline that
 runs every configuration at once, reusing each intermediate result for every configuration that shares it.
 Decisions were agreed in review on 2026-11-21 (issue numbers in brackets).

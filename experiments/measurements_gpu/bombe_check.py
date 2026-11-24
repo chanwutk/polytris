@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-"""Smoke test of a bombe container (measurements-gpu/bombe_container.sh); exits non-zero on the first failure.
+"""Smoke test of a bombe container (experiments/measurements_gpu/bombe_container.sh); exits non-zero on the first failure.
 
 Checks that the one GPU is visible to torch and ultralytics, tetris and every compiled Cython module under tetris/
 import, the mounts are where the pipeline expects them, and Gurobi optimizes a tiny model through gurobipy and through

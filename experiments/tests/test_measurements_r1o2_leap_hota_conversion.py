@@ -5,8 +5,8 @@ import duckdb
 import numpy as np
 import pytest
 
-from evaluation.p140_otif_transform import transform_tracking_json, unwrap_leap_frames
-from measurements import r1o2_leap_hota_conversion as hc
+from experiments.evaluation.p140_otif_transform import transform_tracking_json, unwrap_leap_frames
+from experiments.measurements import r1o2_leap_hota_conversion as hc
 
 
 # The synthetic dataset: one name that needs no SOTA or root-dataset mapping, and its clips.
@@ -525,7 +525,7 @@ def test_native_summary_rejects_other_caches(con, dataset, tmp_path):
 def test_load_native_requires_both_files(tmp_path):
     # Only one of the two outputs present.
     (tmp_path / 'configs.json').write_text('{}')
-    with pytest.raises(AssertionError, match='run measurements/r1o2_leap_native_queries.py first'):
+    with pytest.raises(AssertionError, match='run experiments/measurements/r1o2_leap_native_queries.py first'):
         hc.load_native(tmp_path)
     (tmp_path / 'diagnostics.json').write_text('{}')
     configs, diagnostics, records = hc.load_native(tmp_path)

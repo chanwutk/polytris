@@ -1,6 +1,6 @@
 import pandas as pd
 
-from evaluation.p121_throughput_compute import filter_excluded_runtime_ops
+from experiments.evaluation.p121_throughput_compute import filter_excluded_runtime_ops
 
 
 def test_filter_excluded_runtime_ops_drops_configured_stage_ops():

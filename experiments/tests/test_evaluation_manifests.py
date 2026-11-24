@@ -1,6 +1,6 @@
 import pandas as pd
 
-from evaluation import manifests
+from experiments.evaluation import manifests
 
 
 def test_build_split_video_manifest_filters_supported_extensions(monkeypatch):

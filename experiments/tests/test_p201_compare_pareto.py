@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from evaluation.p201_compare_pareto import (
+from experiments.evaluation.p201_compare_pareto import (
     FACET_COLUMNS,
     FACET_SUBPLOT_HEIGHT,
     FACET_SUBPLOT_WIDTH,

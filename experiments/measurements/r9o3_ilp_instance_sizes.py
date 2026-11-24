@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """R9.O3: size of the polyomino-pruning ILP that p022 solves, counted on the ILP's input.
 
-scripts/p022_exec_prune_polyominoes.py solves one ILP per clip and configuration (an instance). Its
+experiments/scripts/p022_exec_prune_polyominoes.py solves one ILP per clip and configuration (an instance). Its
 input is built from the classifier scores in 020_relevancy/{classifier}_{tilesize}_{sample_rate}/score/
 score.jsonl: each frame's tile scores are binarized at the configuration's relevance threshold r and
 grouped into 4-connected polyominoes by tetris.pack.adapters.group_tiles_all with p022's
@@ -70,15 +70,15 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from evaluation.manifests import list_split_videos
-from measurements.common import (DATASET_LABELS, RELEVANCE_RULES, VARIANT_PATTERN, decode_grids, default_time_limit,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import (DATASET_LABELS, RELEVANCE_RULES, VARIANT_PATTERN, decode_grids, default_time_limit,
                                  load_prune_runs, load_pruning_points, load_test_tradeoff, pruning_operating_points,
                                  query_dicts, results_dir, rounded, write_json)
 from tetris.io import cache
 from tetris.pack.adapters import group_tiles_all
 from tetris.utilities import (build_param_str, load_classification_results, load_pruned_classification_results,
                               parse_execution_param_str)
-from scripts.p022_exec_prune_polyominoes import _ACCURACY_THRESHOLD_TO_IDX, TILEPADDING_MODE, load_max_sampling_rate
+from experiments.scripts.p022_exec_prune_polyominoes import _ACCURACY_THRESHOLD_TO_IDX, TILEPADDING_MODE, load_max_sampling_rate
 
 
 # Splits p022 runs on, as store videoset names.

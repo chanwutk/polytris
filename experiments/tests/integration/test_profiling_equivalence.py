@@ -2,7 +2,7 @@
 Validation: the profiling sweep against the scripts (p020 -> p060), on committed clips, every stage exactly.
 
 The sweep runs first and saves every result in the scripts' layout, with each ILP's status (ilp.json).  The scripts
-then run on the same clips, p022 replaced by tests/integration/mirror_p022.py: where either side's ILP stopped at its
+then run on the same clips, p022 replaced by experiments/tests/integration/mirror_p022.py: where either side's ILP stopped at its
 time limit, both use the sweep's pruned grid, so every later stage is comparable.  Compared (profiling's own
 compare_with_scripts): scores, pruned grids, index maps and offsets, detections in order, byte-identical tracks, HOTA.
 """
@@ -13,9 +13,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.integration import harness
+from experiments.tests.integration import harness
 
-# The grid of profiling/tools/compare_scripts.py: 2 sample rates x 2 T_r x (no pruning + 2 tolerances x 2 trackers)
+# The grid of experiments/tools/profiling/compare_scripts.py: 2 sample rates x 2 T_r x (no pruning + 2 tolerances x 2 trackers)
 # x 2 paddings.
 GRID = {'sample_rates': [1, 4], 'relevance_thresholds': [0.25, 0.5], 'mistrack_tolerances': [None, 0.4, 0.8],
         'tile_paddings': ['none', 'tr'], 'canvas_scales': [1.0], 'trackers': ['sortcython', 'bytetrackcython']}
@@ -48,7 +48,7 @@ def test_profiling_matches_the_scripts(dataset, tmp_path):
     harness.mirror_p022(tree, output_root / dataset / 'execution', tmp_path / 'mirror.json')
     harness.scripts(tree, 'p030_exec_compress', 'p040_exec_detect', 'p050_exec_uncompress', 'p060_exec_track')
 
-    from profiling.tools.compare_scripts import compare_with_scripts
+    from experiments.tools.profiling.compare_scripts import compare_with_scripts
     report = compare_with_scripts(str(output_root), dataset, str(tree.cache), harness.REFERENCE_FILE)
     mirror = json.loads((tmp_path / 'mirror.json').read_text())
     (tmp_path / 'report.json').write_text(json.dumps({'mirror': mirror, **report}, indent=1) + '\n')

@@ -2,8 +2,8 @@ import altair as alt
 import pandas as pd
 import pytest
 
-from evaluation import p038_packing_efficacy as stats
-from evaluation import p206_classifier_and_packing as figure
+from experiments.evaluation import p038_packing_efficacy as stats
+from experiments.evaluation import p206_classifier_and_packing as figure
 
 
 @pytest.fixture

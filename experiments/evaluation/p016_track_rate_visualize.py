@@ -9,7 +9,7 @@ import numpy as np
 
 from tetris.io import cache, store
 from tetris.utilities import get_config
-from evaluation.manifests import list_split_videos
+from experiments.evaluation.manifests import list_split_videos
 
 
 CONFIG = get_config()

@@ -15,7 +15,7 @@ compares every saved result with the scripts' cache (read only):
   060 tracks           byte-identical, and equal up to track-id renaming
   HOTA per video       ours vs tetris.trackeval.evaluate.run_trackeval on the cached 060 tracks, same reference
 
-    python -m profiling.tools.compare_scripts --config profiling/configs/caldot1-y05.yaml \
+    python -m experiments.tools.profiling.compare_scripts --config profiling/configs/caldot1-y05.yaml \
         --videos va00.mp4 va01.mp4 --output-root /polyis-profiling-check --out /polyis-profiling-check/compare.json
 """
 
@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from execution.tools.compare_scripts import compare_detections, compare_track_lines
+from experiments.tools.execution.compare_scripts import compare_detections, compare_track_lines
 from profiling import main as pmain
 from profiling.config import parse_sweep_config
 from tetris.io import store
@@ -137,7 +137,7 @@ def main_cli() -> None:
 
 def compare_with_scripts(output_root: str, ds: str, cache_root: str, reference_file: str) -> dict:
     """Every result a sweep saved under output_root vs the scripts' outputs under cache_root: per-stage rows and
-    totals ({'stages': ..., 'totals': ...}).  Shared by this CLI and tests/integration."""
+    totals ({'stages': ..., 'totals': ...}).  Shared by this CLI and experiments/tests/integration."""
     ours_ex = os.path.join(output_root, ds, 'execution')
     cache_ex = os.path.join(cache_root, ds, 'execution')
     report: dict = {'stages': {}}

@@ -2,14 +2,14 @@
 # R9.O2: restore CalDoT2's validation sweep on va00-va09, whose sweep outputs were cleared on 2026-05-29 (only one
 # configuration was rerun), so the preparation cost measures all 60 validation clips instead of scaling 50.
 #
-# Runs on ace's host (not in the container). It waits until measurements/r9o2_packing_serial.py has finished and every
+# Runs on ace's host (not in the container). It waits until experiments/measurements/r9o2_packing_serial.py has finished and every
 # GPU is idle, then runs p020, p022, p030, p040, p050, and p060 on the validation split with --videos va00-va09 and a
 # config listing only caldot2-y05, so no other clip or dataset is deleted or rerun. The trade-off and Pareto tables
 # (p130, p135) are not rerun: CalDoT2's were built on 2026-04-20, before the clearing, from all 60 clips.
 # It then checks each clip has as many outputs per stage as a complete clip (va10) and resumes the serial packing
 # measurement, which adds the 4,200 new packing units.
 #
-# Usage on ace: nohup measurements-gpu/r9o2_caldot2_resweep.sh > measurements-results/r9o2_caldot2_resweep.log 2>&1 &
+# Usage on ace: nohup experiments/measurements_gpu/r9o2_caldot2_resweep.sh > measurements-results/r9o2_caldot2_resweep.log 2>&1 &
 set -euo pipefail
 
 DATASET=caldot2-y05
@@ -66,5 +66,5 @@ for i in "${!STAGE_DIRS[@]}"; do
 done
 
 # Add the new packing units to the serial measurement (it skips the units it already has).
-in_container python measurements/r9o2_packing_serial.py --dataset "$DATASET" --cpus 4,6,9,10
+in_container python experiments/measurements/r9o2_packing_serial.py --dataset "$DATASET" --cpus 4,6,9,10
 log "done"

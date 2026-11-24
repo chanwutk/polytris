@@ -8,13 +8,13 @@ import pytest
 import torch
 
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def load(name, filename):
-    # Load host-side scripts without requiring measurements-gpu to be a Python package; paths with a '/' are relative
+    # Load host-side scripts without requiring experiments/measurements_gpu to be a Python package; paths with a '/' are relative
     # to the tetris-leap submodule's experiments/, whose scripts the harness runs.
-    base = ROOT / 'baselines' / 'tetris-leap' / 'experiments' if '/' in filename else ROOT / 'measurements-gpu'
+    base = ROOT / 'baselines' / 'tetris-leap' / 'experiments' if '/' in filename else ROOT / 'experiments/measurements_gpu'
     spec = importlib.util.spec_from_file_location(name, base / filename)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

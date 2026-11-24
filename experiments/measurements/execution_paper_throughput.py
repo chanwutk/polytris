@@ -2,7 +2,7 @@
 execution's throughput at the paper's operating points vs the throughput the paper reports.
 
 Inputs:
-  measurements-results/execution-paper/<dataset>-<loss>/result.json   execution.tools.benchmark --skip-scripts
+  measurements-results/execution-paper/<dataset>-<loss>/result.json   experiments.tools.execution.benchmark --skip-scripts
   measurements-results/r1o3_clean_extraction_timing/throughput.json     the paper side and the clean script reruns
   measurements-results/r1o3_clean_extraction_timing/raw/plan.json       dataset ids <-> paper labels
 
@@ -14,7 +14,7 @@ Throughput boundaries compared (frames / seconds over the same test videos):
   clean_steady    the staged scripts' wall clock on idle bombe GPUs, per-stage process startup removed
 
 Writes <runs>/summary.json and prints the table.  Run in the polyis container:
-  python measurements/execution_paper_throughput.py \
+  python experiments/measurements/execution_paper_throughput.py \
       --runs measurements-results/execution-paper-current --baseline measurements-results/execution-paper
 --baseline adds an earlier set of runs' execution throughput for comparison.
 """

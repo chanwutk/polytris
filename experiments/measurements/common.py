@@ -1,4 +1,4 @@
-"""Helpers shared by the revision measurement scripts (see REVISION.md).
+"""Helpers shared by the revision measurement scripts (see experiments/REVISION.md).
 
 Measurement scripts import shared code from here only, never from each other.
 """
@@ -20,13 +20,13 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-# TrackEval is vendored as a submodule, imported the way evaluation/p110_accuracy_compute.py imports it.
+# TrackEval is vendored as a submodule, imported the way experiments/evaluation/p110_accuracy_compute.py imports it.
 sys.path.append('/polyis/modules/TrackEval')
 import trackeval  # noqa: E402
 from trackeval.metrics import CLEAR, HOTA, Identity  # noqa: E402
 
-from evaluation.p121_throughput_compute import excluded_runtime_ops  # noqa: E402
-from evaluation.p200_compare_compute import load_sota_tradeoff_data  # noqa: E402
+from experiments.evaluation.p121_throughput_compute import excluded_runtime_ops  # noqa: E402
+from experiments.evaluation.p200_compare_compute import load_sota_tradeoff_data  # noqa: E402
 from tetris.io import cache  # noqa: E402
 from tetris.leap_results import canonical_leap_result  # noqa: E402
 from tetris.trackeval.dataset import Dataset  # noqa: E402
@@ -43,13 +43,13 @@ RESULTS_ROOT = Path(__file__).resolve().parent.parent / 'measurements-results'
 # Schema of a tracking.jsonl line (ground truth, reference, Tetris, and converted SOTA tracks): a frame index and
 # boxes [track_id, x1, y1, x2, y2].
 TRACK_COLUMNS = "{'frame_idx': 'BIGINT', 'tracks': 'DOUBLE[][]'}"
-# Schema of the unwrap.json that evaluation/p140_otif_transform.py writes next to each corrected LEAP tracking.jsonl
+# Schema of the unwrap.json that experiments/evaluation/p140_otif_transform.py writes next to each corrected LEAP tracking.jsonl
 # (unwrap_leap_frames' statistics of what it removed from the raw export).
 UNWRAP_COLUMNS = ("{'export_frames': 'BIGINT', 'clip_frames': 'BIGINT', 'objects': 'BIGINT', "
                   "'wrapped_objects': 'BIGINT[]', 'ambiguous_full_span_objects': 'BIGINT[]', "
                   "'wrapped_boxes_dropped': 'BIGINT', 'boxes_past_clip_dropped': 'BIGINT'}")
 # Where each stage's runtime-log lines keep their op list, as JSON paths mirroring
-# evaluation/p121_throughput_compute.py's INDEX/QUERY_DATA_ACCESSORS.
+# experiments/evaluation/p121_throughput_compute.py's INDEX/QUERY_DATA_ACCESSORS.
 OP_LIST_PATHS = {
     '011_tune_detect': '$[#-1]',
     '012_tune_create_training_data': '$',
@@ -66,13 +66,13 @@ OP_LIST_PATHS = {
 # JSON types DuckDB reports for numeric op times; anything else (a string such as p040's image_file name, a
 # boolean, null) is not a duration.
 NUMERIC_JSON_TYPES = ('DOUBLE', 'BIGINT', 'UBIGINT')
-# Ops p121 drops from every runtime file (a local list inside evaluation/p121_throughput_compute.py's
-# parse_runtime_file, copied here; tests/test_measurements_common.py checks the copy against p121's source and parser).
+# Ops p121 drops from every runtime file (a local list inside experiments/evaluation/p121_throughput_compute.py's
+# parse_runtime_file, copied here; experiments/tests/test_measurements_common.py checks the copy against p121's source and parser).
 P121_IGNORED_OPS = ('total_frame_time', 'read_frame', 'save_canvas', 'save_mapping_files')
 # Types of the columns of p121's per-op table (query_execution_per_op.csv) that the measurements read.
 P121_PER_OP_TYPES = {'dataset': 'VARCHAR', 'videoset': 'VARCHAR', 'variant_id': 'VARCHAR', 'video': 'VARCHAR',
                      'stage': 'VARCHAR', 'op': 'VARCHAR', 'time': 'DOUBLE', 'count': 'BIGINT'}
-# The pruning stage (scripts/p022_exec_prune_polyominoes.py): its directory, its name in the throughput tables, and
+# The pruning stage (experiments/scripts/p022_exec_prune_polyominoes.py): its directory, its name in the throughput tables, and
 # its source, whose call to solve_ilp sets the default solve budget.
 PRUNE_DIR = cache.EXEC_STAGE_MAP['pruned-polyominoes']
 PRUNE_STAGE = '022_exec_prune_polyominoes'
@@ -341,7 +341,7 @@ def load_p121_per_op(con: duckdb.DuckDBPyConnection, table: str, paths: dict[str
     (<dataset>/evaluation/080_throughput/measurements/query_execution_per_op.csv), given as {dataset: path}: one row
     per configuration, video, stage, and op, with its seconds and timed items. Callers select splits and rows."""
     # A missing table would otherwise surface as a bare DuckDB error.
-    assert_files_exist(list(paths.values()), 'per-op throughput tables (run evaluation/p120 and p121 --test)')
+    assert_files_exist(list(paths.values()), 'per-op throughput tables (run experiments/evaluation/p120 and p121 --test)')
     # Every dataset's table at once, the columns read typed explicitly.
     con.execute(f"""
         CREATE OR REPLACE TABLE {table} AS
@@ -804,7 +804,7 @@ def system_configs(dataset: str) -> list[dict]:
 
     Each row has system, config, fps (throughput over the test split), and hota. Tetris rows are
     its validated configurations from the tradeoff table; prior systems' throughput is the test
-    split's frame count over their runtime, as in evaluation/p200_compare_compute.py.
+    split's frame count over their runtime, as in experiments/evaluation/p200_compare_compute.py.
     """
     # Tetris configurations and the reference pipeline from the tradeoff table.
     tetris, naive = load_test_tradeoff(dataset)
@@ -838,7 +838,7 @@ def output_path(dataset: str, system: str, config: str, video: str, kind: str = 
     if system == 'tetris':
         # 050 directories drop the tracker for unpruned configurations and hold detections.jsonl,
         # so they are not addressable by the variant id; use detection_config in
-        # measurements/r1o4_packing_detection_accuracy.py for unpacked detections.
+        # experiments/measurements/r1o4_packing_detection_accuracy.py for unpacked detections.
         assert kind == 'tracking', 'Tetris detections are named by detection configuration, not variant id'
         return Path(cache.exec(dataset, 'ucomp-tracks', video, config, name))
     # Prior systems store one directory per parameter id.

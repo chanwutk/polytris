@@ -2,7 +2,7 @@
 
 Runs inside the LEAP container (python 3.10, the scored container's conda env) with the working directory set to a
 copy of LEAP's checkout, because LEAP reads masks, re-identification configs, and pretrained weights relative to it
-and writes visualizations there. measurements-gpu/r1o2_leap_otif_rerun.py builds the container and calls this.
+and writes visualizations there. experiments/measurements_gpu/r1o2_leap_otif_rerun.py builds the container and calls this.
 
 LEAP's own code is not changed. This script repeats the multi-video block of LEAP's main.py (its `__main__`: seed,
 clear_dir, then run_session on every .mp4 of --video_dir in sorted file-name order, in one process, so the state

@@ -1,18 +1,18 @@
 #!/bin/bash
-# R9.O2 preparation re-timing on bombe: measurements-gpu/r9o2_preparation_cost.py --run inside the shared launcher
-# (measurements-gpu/bombe_container.sh), one container per GPU, each timing its own datasets in sequence.
+# R9.O2 preparation re-timing on bombe: experiments/measurements_gpu/r9o2_preparation_cost.py --run inside the shared launcher
+# (experiments/measurements_gpu/bombe_container.sh), one container per GPU, each timing its own datasets in sequence.
 # Usage, from the checkout /work/cwkt/projects/tetris (the same files on ace and bombe):
-#   ace:   measurements-gpu/r9o2_preparation_retiming.sh stage <GPU> <dataset...>
+#   ace:   experiments/measurements_gpu/r9o2_preparation_retiming.sh stage <GPU> <dataset...>
 #            Push every tracking.jsonl under the datasets' execution/va*/ in ace's cache (read only) into the GPU's
 #            staging cache on bombe, $TRACK/g<GPU>/polyis-cache, which the launcher mounts at /polyis-cache. The plan
 #            copies them from there into its scratch cache (copy-on-write clones on bombe's ZFS).
-#   bombe: measurements-gpu/r9o2_preparation_retiming.sh run <GPU> <dataset...>
+#   bombe: experiments/measurements_gpu/r9o2_preparation_retiming.sh run <GPU> <dataset...>
 #            Time STEPS for the datasets on that GPU, pinned to its NUMA node; the plan's scratch is $TRACK/g<GPU>/retime
 #            (/scratch/retime in the container). Run it in a detached tmux session; it prints the plan, then one line
 #            per step.
-#   bombe: measurements-gpu/r9o2_preparation_retiming.sh collect
+#   bombe: experiments/measurements_gpu/r9o2_preparation_retiming.sh collect
 #            Merge every GPU's records into measurements-results/r9o2_preparation_retiming/ (timings.jsonl,
-#            detector_load.jsonl, files.jsonl.gz, launcher_runs.jsonl, logs/), which measurements/r9o2_preparation_cost.py
+#            detector_load.jsonl, files.jsonl.gz, launcher_runs.jsonl, logs/), which experiments/measurements/r9o2_preparation_cost.py
 #            reads on ace.
 # Optional environment: R9O2_STEPS replaces the steps that run times (for example 'p110_density', the deployed-density
 # cross-check); R9O2_TRACK and R9O2_TETRIS move the track directory and the checkout (tests run collect on a fake one).
@@ -45,8 +45,8 @@ case "$CMD" in
     [ $# -gt 0 ] || { echo "$USAGE" >&2; exit 2; }
     cd "$TETRIS"
     # The launcher shows the container only its GPU, as cuda:0.
-    exec measurements-gpu/bombe_container.sh "$G" "$TRACK/g$G" \
-      "python measurements-gpu/r9o2_preparation_cost.py --run --gpu 0 --scratch /scratch/retime --steps $STEPS --datasets $*"
+    exec experiments/measurements_gpu/bombe_container.sh "$G" "$TRACK/g$G" \
+      "python experiments/measurements_gpu/r9o2_preparation_cost.py --run --gpu 0 --scratch /scratch/retime --steps $STEPS --datasets $*"
     ;;
   collect)
     OUT=$TETRIS/measurements-results/r9o2_preparation_retiming

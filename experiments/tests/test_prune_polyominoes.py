@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from scripts import p022_exec_prune_polyominoes as prune
+from experiments.scripts import p022_exec_prune_polyominoes as prune
 
 
 @pytest.mark.parametrize('threshold,first_kept', [

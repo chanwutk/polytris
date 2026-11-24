@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Phase A of re-scoring B3D on human ground truth: snapshot, install, rescore, gate.
 #
-# Run on ace (host), inside tmux:  measurements-gpu/b3d_human_gt_phase_a.sh <annotation commit>
+# Run on ace (host), inside tmux:  experiments/measurements_gpu/b3d_human_gt_phase_a.sh <annotation commit>
 # Stops at the first failure. Each stage writes a done marker, so a rerun resumes after the last
 # finished stage. Logs and the report go to measurements-results/b3d_human_gt/.
 set -euo pipefail
@@ -51,14 +51,14 @@ EOF
 
 stage 00_untouched_checksums record_untouched
 # shellcheck disable=SC2046
-stage 01_snapshot py_all measurements/snapshot_outputs.py $(snapshot_paths)
-stage 02_install py_all preprocess/p004_install_human_groundtruth.py --source-commit "$COMMIT" --datasets "${B3D[@]}"
+stage 01_snapshot py_all experiments/measurements/snapshot_outputs.py $(snapshot_paths)
+stage 02_install py_all experiments/preprocess/p004_install_human_groundtruth.py --source-commit "$COMMIT" --datasets "${B3D[@]}"
 export DATASETS=$(IFS=,; echo "${B3D[*]}")
-stage 03_p110 py evaluation/p110_accuracy_compute.py --test
-stage 04_p111 py evaluation/p111_accuracy_aggregate.py --test
-stage 05_p130 py evaluation/p130_tradeoff_compute.py --test
-stage 06_p141 py evaluation/p141_otif_accuracy.py --test
-stage 07_p142 py evaluation/p142_otif_tradeoff.py --test
-stage 08_report py_all measurements/b3d_human_gt_report.py --datasets "${B3D[@]}" \
+stage 03_p110 py experiments/evaluation/p110_accuracy_compute.py --test
+stage 04_p111 py experiments/evaluation/p111_accuracy_aggregate.py --test
+stage 05_p130 py experiments/evaluation/p130_tradeoff_compute.py --test
+stage 06_p141 py experiments/evaluation/p141_otif_accuracy.py --test
+stage 07_p142 py experiments/evaluation/p142_otif_tradeoff.py --test
+stage 08_report py_all experiments/measurements/b3d_human_gt_report.py --datasets "${B3D[@]}" \
   --untouched-checksums "$COUT/untouched_checksums.json" --output "$COUT/report.json"
 echo "== $(date -Is) phase A complete"

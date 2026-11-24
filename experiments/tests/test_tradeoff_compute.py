@@ -1,6 +1,6 @@
 import pandas as pd
 
-from evaluation.p130_tradeoff_compute import build_tradeoff_table
+from experiments.evaluation.p130_tradeoff_compute import build_tradeoff_table
 
 
 def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
@@ -50,7 +50,7 @@ def test_build_tradeoff_table_aggregates_split_level_variants(monkeypatch):
 
     # Return deterministic frame counts for the two test videos.
     monkeypatch.setattr(
-        'evaluation.p130_tradeoff_compute.get_video_frame_count',
+        'experiments.evaluation.p130_tradeoff_compute.get_video_frame_count',
         lambda dataset, video: {'te01.mp4': 100, 'te02.mp4': 50}[video],
     )
 

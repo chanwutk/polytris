@@ -3,7 +3,7 @@ import json
 import duckdb
 import pytest
 
-from measurements import r1o2_count_query as cq
+from experiments.measurements import r1o2_count_query as cq
 
 
 # A unit square and a concave "L" polygon for point-in-polygon checks.

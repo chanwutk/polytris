@@ -5,8 +5,8 @@ import duckdb
 import numpy as np
 import pytest
 
-from measurements import r1o1_hota_scoring_window as sw
-from measurements.common import output_path
+from experiments.measurements import r1o1_hota_scoring_window as sw
+from experiments.measurements.common import output_path
 
 
 # The synthetic dataset: one name that needs no root-dataset mapping, and its label.

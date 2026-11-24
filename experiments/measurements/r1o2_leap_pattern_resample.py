@@ -11,7 +11,7 @@ Checks before any new number is used:
   - its pattern HOTA reproduces the recorded pattern HOTA of the reported run.
 The raw and linear reconstructions do not use patterns, so their recorded HOTA is reused.
 
-Run in ace's polyis container from /polyis:  python measurements/r1o2_leap_pattern_resample.py
+Run in ace's polyis container from /polyis:  python experiments/measurements/r1o2_leap_pattern_resample.py
 Output: RESULTS/results.json (per dataset: interval/pattern counts, recorded, received, and resampled HOTA, and the
 best reconstruction).
 """
@@ -25,15 +25,15 @@ from pathlib import Path
 
 import duckdb
 
-from evaluation.manifests import list_split_videos
-from evaluation.p140_otif_transform import extract_video_id, transform_tracking_json
-from measurements.common import output_path, write_json
-from measurements.r1o2_leap_otif_rerun import run_trackeval
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p140_otif_transform import extract_video_id, transform_tracking_json
+from experiments.measurements.common import output_path, write_json
+from experiments.measurements.r1o2_leap_otif_rerun import run_trackeval
 
 ROOT = Path(__file__).resolve().parents[1]
 MEASURED = ROOT / 'measurements-results'
 RESULTS = MEASURED / 'r1o2_leap_pattern_resample'
-EXPORT_TOOL = ROOT / 'baselines/tetris-leap/experiments/eval/export_tracks.py'
+EXPORT_TOOL = ROOT.parent / 'baselines/tetris-leap/experiments/eval/export_tracks.py'
 EXPORTER = RESULTS / 'inputs' / 'export-leap-outputs.py'
 # Per dataset: label, the reported run's saved export, whether that export dropped pre-video frames, and where the
 # reported run's padded HOTA per reconstruction is recorded (file, key path to the {reading: {HOTA, ...}} section).
@@ -193,7 +193,7 @@ def main():
               f"linear {recorded['linear']['HOTA']:.6f}; best {best}", flush=True)
     # Results with the inputs that produced them.
     write_json(RESULTS, 'results.json', dict(
-        method=dict(exporter=str(EXPORTER.relative_to(ROOT)), export_tool=str(EXPORT_TOOL.relative_to(ROOT)),
+        method=dict(exporter=str(EXPORTER.relative_to(ROOT)), export_tool=str(EXPORT_TOOL.relative_to(ROOT.parent)),
                     scoring='TrackEval HOTA, canonical padded window, root ground truth (B3D: human-verified)',
                     reused='raw and linear HOTA from the recorded reported runs (they do not use patterns)'),
         datasets={s['label']: s for s in sections.values()}))

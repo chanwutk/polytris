@@ -4,7 +4,7 @@
 The same detector, with the same weights and confidence threshold, runs twice in the cache:
 
   before packing  the reference pipeline on every original frame (002_naive/detection.jsonl,
-                  preprocess/p002_preprocess_naive_detection.py, batch size 1);
+                  experiments/preprocess/p002_preprocess_naive_detection.py, batch size 1);
   after packing   each Tetris configuration on its packed canvases (p040, batch size 4), with
                   every box mapped back to source-frame coordinates by p050
                   (050_uncompressed_detections/<detection config>/detections.jsonl).
@@ -90,9 +90,9 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from evaluation.manifests import list_split_videos
-from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
-from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, fastest_tetris, load_test_tradeoff,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
+from experiments.measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, fastest_tetris, load_test_tradeoff,
                                  load_tradeoff_points, query_dicts, results_dir, write_json)
 from tetris.io import cache, store
 from tetris.utilities import build_param_str

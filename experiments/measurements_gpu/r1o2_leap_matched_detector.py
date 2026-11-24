@@ -78,4 +78,4 @@ if __name__ == '__main__':
         # Keep LEAP's sampler, matcher, exporter, and per-clip timers unchanged.
         import main as leap_main
         leap_main.Detector = MatchedDetector
-        runpy.run_path('/polyis/measurements-gpu/r1o2_leap_otif_rerun_leap.py', run_name='__main__')
+        runpy.run_path('/polyis/experiments/measurements_gpu/r1o2_leap_otif_rerun_leap.py', run_name='__main__')

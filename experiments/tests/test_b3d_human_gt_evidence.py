@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from measurements import b3d_human_gt_evidence as ev
+from experiments.measurements import b3d_human_gt_evidence as ev
 
 
 def leap_entry(label, linear=0.2, pattern=0.05, raw=0.01, clips=5):

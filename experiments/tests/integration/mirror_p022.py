@@ -1,5 +1,5 @@
 """
-Test-only stand-in for scripts/p022_exec_prune_polyominoes.py in the integration tests.
+Test-only stand-in for experiments/scripts/p022_exec_prune_polyominoes.py in the integration tests.
 
 For every (video, pruned combination) of the configured grid it runs p022's own process_video, one at a time, so at
 most one Gurobi session is open (p022 solves its tasks in parallel; the web license allows two).  It records each
@@ -8,9 +8,9 @@ a pair where either the pipeline's ILP (its saved ilp.json) or this solve stoppe
 pipeline's pruned grid instead, so the scripts' later stages see the same input and stay comparable.  Without it
 (the test-split test) nothing is replaced and the report shows whether every solve finished.
 
-Run with CONFIG set to the test's config (tests/integration/harness.py):
+Run with CONFIG set to the test's config (experiments/tests/integration/harness.py):
 
-    python -m tests.integration.mirror_p022 --split valid --videos va00.mp4 va01.mp4 \
+    python -m experiments.tests.integration.mirror_p022 --split valid --videos va00.mp4 va01.mp4 \
         --pipeline-execution <output_root>/<dataset>/execution --report mirror.json
 """
 
@@ -35,7 +35,7 @@ def parse_args():
 def main() -> None:
     args = parse_args()
     # Imported here: p022 and tetris.io.cache read CONFIG when imported.
-    import scripts.p022_exec_prune_polyominoes as p022
+    import experiments.scripts.p022_exec_prune_polyominoes as p022
     from tetris.io import cache
     from tetris.utilities import build_param_str, get_config
 

@@ -39,7 +39,7 @@ from tetris.train.select_model_optimization import select_model_optimization
 from tetris.utilities import create_tracker, register_tracked_detections
 
 # p020's BATCH_SIZE, p040's default --batch_size, p022's TILEPADDING_MODE and solve time limit,
-# and p030's PackMode.Best_Fit.  tests/execution/test_stages.py checks each against its script.
+# and p030's PackMode.Best_Fit.  experiments/tests/execution/test_stages_match_scripts.py checks each against its script.
 CLASSIFY_BATCH = 16
 DETECT_BATCH = 4
 PRUNE_TILEPADDING_MODE = 0

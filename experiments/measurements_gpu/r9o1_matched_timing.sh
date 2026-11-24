@@ -1,6 +1,6 @@
 #!/bin/bash
-# Launch measurements-gpu/r9o1_matched_timing.py on one GPU of a host without the polyis container (bombe used GPU 6).
-# Usage: measurements-gpu/r9o1_matched_timing.sh <staging dir S> <physical GPU index> [script args...]
+# Launch experiments/measurements_gpu/r9o1_matched_timing.py on one GPU of a host without the polyis container (bombe used GPU 6).
+# Usage: experiments/measurements_gpu/r9o1_matched_timing.sh <staging dir S> <physical GPU index> [script args...]
 # S holds polyis/ (this checkout), polyis-cache/ and polyis-data/ (the copied inputs); the polyis-polyis image is loaded.
 # The job runs pinned to the GPU's NUMA node with numactl, since rootless docker discards --cpuset-cpus/--cpuset-mems.
 # A host-side sampler records compute processes and the load average once per second, because nvidia-smi inside the
@@ -45,7 +45,7 @@ docker run --rm --name r9o1-matched-timing --gpus all --cap-add SYS_NICE --hostn
   -e PYTHONWARNINGS=ignore::UserWarning:numpy._core.getlimits -e POLYIS_DATA=/polyis-data -e POLYIS_CACHE=/polyis-cache \
   -v "$S/polyis:/polyis" -v "$S/polyis-cache:/polyis-cache:ro" -v "$S/polyis-data:/polyis-data:ro" \
   polyis-polyis bash -c "set -e; (apt-get update -qq && apt-get install -y -qq numactl) > /dev/null; pip install -q duckdb==2.0.0;
-    numactl --cpunodebind=$NODE --membind=$NODE python measurements-gpu/r9o1_matched_timing.py --gpu $G $*"
+    numactl --cpunodebind=$NODE --membind=$NODE python experiments/measurements_gpu/r9o1_matched_timing.py --gpu $G $*"
 STATUS=$?
 rm -f "$S/running"
 wait "$SAMPLER"

@@ -1,12 +1,12 @@
 """Rebuild the B3D parts of the paper's evidence snapshots after re-scoring on human ground truth.
 
 Earlier sessions spliced B3D entries into three files by hand; this reproduces those splices:
-- revision_evidence/leap_rerun.json: B3D entries come from measurements/r1o2_leap_otif_rerun.py output.
+- revision_evidence/leap_rerun.json: B3D entries come from experiments/measurements/r1o2_leap_otif_rerun.py output.
   Sections that do not depend on ground truth must be unchanged.
-- revision_evidence/extraction_configs.json: each B3D list is measurements.common.system_configs(), with the
+- revision_evidence/extraction_configs.json: each B3D list is experiments.measurements.common.system_configs(), with the
   LEAP row's HOTA replaced by the best of LEAP's raw/linear/pattern reconstructions from leap_rerun.json.
 - measurements-results/r1o2_leap_sampling_unmasked/all_datasets.json: B3D entries come from
-  measurements/r1o2_leap_sampling_diagnostics.py output.
+  experiments/measurements/r1o2_leap_sampling_diagnostics.py output.
 Then every evidence file whose sources.json source is a plain measurements-results file is re-copied, and
 sources.json gets the new sha256 of every changed evidence file.
 """
@@ -115,7 +115,7 @@ def refresh_sources(evidence: Path, results: Path) -> list[str]:
 
 def main():
     args = parse_args()
-    from measurements.common import system_configs
+    from experiments.measurements.common import system_configs
     evidence, results = Path(args.evidence), Path(args.results)
     # Validate every splice before writing anything.
     leap = splice_leap_rerun(read(evidence / 'leap_rerun.json'), read(Path(args.leap_rerun)))

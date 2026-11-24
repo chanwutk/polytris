@@ -84,7 +84,7 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 - `assets/`, `output/`, `pipeline-stages/`, `detection_experiments/`: Data, results, and experiment artifacts.
 
 ## Build, Test, and Development Commands
-- Run a script: `./run scripts/p040_exec_detect.py --help` (from outside the container).
+- Run a script: `./run experiments/scripts/p040_exec_detect.py --help` (from outside the container).
 - Build Cython (from `lib/`): `./build.sh` or `python setup.py build_ext --inplace`.
 - Tests: `pytest lib/tests -v` for Cython and fast unit tests.
 - Local (non‑Docker) setup: `conda env update -f environment.yml` then `pip install -r requirements.txt`.
@@ -97,7 +97,7 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 - Always add comments to every operations of the code.
 - If a Python file requires argument parsing, define the `parse_args` function near the top of the file, below imports, global variable definitions, and type definitions.
 - Do not add any comment or any doc-string to the parse_args function and its contents.
-- Data analytics code (evaluation, `measurements/`, and other scripts that read, join, group, or aggregate result files and tables) uses DuckDB; pandas is too slow for this.
+- Data analytics code (evaluation, `experiments/measurements/`, and other scripts that read, join, group, or aggregate result files and tables) uses DuckDB; pandas is too slow for this.
   Do not analyze data with Python for-loops there unless absolutely necessary; express the analysis as DuckDB queries (or vectorized NumPy) instead.
   This rule does not apply to the Tetris system's execution pipeline (`scripts/`, `tetris/`, `lib/`); do not change how the system runs to follow it.
 

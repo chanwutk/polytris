@@ -5,8 +5,8 @@ import duckdb
 import numpy as np
 import pytest
 
-from evaluation.p140_otif_transform import unwrap_leap_frames
-from measurements import r1o2_leap_native_queries as lq
+from experiments.evaluation.p140_otif_transform import unwrap_leap_frames
+from experiments.measurements import r1o2_leap_native_queries as lq
 from tetris.io import store
 
 

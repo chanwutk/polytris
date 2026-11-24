@@ -6,7 +6,7 @@ import pytest
 
 from tetris import groundtruth
 from tetris.io import cache, store
-from preprocess import p004_install_human_groundtruth as p004
+from experiments.preprocess import p004_install_human_groundtruth as p004
 
 
 FRAMES = 3

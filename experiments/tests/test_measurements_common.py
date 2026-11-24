@@ -13,9 +13,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evaluation import p121_throughput_compute as p121
-from evaluation.p140_otif_transform import unwrap_leap_frames
-from measurements import common
+from experiments.evaluation import p121_throughput_compute as p121
+from experiments.evaluation.p140_otif_transform import unwrap_leap_frames
+from experiments.measurements import common
 
 
 @pytest.fixture
@@ -94,7 +94,7 @@ def test_fastest_within_rejects_bad_reference(con):
 def test_results_dir_matches_script_name(tmp_path, monkeypatch):
     # Redirect the results root so the test does not touch the repository.
     monkeypatch.setattr(common, 'RESULTS_ROOT', tmp_path)
-    path = common.results_dir('/polyis/measurements/r1o2_count_query.py')
+    path = common.results_dir('/polyis/experiments/measurements/r1o2_count_query.py')
     assert path == tmp_path / 'r1o2_count_query'
     assert path.is_dir()
 
@@ -237,35 +237,35 @@ def imported_measurement_modules(source: str) -> set[str]:
     found = set()
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.Import):
-            found |= {a.name for a in node.names if a.name.startswith('measurements.')}
-        elif isinstance(node, ast.ImportFrom) and node.module == 'measurements':
-            found |= {f'measurements.{a.name}' for a in node.names}
-        elif isinstance(node, ast.ImportFrom) and (node.module or '').startswith('measurements.'):
+            found |= {a.name for a in node.names if a.name.startswith('experiments.measurements.')}
+        elif isinstance(node, ast.ImportFrom) and node.module == 'experiments.measurements':
+            found |= {f'experiments.measurements.{a.name}' for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and (node.module or '').startswith('experiments.measurements.'):
             found.add(node.module)
     return found
 
 
 def test_imported_measurement_modules_sees_every_import_form():
     # The three spellings that would couple one script to another.
-    source = ('import measurements.r9o3_ilp_timings\nfrom measurements import common, r1o5_gap_tolerance as gt\n'
-              'from measurements.r9o3_ilp_instance_sizes import decode_grids\nimport os\n')
-    assert imported_measurement_modules(source) == {'measurements.r9o3_ilp_timings', 'measurements.common',
-                                                    'measurements.r1o5_gap_tolerance', 'measurements.r9o3_ilp_instance_sizes'}
+    source = ('import experiments.measurements.r9o3_ilp_timings\nfrom experiments.measurements import common, r1o5_gap_tolerance as gt\n'
+              'from experiments.measurements.r9o3_ilp_instance_sizes import decode_grids\nimport os\n')
+    assert imported_measurement_modules(source) == {'experiments.measurements.r9o3_ilp_timings', 'experiments.measurements.common',
+                                                    'experiments.measurements.r1o5_gap_tolerance', 'experiments.measurements.r9o3_ilp_instance_sizes'}
 
 
 # Cross-script imports that predate the rule, in finished measurement scripts (allowed 2026-11-20 instead of moving
 # their shared code into common.py). Do not add to this list: put new shared code in common.py.
 ALLOWED_CROSS_IMPORTS = {
-    'fixed_ilp_1h.py': ['measurements.fixed_ilp_unlimited'],
-    'fixed_ilp_60s.py': ['measurements.fixed_ilp_unlimited'],
-    'fixed_ilp_unlimited.py': ['measurements.r9o3_ilp_instance_sizes'],
-    'fixed_runtime_operator_details.py': ['measurements.r9o3_ilp_instance_sizes'],
-    'r1o2_leap_pattern_resample.py': ['measurements.r1o2_leap_otif_rerun'],
-    'r7o3_noscope_score.py': ['measurements.r7o3_seiden_score'],
-    'r7o3_seiden_score.py': ['measurements.r1o2_leap_native_queries'],
-    'r9o2_caldot2_resweep_units.py': ['measurements.r9o2_preparation_cost'],
-    'r9o2_packing_serial.py': ['measurements.r9o2_packing_untimed'],
-    'r9o2_preparation_total.py': ['measurements.r1o2_leap_otif_rerun'],
+    'fixed_ilp_1h.py': ['experiments.measurements.fixed_ilp_unlimited'],
+    'fixed_ilp_60s.py': ['experiments.measurements.fixed_ilp_unlimited'],
+    'fixed_ilp_unlimited.py': ['experiments.measurements.r9o3_ilp_instance_sizes'],
+    'fixed_runtime_operator_details.py': ['experiments.measurements.r9o3_ilp_instance_sizes'],
+    'r1o2_leap_pattern_resample.py': ['experiments.measurements.r1o2_leap_otif_rerun'],
+    'r7o3_noscope_score.py': ['experiments.measurements.r7o3_seiden_score'],
+    'r7o3_seiden_score.py': ['experiments.measurements.r1o2_leap_native_queries'],
+    'r9o2_caldot2_resweep_units.py': ['experiments.measurements.r9o2_preparation_cost'],
+    'r9o2_packing_serial.py': ['experiments.measurements.r9o2_packing_untimed'],
+    'r9o2_preparation_total.py': ['experiments.measurements.r1o2_leap_otif_rerun'],
 }
 
 
@@ -273,7 +273,7 @@ def test_measurement_scripts_import_shared_code_only_from_common():
     # A script importing another script would tie its semantics to that script's; shared code belongs in common.py.
     scripts = sorted(Path(common.__file__).resolve().parent.glob('*.py'))
     assert len(scripts) > 1
-    offenders = {p.name: sorted(imported_measurement_modules(p.read_text()) - {'measurements.common'}) for p in scripts}
+    offenders = {p.name: sorted(imported_measurement_modules(p.read_text()) - {'experiments.measurements.common'}) for p in scripts}
     offenders = {name: mods for name, mods in offenders.items() if mods}
     # Exactly the allowed imports: a new one fails, and so does an allowed one that was since removed (shrink the list).
     assert offenders == ALLOWED_CROSS_IMPORTS

@@ -7,7 +7,7 @@ requested, then the steps that read its detections):
   p110           scoring of every validation configuration (CPU; the measurement only estimates it from the test
                  split's scoring) with P110_CPU_COUNT CPUs, so 16 TrackEval processes. Only validation videos whose
                  every tracking output (the reference's and each configuration's) exists in the source cache are
-                 scored; on CalDoT2 a 2026-05-29 rerun deleted the sweep outputs of va00-va09 (REVISION.md
+                 scored; on CalDoT2 a 2026-05-29 rerun deleted the sweep outputs of va00-va09 (experiments/REVISION.md
                  finding 5), so p110 there scores 50 of 60 videos.
   p110_density   the same scoring at the deployed density, PYTHON_CPU_COUNT = the CPUs this process may use, so 0.8
                  TrackEval processes per CPU as on ace (64 on 80); a cross-check, not run by default
@@ -30,8 +30,8 @@ detector weights are read in place. Every executable step lists the paths it wri
 refuses a step that would write outside the scratch directory; nothing under /polyis-cache,
 /polyis-data, /otif-dataset, or /sota-results is written.
 
-On bombe the plan runs inside measurements-gpu/bombe_container.sh, driven by
-measurements-gpu/r9o2_preparation_retiming.sh: /polyis-cache is the launcher's staging cache (the
+On bombe the plan runs inside experiments/measurements_gpu/bombe_container.sh, driven by
+experiments/measurements_gpu/r9o2_preparation_retiming.sh: /polyis-cache is the launcher's staging cache (the
 inputs pushed from ace's cache; the source, never written), /polyis-data is the read-only mirror,
 the only GPU is cuda:0 (--gpu 0), and --scratch is /scratch/retime on the host's scratch directory.
 
@@ -47,7 +47,7 @@ seconds of its processes (getrusage of the reaped children), GPU snapshots befor
 step, minus the step's own CPU use, and the launcher's samples, about every 2 s, of foreign
 processes on the GPU during the step), and `placement` (CPU set, physical GPU, and launcher run). The creation and
 modification times of the step's outputs (STEP_OUTPUTS) go to <scratch>/files.jsonl under the
-record's id; measurements/r9o2_preparation_cost.py derives each unit's process time from them.
+record's id; experiments/measurements/r9o2_preparation_cost.py derives each unit's process time from them.
 detector_load also appends its per-load times to <scratch>/detector_load.jsonl. A GPU step waits
 up to IDLE_WAIT_S for its GPU to show 0% and under 100 MiB, and refuses to start otherwise
 (cached timings were taken on idle GPUs) unless --allow-busy is given.
@@ -66,10 +66,10 @@ from pathlib import Path
 
 import yaml
 
-from evaluation.manifests import build_query_task_manifest, list_split_videos
-from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset, resolve_prediction_relative_path
+from experiments.evaluation.manifests import build_query_task_manifest, list_split_videos
+from experiments.evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset, resolve_prediction_relative_path
 # file_times: GNU stat with creation times, the one implementation the plan and the R9.O2 measurement share.
-from measurements.common import DATASET_LABELS, file_times
+from experiments.measurements.common import DATASET_LABELS, file_times
 from tetris.io import cache, store
 from tetris.utilities import get_config
 
@@ -108,7 +108,7 @@ P016_RETIMING_WORKERS = 1
 # under the 40 CPUs of a bombe NUMA node, so a task's span is not stretched by waiting for a CPU. p110_density sets it
 # to the CPUs this process may use instead.
 P110_CPU_COUNT = 20
-# Where the launcher (measurements-gpu/bombe_container.sh) writes its host-side samples, as mounted in its container.
+# Where the launcher (experiments/measurements_gpu/bombe_container.sh) writes its host-side samples, as mounted in its container.
 LAUNCHER_SAMPLES = Path('/scratch/samples')
 # Outputs whose creation and modification times each step records, as globs under the scratch cache's dataset root.
 STEP_OUTPUTS = {
@@ -267,7 +267,7 @@ def polyis_steps(dataset: str, steps: list[str], scratch: Path, gpu: int) -> lis
             p110_config, data = str(scratch / 'configs' / f'{dataset}.p110.yaml'), dict(DATASETS_DIR=str(scratch / 'datasets'))
         # Score every validation configuration, as p110 --valid does in the pipeline, once per requested CPU count.
         for step, cpu_count in scorings.items():
-            plan.append(executable(step, dataset, ['python', 'evaluation/p110_accuracy_compute.py', '--valid'],
+            plan.append(executable(step, dataset, ['python', 'experiments/evaluation/p110_accuracy_compute.py', '--valid'],
                                    writes=[scratch_cache], env=dict(cpu_env, CONFIG=p110_config,
                                                                     PYTHON_CPU_COUNT=str(cpu_count)),
                                    gpu=False, config=data, meta=dict(videos=covered, excluded_videos=excluded)))

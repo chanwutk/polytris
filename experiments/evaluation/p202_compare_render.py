@@ -8,7 +8,7 @@ from functools import partial
 from multiprocessing import Queue
 from pathlib import Path
 
-from evaluation.manifests import build_split_video_manifest
+from experiments.evaluation.manifests import build_split_video_manifest
 from tetris.io import cache, store
 from tetris.pareto import load_pareto_params, pareto_params_exist
 from tetris.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, get_config

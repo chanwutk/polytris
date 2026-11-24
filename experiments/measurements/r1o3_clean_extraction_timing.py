@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """R1.O3: extraction throughput of the reference pipeline and Tetris from clean reruns, at seven timing boundaries.
 
-Aggregates the raw outputs of measurements-gpu/r1o3_clean_extraction_timing.py (measurements-results/
+Aggregates the raw outputs of experiments/measurements_gpu/r1o3_clean_extraction_timing.py (measurements-results/
 r1o3_clean_extraction_timing/raw/: plan.json and one directory per unit attempt; see that script for what ran, how,
 and where), and fails with a clear error when they are missing. Runs on ace, whose cache holds the paper's timing
 logs and p121's per-op tables.
@@ -20,7 +20,7 @@ CPUs, so it is other tracks' and users' use. conditions.json lists every attempt
 
 Boundaries, per system, in seconds over a set of test videos (throughput = frames / seconds; speedup = Tetris
 throughput / reference throughput on the same videos):
-  p121                       evaluation/p121_throughput_compute.py's sum over the stages' runtime logs: every op except
+  p121                       experiments/evaluation/p121_throughput_compute.py's sum over the stages' runtime logs: every op except
                              p121's ignored ops (common.P121_IGNORED_OPS) and its excluded ops (p020 read and retrieve,
                              p030 save_collage and pack_all_total), parsed by common.load_p121_runtime_ops. It counts the reference's per-frame decode (p002 'read')
                              and Tetris's canvas reads (p040 'read'), but none of Tetris's decodes (p020's 'read' is
@@ -51,7 +51,7 @@ throughput / reference throughput on the same videos):
                              it finishes that video, in sorted order). p002 starts a worker process per video, so the
                              reference keeps its per-video startup, as the prototype pays it. Units recorded before the
                              serial phase have no write times, so only the serial phase has this boundary. It is the
-                             counterpart of REVISION.md finding 3's wall-clock row, which is r9o2_preparation_cost's
+                             counterpart of experiments/REVISION.md finding 3's wall-clock row, which is r9o2_preparation_cost's
                              process boundary (per-video file-timestamp spans on ace, which leave out process startup).
 The paper's side is the same accounting over ace's cached runtime logs of the same configurations and videos
 ('paper'); a port check requires those logs' p121 sums to equal p121's per-op table (query_execution_per_op.csv) per
@@ -83,14 +83,14 @@ from pathlib import Path
 
 import duckdb
 
-from measurements.common import (DATASET_LABELS, assert_files_exist, load_p121_per_op, load_p121_runtime_ops,
+from experiments.measurements.common import (DATASET_LABELS, assert_files_exist, load_p121_per_op, load_p121_runtime_ops,
                                  query_dicts, results_dir, rounded, write_json)
 from tetris.io import cache
 
 
-# The GPU job, loaded from its file (measurements-gpu is not a package; its top level needs only the standard
+# The GPU job, loaded from its file (experiments/measurements_gpu is not a package; its top level needs only the standard
 # library). Its constants define the raw layout, the stages, the phases, and the idle-node threshold.
-GPU_PATH = Path(__file__).resolve().parent.parent / 'measurements-gpu' / 'r1o3_clean_extraction_timing.py'
+GPU_PATH = Path(__file__).resolve().parent.parent / 'measurements_gpu' / 'r1o3_clean_extraction_timing.py'
 _spec = importlib.util.spec_from_file_location('r1o3_clean_extraction_timing_gpu', GPU_PATH)
 gpu = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gpu)
@@ -782,7 +782,7 @@ def about(plan: dict, units: list[dict]) -> dict:
                                    'process (5 on B3D, 60 elsewhere); p022 from its log when it could not run'),
                     'wall_clock_steady': ('clean serial only: wall_clock with each stage\'s process startup taken out '
                                           '(first to last video\'s runtime write, times n / (n - 1)); the counterpart of '
-                                          'REVISION.md finding 3\'s wall-clock row (r9o2\'s process boundary on ace)')},
+                                          'experiments/REVISION.md finding 3\'s wall-clock row (r9o2\'s process boundary on ace)')},
         phases=dict(serial='all test videos, one unit at a time on an idle node (headline numbers)',
                     parallel='all test videos while this job\'s three GPUs on one NUMA node ran datasets at once',
                     solo='calibration videos, one unit at a time on an idle node (repeatability against serial)'),

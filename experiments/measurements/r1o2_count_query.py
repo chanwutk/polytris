@@ -45,7 +45,7 @@ from pathlib import Path
 import cv2
 import duckdb
 
-from measurements.common import (PRIOR_SYSTEMS, TRACK_COLUMNS, assert_files_exist, best_accuracy_bounds, operating_points,
+from experiments.measurements.common import (PRIOR_SYSTEMS, TRACK_COLUMNS, assert_files_exist, best_accuracy_bounds, operating_points,
                                  output_path, print_operating_points, query_dicts, results_dir, system_configs, write_json)
 from tetris.io import store
 

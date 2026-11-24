@@ -9,16 +9,16 @@ import cv2
 import duckdb
 import torch
 
-from evaluation.manifests import list_split_videos
-from evaluation.p121_throughput_compute import QUERY_DATA_ACCESSORS, parse_runtime_file, filter_excluded_runtime_ops
-from measurements.common import metric_summary, trackeval_rerun
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p121_throughput_compute import QUERY_DATA_ACCESSORS, parse_runtime_file, filter_excluded_runtime_ops
+from experiments.measurements.common import metric_summary, trackeval_rerun
 from tetris.io import cache, store
 from tetris.models import detector as detectors
-from scripts import p022_exec_prune_polyominoes as pruning
-from scripts import p030_exec_compress as packing
-from scripts import p040_exec_detect as detection
-from scripts import p050_exec_uncompress as unpacking
-from scripts import p060_exec_track as tracking
+from experiments.scripts import p022_exec_prune_polyominoes as pruning
+from experiments.scripts import p030_exec_compress as packing
+from experiments.scripts import p040_exec_detect as detection
+from experiments.scripts import p050_exec_uncompress as unpacking
+from experiments.scripts import p060_exec_track as tracking
 
 
 def parse_args():

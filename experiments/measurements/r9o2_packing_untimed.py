@@ -24,9 +24,9 @@ import time
 import cv2
 import pandas as pd
 
-from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest
-from evaluation.p120_throughput_gather import build_stage030_manifest, resolve_upstream_tracker
-from measurements.common import DATASET_LABELS, host_info, results_dir, write_json
+from experiments.evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest
+from experiments.evaluation.p120_throughput_gather import build_stage030_manifest, resolve_upstream_tracker
+from experiments.measurements.common import DATASET_LABELS, host_info, results_dir, write_json
 from tetris.io import store
 from tetris.utilities import load_classification_results, load_pruned_classification_results
 

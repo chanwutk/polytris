@@ -2,7 +2,7 @@
 # Run execution on every Figure 8 full-Tetris config, one at a time on one GPU, then summarize.
 # Meant for a tmux session on ace (survives the client disconnecting):
 #   tmux new-session -d -s execution-figure8 \
-#     'bash /work/cwkt/projects/tetris/execution/tools/run_figure8.sh 2 2>&1 | tee -a /work/cwkt/projects/tetris/measurements-results/execution-figure8/run.log'
+#     'bash /work/cwkt/projects/tetris/experiments/tools/execution/run_figure8.sh 2 2>&1 | tee -a /work/cwkt/projects/tetris/measurements-results/execution-figure8/run.log'
 # Arguments: <gpu index> [passes, default 8] [minutes between passes, default 10].
 # Each pass runs every config that has no result.json yet, so configs that failed (e.g. pruning configs while
 # the Gurobi web license has no free session) are retried in later passes.  A finished run is never redone;
@@ -25,13 +25,13 @@ gurobi_status() {
 
 for pass in $(seq 1 "$PASSES"); do
   remaining=0
-  for cfg in $(ls "$REPO"/execution/configs/figure8/*/*.yaml | sort); do
+  for cfg in $(ls "$REPO"/experiments/configs/execution/figure8/*/*.yaml | sort); do
     [ -f "$OUT/$(basename "$(dirname "$cfg")")/$(basename "$cfg" .yaml)/result.json" ] || remaining=$((remaining + 1))
   done
   echo "$(date -Is) pass $pass/$PASSES: $remaining configs without a result; gurobi: $(gurobi_status)"
   [ "$remaining" -eq 0 ] && break
 
-  for cfg in $(ls "$REPO"/execution/configs/figure8/*/*.yaml | sort); do
+  for cfg in $(ls "$REPO"/experiments/configs/execution/figure8/*/*.yaml | sort); do
     ds=$(basename "$(dirname "$cfg")")
     name=$(basename "$cfg" .yaml)
     run=$OUT/$ds/$name
@@ -43,7 +43,7 @@ for pass in $(seq 1 "$PASSES"); do
       -v "$REPO":/polyis -v /data/cwkt/data/polyis-data:/polyis-data:ro \
       -v /work/cwkt/data/otif-dataset:/otif-dataset:ro -v "$HOME"/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro \
       -v /data/cwkt/data/polyis-cache:/polyis-cache-ro:ro -v "$run/cache":/polyis-cache -v "$run":/bench \
-      "$IMAGE" python -m execution.tools.benchmark --dataset "$ds" --config "execution/configs/figure8/$ds/$name.yaml" \
+      "$IMAGE" python -m experiments.tools.execution.benchmark --dataset "$ds" --config "experiments/configs/execution/figure8/$ds/$name.yaml" \
       --bench /bench --skip-scripts > "$run/benchmark.log" 2>&1
     status=$?
     reason=$(grep -hoE 'Too many sessions[^"]*|GRBstartenv failed[^"]*' "$run"/*.log 2>/dev/null | head -1)
@@ -53,5 +53,5 @@ for pass in $(seq 1 "$PASSES"); do
 done
 
 echo "$(date -Is) summarizing"
-docker run --rm --network host -w /polyis -v "$REPO":/polyis "$IMAGE" python measurements/execution_figure8_throughput.py
+docker run --rm --network host -w /polyis -v "$REPO":/polyis "$IMAGE" python experiments/measurements/execution_figure8_throughput.py
 echo "$(date -Is) done"

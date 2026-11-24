@@ -33,16 +33,16 @@ Output formats:
 
 Usage:
     # Convert to MOT format (default)
-    ./run preprocess/p008_preprocess_convert_tracking.py --test
+    ./run experiments/preprocess/p008_preprocess_convert_tracking.py --test
 
     # Convert to CVAT XML format
-    ./run preprocess/p008_preprocess_convert_tracking.py --test --format cvat
+    ./run experiments/preprocess/p008_preprocess_convert_tracking.py --test --format cvat
 
     # Convert from different source directory
-    ./run preprocess/p008_preprocess_convert_tracking.py --test --source 002_naive
+    ./run experiments/preprocess/p008_preprocess_convert_tracking.py --test --source 002_naive
 
     # Convert all videosets
-    ./run preprocess/p008_preprocess_convert_tracking.py --test --train --valid
+    ./run experiments/preprocess/p008_preprocess_convert_tracking.py --test --train --valid
 
 Import into CVAT:
     - MOT 1.1: Project > Import annotations > MOT 1.1 > Select gt.txt

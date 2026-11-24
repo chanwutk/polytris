@@ -197,7 +197,7 @@ def run(args):
     subprocess.run(command, check=True)
     BASE.gpus(stage_args)
     # Accuracy is CPU-only and runs on ace, where the original ground truth and TrackEval cache live.
-    score = ['docker', 'exec', '-w', '/polyis', 'polyis', 'python', 'measurements/r1o2_leap_otif_rerun.py',
+    score = ['docker', 'exec', '-w', '/polyis', 'polyis', 'python', 'experiments/measurements/r1o2_leap_otif_rerun.py',
              '--datasets', args.dataset, '--raw-dir', '/polyis/' + str(RAW.relative_to(BASE.TETRIS)),
              '--output-dir', '/polyis/measurements-results/r1o2_leap_matched/summary', '--workers', '3']
     subprocess.run(['ssh', 'ace', shlex.join(score)], check=True)

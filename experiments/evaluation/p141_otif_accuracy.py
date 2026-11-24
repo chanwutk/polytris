@@ -17,7 +17,7 @@ sys.path.append('/polyis/modules/TrackEval')
 import trackeval
 from trackeval.metrics import Count, HOTA
 
-from evaluation.manifests import build_split_video_manifest, load_sota_stat_manifest
+from experiments.evaluation.manifests import build_split_video_manifest, load_sota_stat_manifest
 from tetris.io import cache
 from tetris.trackeval.dataset import Dataset
 from tetris.utilities import dataset_root_name, get_config

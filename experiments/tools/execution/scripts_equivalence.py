@@ -1,19 +1,19 @@
 """
 Scripts-vs-pipelines equivalence on a scratch cache (both execution and profiling against freshly run scripts).
 
-Two sources of nondeterminism are removed: p040 reads canvases in name order (scripts/p040_exec_detect.py), and
+Two sources of nondeterminism are removed: p040 reads canvases in name order (experiments/scripts/p040_exec_detect.py), and
 the pipelines' prune stages read the scripts' saved 022 grids instead of solving (an ILP stopped by its 0.1 s limit
 is not unique).  The ILP itself is compared once per (config, video) in execution's isolated comparison.
 
-  scripts     p020 -> p060 on the test videos with configs/equivalence.yaml (the small grid), default settings
-  execution  execution.tools.compare_scripts for every configuration of the grid, spread over GPUs
-  summary     per-stage totals of the execution reports (profiling.tools.compare_scripts writes its own)
+  scripts     p020 -> p060 on the test videos with experiments/configs/equivalence.yaml (the small grid), default settings
+  execution  experiments.tools.execution.compare_scripts for every configuration of the grid, spread over GPUs
+  summary     per-stage totals of the execution reports (experiments.tools.profiling.compare_scripts writes its own)
 
 Run inside the polyis container, with /polyis-cache a scratch cache (never the real one):
 
-    python -m execution.tools.scripts_equivalence scripts --dataset caldot1-y05 --videos va00.mp4 va01.mp4 va02.mp4
-    python -m execution.tools.scripts_equivalence execution --dataset caldot1-y05 --videos ... --out-dir OUT --gpus 0 1
-    python -m execution.tools.scripts_equivalence summary --out-dir OUT
+    python -m experiments.tools.execution.scripts_equivalence scripts --dataset caldot1-y05 --videos va00.mp4 va01.mp4 va02.mp4
+    python -m experiments.tools.execution.scripts_equivalence execution --dataset caldot1-y05 --videos ... --out-dir OUT --gpus 0 1
+    python -m experiments.tools.execution.scripts_equivalence summary --out-dir OUT
 """
 
 import argparse
@@ -131,7 +131,7 @@ def run_scripts(dataset: str, videos: list[str]) -> None:
 
 def grid_branches() -> list[dict]:
     """Every configuration of the small grid (unpruned ones once per tracker), as aggregate branches."""
-    from profiling.tools.compare_scripts import SMALL_GRID as g
+    from experiments.tools.profiling.compare_scripts import SMALL_GRID as g
     out = []
     for s, t_r, tol, pad, scale, tracker in itertools.product(g['sample_rates'], g['relevance_thresholds'],
                                                               g['mistrack_tolerances'], g['tile_paddings'],
@@ -178,7 +178,7 @@ def run_execution(dataset: str, videos: list[str], out_dir: str, gpus: list[int]
         for stage in ('classify', 'detect'):
             cfg['system']['stages'][stage]['gpu'] = gpu
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
-        cmd = ['python', '-m', 'execution.tools.compare_scripts', '--config', str(path), '--dataset', dataset,
+        cmd = ['python', '-m', 'experiments.tools.execution.compare_scripts', '--config', str(path), '--dataset', dataset,
                '--videoset', 'valid', '--videos', *videos, '--out', str(out / f'{path.stem}.json')]
         with open(out / f'{path.stem}.log', 'w') as f:
             code = subprocess.run(cmd, env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(gpu)},

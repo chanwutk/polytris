@@ -2,7 +2,7 @@
 """R9.O2: p030 re-run serially on the validation sweep's packing units, timed from start to end of compress().
 
 The sweep ran p030 with 20 concurrent workers, so its per-unit spans include slowdown from sharing CPUs and disk. This
-script runs every unit of one dataset (the units of measurements/r9o2_packing_untimed.py) one after another in a single
+script runs every unit of one dataset (the units of experiments/measurements/r9o2_packing_untimed.py) one after another in a single
 process pinned to --cpus, and records compress()'s own whole-unit time (compress_total.json) and its recorded ops
 (runtime.jsonl). Outputs go to --scratch instead of the cache, so the sweep's cached outputs and runtimes are untouched,
 and each unit's output is deleted after it is read. Records append to measurements-results/r9o2_packing_serial/
@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from evaluation.p120_throughput_gather import resolve_upstream_tracker
-from measurements.common import results_dir
-from measurements.r9o2_packing_untimed import packing_units
+from experiments.evaluation.p120_throughput_gather import resolve_upstream_tracker
+from experiments.measurements.common import results_dir
+from experiments.measurements.r9o2_packing_untimed import packing_units
 from tetris.io import cache
 
 
@@ -33,7 +33,7 @@ def parse_args():
 
 
 def load_p030():
-    """scripts/p030_exec_compress.py as a module (its file name is not importable)."""
+    """experiments/scripts/p030_exec_compress.py as a module (its file name is not importable)."""
     # Load the script from its path, as scripts/ is not a package.
     path = Path(__file__).resolve().parents[1] / 'scripts' / 'p030_exec_compress.py'
     spec = importlib.util.spec_from_file_location('p030_exec_compress', path)

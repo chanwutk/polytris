@@ -22,7 +22,7 @@ import altair as alt
 
 from tetris.io import cache
 from tetris.utilities import DATASETS_TO_TEST
-from evaluation.utilities import ColorScheme
+from experiments.evaluation.utilities import ColorScheme
 
 
 # Configuration for compression evaluation directory

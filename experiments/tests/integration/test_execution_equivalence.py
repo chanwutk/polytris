@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 import yaml
 
-from tests.integration import harness
+from experiments.tests.integration import harness
 
 # A few operating points: with and without pruning, sample rates 1 and 4, both trackers and paddings.
 CONFIGS = [
@@ -66,7 +66,7 @@ def grid() -> dict:
 
 def execution_config(tree: harness.Tree, c: dict) -> dict:
     """execution's config for one configuration, on the scratch cache's artifacts."""
-    from execution.tools.make_paper_configs import build_params
+    from experiments.tools.execution.make_paper_configs import build_params
     detectors = yaml.safe_load((harness.REPO / 'configs' / 'detectors.yaml').read_text())
     text = yaml.safe_dump(build_params(tree.dataset, full(c), detectors), sort_keys=False)
     return yaml.safe_load(text.replace('/polyis-cache/', f'{tree.cache}/'))

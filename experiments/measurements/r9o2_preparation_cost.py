@@ -21,7 +21,7 @@ per GPU on 8 GPUs), so these sums are single-worker equivalents, not elapsed tim
 p016's elapsed time with 40 workers is converted to an upper bound (elapsed x min(40, videos)).
 
 Two timing boundaries, both reported, since the paper must name the one it quotes (R1.O3).
-  instrumented  The ops evaluation/p121_throughput_compute.py counts for the paper's throughput
+  instrumented  The ops experiments/evaluation/p121_throughput_compute.py counts for the paper's throughput
                 (same op lists, same dropped ops), minus video decoding. p121 already drops p020's
                 decoding; this boundary also drops the per-frame 'read' of the reference pipeline
                 (001) and of p011, so the reference and Tetris are compared like for like. It leaves
@@ -29,7 +29,7 @@ Two timing boundaries, both reported, since the paper must name the one it quote
                 configuration and video, the loading of upstream outputs in p022-p060, p050's debug
                 images, and canvas and file writes.
   process       Whole-process time of each work unit, from file timestamps (below), which includes
-                all of that. The reference pipeline's detection (preprocess/p002) gets the same
+                all of that. The reference pipeline's detection (experiments/preprocess/p002) gets the same
                 own-span rule as Tetris's units: it loads the detector before opening its runtime
                 file, as p040 loads its detector before its first unit, so detector loading is
                 outside on both sides. p011's detection files have stale creation times on some
@@ -55,7 +55,7 @@ max(own span, recorded ops) from their runtime file's creation to their last wri
 
 Shared work is counted once. Every stage writes its runtime file into a directory keyed by
 exactly the parameters it depends on, and later stages read earlier outputs from the cache, so the
-sweep costs the sum over distinct runtime files of the manifests evaluation/p120_throughput_gather.py
+sweep costs the sum over distinct runtime files of the manifests experiments/evaluation/p120_throughput_gather.py
 builds. The cost of charging every configuration its full pipeline is reported alongside. A
 validation video whose sweep files are not all present (CalDoT2's va00 to va09 were cleared on
 2026-05-29 and only one configuration rerun) is left out, and the sweep is ESTIMATED for the full
@@ -93,9 +93,9 @@ minutes are preparation seconds over that saving, when it is positive.
 Not included: detector training (shared), detector loading per p011 and reference video and per
 p040 configuration (not recorded), and OTIF's and LEAP's preparation (not recorded in this cache).
 
-Re-timing (`retiming` per dataset). measurements-gpu/r9o2_preparation_cost.py --run re-ran p110
+Re-timing (`retiming` per dataset). experiments/measurements_gpu/r9o2_preparation_cost.py --run re-ran p110
 (validation scoring), p011, p012, p013, detector loading, and p016 on idle bombe GPUs pinned to
-their NUMA node (measurements-gpu/r9o2_preparation_retiming.sh), and its records are collected in
+their NUMA node (experiments/measurements_gpu/r9o2_preparation_retiming.sh), and its records are collected in
 measurements-results/r9o2_preparation_retiming/ (timings.jsonl, files.jsonl.gz, detector_load.jsonl,
 and the launcher's run summaries in launcher_runs.jsonl; this script fails when they are missing,
 unless --no-retiming). Per dataset and step the latest run that exited 0 counts, preferring runs
@@ -142,11 +142,11 @@ import cv2
 import duckdb
 import pandas as pd
 
-from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest, list_split_videos
-from evaluation.p120_throughput_gather import (build_index_construction_manifest, build_naive_query_manifest,
+from experiments.evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest, list_split_videos
+from experiments.evaluation.p120_throughput_gather import (build_index_construction_manifest, build_naive_query_manifest,
                                                build_stage020_manifest, build_stage022_manifest, build_stage030_manifest,
                                                build_stage040_manifest, build_stage050_manifest, build_stage060_manifest)
-from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, P121_IGNORED_OPS, RESULTS_ROOT, fastest_tetris,
+from experiments.measurements.common import (DATASET_LABELS, OP_LIST_PATHS, P121_IGNORED_OPS, RESULTS_ROOT, fastest_tetris,
                                  file_times, host_info, iso_utc, load_p121_runtime_ops, load_test_tradeoff,
                                  load_tradeoff_points, query_dicts, results_dir, rounded, write_json)
 from tetris.io import cache, store
@@ -163,7 +163,7 @@ VIDEO_DECODE_OPS = {'001_preprocess_groundtruth_detection': ['read'], '011_tune_
 # file always counts), and whether one task processes the split's videos in order (so units can be chained). Read
 # from each stage's code and checked on real files; stages not listed keep their recorded time.
 STAGE_SPANS = {
-    # The reference pipeline (preprocess/p002): one task per video; the detector is loaded, then 002_naive/ is
+    # The reference pipeline (experiments/preprocess/p002): one task per video; the detector is loaded, then 002_naive/ is
     # recreated and the runtime file opened; detection.jsonl is written with every frame.
     '001_preprocess_groundtruth_detection': (0, ['detection.jsonl'], False),
     # One task per video; the runtime file is opened when the video starts and closed when it ends.
@@ -200,7 +200,7 @@ P014_EPOCHS_PER_STAGE = 7
 # p016's default worker count, with which the cache's profiles ran, for converting their elapsed time into process seconds.
 P016_CACHE_WORKERS = 40
 # p016's worker count in the re-timing: one, the only count whose wall clock is the process seconds of its profiles
-# (measurements-gpu/r9o2_preparation_cost.py runs p016 with its own P016_RETIMING_WORKERS; a test keeps the two equal).
+# (experiments/measurements_gpu/r9o2_preparation_cost.py runs p016 with its own P016_RETIMING_WORKERS; a test keeps the two equal).
 P016_RETIMING_WORKERS = 1
 # Files p016 writes after aggregating a profile's partial counts.
 PROFILE_OUTPUT_GLOBS = ('accuracy.npy', 'counts.npy', 'max_rate_table.npy', 'sample_rates.json', 'max_rate_*.txt')
@@ -240,8 +240,8 @@ BASELINE_PREPARATION = {
         'confirm with the LEAP operator which steps the reported runs executed and on which splits',
     ]),
 }
-# Where measurements-gpu/r9o2_preparation_retiming.sh collects the re-timing records of
-# measurements-gpu/r9o2_preparation_cost.py --run, and the record files it writes there.
+# Where experiments/measurements_gpu/r9o2_preparation_retiming.sh collects the re-timing records of
+# experiments/measurements_gpu/r9o2_preparation_cost.py --run, and the record files it writes there.
 RETIMING_DIR = RESULTS_ROOT / 'r9o2_preparation_retiming'
 RETIMING_FILES = ('timings.jsonl', 'files.jsonl.gz', 'detector_load.jsonl', 'launcher_runs.jsonl')
 # Per re-timed step: the component it measures and the boundaries whose figure the measurement replaces. p011 keeps
@@ -883,7 +883,7 @@ def load_retiming(con: duckdb.DuckDBPyConnection, directory: Path):
     """
     # The plan's record files and the launcher's run summaries must all be there.
     missing = [name for name in RETIMING_FILES if not (directory / name).exists()]
-    assert not missing, (f'{directory}: missing {missing}; run measurements-gpu/r9o2_preparation_retiming.sh (run, '
+    assert not missing, (f'{directory}: missing {missing}; run experiments/measurements_gpu/r9o2_preparation_retiming.sh (run, '
                          'then collect), or pass --no-retiming')
     # Every record as a row; nested objects stay JSON, since their keys differ between steps.
     con.execute("""
@@ -1469,9 +1469,9 @@ def main():
                              'TrackEval processes per CPU, reported in validation_scoring.density_cross_check and '
                              'never substituted',
                 p016_retiming_workers=P016_RETIMING_WORKERS,
-                plan='measurements-gpu/r9o2_preparation_cost.py --run, driven by '
-                     'measurements-gpu/r9o2_preparation_retiming.sh on bombe')),
-        baselines=dict(BASELINE_PREPARATION, plan='measurements-gpu/r9o2_preparation_cost.py (dry run by default)'),
+                plan='experiments/measurements_gpu/r9o2_preparation_cost.py --run, driven by '
+                     'experiments/measurements_gpu/r9o2_preparation_retiming.sh on bombe')),
+        baselines=dict(BASELINE_PREPARATION, plan='experiments/measurements_gpu/r9o2_preparation_cost.py (dry run by default)'),
     ))
 
 

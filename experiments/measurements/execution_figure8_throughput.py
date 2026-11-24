@@ -3,7 +3,7 @@ execution's throughput at every full-Tetris point of the paper's Figure 8 vs the
 
 Inputs:
   measurements-results/execution-figure8/figure8_points.json             the "Tetris" rows Figure 8 plots
-  measurements-results/execution-figure8/runs/<dataset>/<config>/result.json   execution.tools.benchmark
+  measurements-results/execution-figure8/runs/<dataset>/<config>/result.json   experiments.tools.execution.benchmark
                                                                              --skip-scripts, one per point
 Throughputs (frames per second over each dataset's test videos):
   reported     Figure 8's throughput_fps (the published p121 boundary: logged op times, Tetris decode not counted)
@@ -12,7 +12,7 @@ Throughputs (frames per second over each dataset's test videos):
 
 Writes measurements-results/execution-figure8/summary.json (one row per point) and
 summary_by_dataset.json, and prints both.  Points without a result yet are listed as missing.
-Run in the polyis container:  python measurements/execution_figure8_throughput.py
+Run in the polyis container:  python experiments/measurements/execution_figure8_throughput.py
 """
 
 import json
@@ -20,7 +20,7 @@ from pathlib import Path
 
 import duckdb
 
-from execution.tools.make_figure8_configs import config_name, params_of
+from experiments.tools.execution.make_figure8_configs import config_name, params_of
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / 'measurements-results' / 'execution-figure8'

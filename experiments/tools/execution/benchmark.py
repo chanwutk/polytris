@@ -12,8 +12,8 @@ directories) nor ProgressBar's logs can overwrite old results.  Launch from the 
     -v /work/cwkt/projects/tetris:/polyis -v /data/cwkt/data/polyis-data:/polyis-data:ro \
     -v /work/cwkt/data/otif-dataset:/otif-dataset:ro -v ~/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro \
     -v /data/cwkt/data/polyis-cache:/polyis-cache-ro:ro -v $RUN/cache:/polyis-cache -v $RUN:/bench \
-    polyis-polyis bash -c 'pip install -q duckdb && python -m execution.tools.benchmark \
-      --dataset caldot1-y05 --config execution/configs/caldot1-y05-s4.yaml --bench /bench'
+    polyis-polyis bash -c 'pip install -q duckdb && python -m experiments.tools.execution.benchmark \
+      --dataset caldot1-y05 --config experiments/configs/execution/caldot1-y05-s4.yaml --bench /bench'
 
 What it measures (wall clock with perf_counter, after reading every video once to warm the page cache):
   scripts      each of p020, (p022), p030, p040, p050, p060 run as `python <script> --test`, one after another,
@@ -39,7 +39,7 @@ from pathlib import Path
 import yaml
 
 from execution.config import load_config
-from execution.tools.compare_scripts import compare_track_lines
+from experiments.tools.execution.compare_scripts import compare_track_lines
 from tetris.utilities import build_param_str
 
 REAL_CACHE = Path('/polyis-cache-ro')
@@ -161,9 +161,9 @@ def main() -> None:
     result: dict = {'dataset': args.dataset, 'config': args.config, 'videos': videos, 'inputs': inputs,
                     'pareto_row': pareto_row, 'loadavg_start': os.getloadavg(), 'scripts': [], 'execution': {}}
     # Scripts, one stage after another, as the pipeline runs them.
-    scripts = ['scripts/p020_exec_classify.py', *(['scripts/p022_exec_prune_polyominoes.py'] if cfg.use_prune else []),
-               'scripts/p030_exec_compress.py', 'scripts/p040_exec_detect.py', 'scripts/p050_exec_uncompress.py',
-               'scripts/p060_exec_track.py']
+    scripts = ['experiments/scripts/p020_exec_classify.py', *(['experiments/scripts/p022_exec_prune_polyominoes.py'] if cfg.use_prune else []),
+               'experiments/scripts/p030_exec_compress.py', 'experiments/scripts/p040_exec_detect.py', 'experiments/scripts/p050_exec_uncompress.py',
+               'experiments/scripts/p060_exec_track.py']
     for script in [] if args.skip_scripts else scripts:
         rec = timed([sys.executable, script, '--test'], env, bench / f'{Path(script).stem}.log')
         result['scripts'].append({'script': script, 'seconds': rec['seconds']})

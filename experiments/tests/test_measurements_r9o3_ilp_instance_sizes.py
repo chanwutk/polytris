@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from measurements import r9o3_ilp_instance_sizes as ilp
+from experiments.measurements import r9o3_ilp_instance_sizes as ilp
 from tetris.io import store
 
 

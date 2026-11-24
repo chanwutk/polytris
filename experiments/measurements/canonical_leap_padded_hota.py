@@ -13,8 +13,8 @@ import json
 import multiprocessing as mp
 from pathlib import Path
 
-from evaluation.manifests import list_split_videos
-from measurements.common import DATASET_LABELS, metric_summary, output_path, trackeval_rerun
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import DATASET_LABELS, metric_summary, output_path, trackeval_rerun
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / 'measurements-results' / 'leap_canonical.json'

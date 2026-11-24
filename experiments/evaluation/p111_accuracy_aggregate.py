@@ -8,7 +8,7 @@ import shutil
 
 import pandas as pd
 
-from evaluation.manifests import build_split_variant_manifest
+from experiments.evaluation.manifests import build_split_variant_manifest
 from tetris.io import cache
 from tetris.pareto import load_pareto_params, pareto_params_exist
 from tetris.utilities import get_config

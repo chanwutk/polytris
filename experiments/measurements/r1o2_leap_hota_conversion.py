@@ -11,13 +11,13 @@ this into the tracks p141 scores:
      and truncated when longer; box idx goes to index start + idx of a frame list as long as the largest end.
      A negative start therefore wraps to the end of the list (Python indexing), and an end past the clip
      lengthens the list past the clip. The exports are /sota-results/<dataset>/leap/<video id>.json.
-  3. evaluation/p140_otif_transform.py turns an export into tracking.jsonl. Until 2026-10-26 it kept the wrapped
+  3. experiments/evaluation/p140_otif_transform.py turns an export into tracking.jsonl. Until 2026-10-26 it kept the wrapped
      tail and then interpolated the gap between the tail and the object's head, filling every frame between;
      frames past the clip were kept. Since then it drops the wrapped tail, keeps an object present on every
      exported frame whole (ambiguous: its wrap may overlap its real part, so both its true start and its true
      end are unknown), drops frames past the clip, and records what it removed in unwrap.json. The old cache is
      in SOTA/leap-wrapped-backup-20261026.
-  4. evaluation/p141_otif_accuracy.py scores the tracks with TrackEval against the root dataset's 003_groundtruth
+  4. experiments/evaluation/p141_otif_accuracy.py scores the tracks with TrackEval against the root dataset's 003_groundtruth
      through tetris/trackeval/dataset.py.
 
 What this script measures per dataset (all from the cache and the raw exports, read-only):
@@ -83,9 +83,9 @@ from pathlib import Path
 
 import duckdb
 
-from evaluation.manifests import list_split_videos
-from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id
-from measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, file_record, leap_intervals,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id
+from experiments.measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, file_record, leap_intervals,
                                  load_leap_exports, load_unwrap, metric_summary, output_path, query_dicts, results_dir,
                                  rounded, trackeval_rerun, unscored_boxes, unwrap_totals, write_json)
 from tetris.io import cache
@@ -184,7 +184,7 @@ FINDINGS = {
     'scored_window': (
         'tetris/trackeval/dataset.py with TrackEval scores a clip only on its first min(T_gt, T_tracker) frames '
         'when both sides have boxes (see datasets[*].scored_window). For LEAP it hides misses after its last '
-        'exported box. evaluation/p110_accuracy_compute.py uses the same dataset class, so the reference, Tetris, '
+        'exported box. experiments/evaluation/p110_accuracy_compute.py uses the same dataset class, so the reference, Tetris, '
         'and OTIF are scored the same way; they are not quantified here. The *_full_length TrackEval variants '
         'score full clips.'),
     'count_ids': ("TrackEval's Count IDs (and p142's Count_TracksMAPE) is max(track id) + 1 per clip, not the number "
@@ -745,7 +745,7 @@ def load_native(native_dir: Path) -> tuple[dict, dict, list[dict]]:
     """r1o2_leap_native_queries' configs.json and diagnostics.json, and their file records."""
     # Both files are needed; they come from a separate measurement run.
     paths = [native_dir / 'configs.json', native_dir / 'diagnostics.json']
-    assert_files_exist(paths, 'r1o2_leap_native_queries outputs (run measurements/r1o2_leap_native_queries.py first)')
+    assert_files_exist(paths, 'r1o2_leap_native_queries outputs (run experiments/measurements/r1o2_leap_native_queries.py first)')
     # Read both small JSON files whole.
     with open(paths[0]) as f:
         configs = json.load(f)

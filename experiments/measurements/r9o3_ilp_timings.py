@@ -4,7 +4,7 @@
 Nothing is rerun. Two kinds of saved logs are summarized.
 
 Pruning runs
-    scripts/p022_exec_prune_polyominoes.py writes one score/runtime.jsonl per
+    experiments/scripts/p022_exec_prune_polyominoes.py writes one score/runtime.jsonl per
     (dataset, video, pruning configuration) under
     <dataset>/execution/<video>/022_pruned_polyominoes/<param>/, holding the
     stage's operations (prepare_bitmaps, group_tiles, build_ilp, solve_ilp,
@@ -44,9 +44,9 @@ Pruning runs
 Extraction runtime
     The ILP's share of extraction is taken from the same per-operation runtime
     table the throughput numbers are computed from
-    (evaluation/p121_throughput_compute.py writes
+    (experiments/evaluation/p121_throughput_compute.py writes
     <dataset>/evaluation/080_throughput/measurements/query_execution_per_op.csv,
-    whose per-configuration totals evaluation/p130_tradeoff_compute.py turns into
+    whose per-configuration totals experiments/evaluation/p130_tradeoff_compute.py turns into
     throughput). Each configuration's total must equal the tradeoff table's
     runtime, and its pruning-stage ILP times must equal the saved p022 logs; both
     are checked. The operating point is the fastest validated Tetris
@@ -66,8 +66,8 @@ from pathlib import Path
 
 import duckdb
 
-from evaluation.manifests import list_split_videos
-from measurements.common import (DATASET_LABELS, PRUNE_DIR, PRUNE_STAGE, SPLIT_PREFIXES, VARIANT_PATTERN,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import (DATASET_LABELS, PRUNE_DIR, PRUNE_STAGE, SPLIT_PREFIXES, VARIANT_PATTERN,
                                  default_time_limit, load_p121_per_op, load_prune_runs, load_pruning_points,
                                  load_test_tradeoff, pruning_operating_points, query_dicts, results_dir, write_json)
 from tetris.io import cache

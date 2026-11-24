@@ -101,7 +101,7 @@ def classifier(dataset, inputs, work, metadata):
 
 
 def tables(dataset, inputs):
-    from evaluation import p130_tradeoff_compute as tradeoff, p135_pareto_extract as pareto
+    from experiments.evaluation import p130_tradeoff_compute as tradeoff, p135_pareto_extract as pareto
     from tetris.io import cache
 
     # Only validation rows are staged, since test-set reporting is outside preparation.

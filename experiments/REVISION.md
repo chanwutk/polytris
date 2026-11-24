@@ -4,31 +4,31 @@ Data collected for the revision lives in three top-level directories.
 
 | Directory | Contents | Runs |
 | --- | --- | --- |
-| `measurements-gpu/` | One Python script per long-running GPU job the revision needs (retraining for timing, rerunning detection on packed canvases, ...). It writes into the cache, like the pipeline stages. | On ace, in a tmux session |
-| `measurements/` | One Python script per measurement. It reads existing data (cache, tradeoff tables, outputs of `measurements-gpu/`) and aggregates it. | On ace, minutes at most |
-| `measurements-results/` | Outputs of `measurements/`, committed to git. | Pulled back from ace |
+| `experiments/measurements_gpu/` | One Python script per long-running GPU job the revision needs (retraining for timing, rerunning detection on packed canvases, ...). It writes into the cache, like the pipeline stages. | On ace, in a tmux session |
+| `experiments/measurements/` | One Python script per measurement. It reads existing data (cache, tradeoff tables, outputs of `experiments/measurements_gpu/`) and aggregates it. | On ace, minutes at most |
+| `measurements-results/` | Outputs of `experiments/measurements/`, committed to git. | Pulled back from ace |
 
 ## Conventions
 
-- `measurements/X.py` writes only into `measurements-results/X/`, a directory holding one or more JSON files. `measurements.common.results_dir(__file__)` returns that directory, so the name always matches the script.
-- `X` starts with the review item it answers, as in the response letter and the checklists: `r1o2_count_query.py`, `r9o2_preparation_cost.py`. Shared helpers live in `measurements/common.py`.
-- A `measurements/X.py` that depends on a `measurements-gpu/Y.py` says so in its docstring and in the table below, and fails with a clear error when Y's outputs are missing. For example, R1.O4's accuracy script reads the canvas detections that a GPU script reruns, and R9.O2's preparation-cost script reads the training times that a GPU script records.
-- Every `measurements/X.py` has tests in `tests/test_measurements_X.py` covering its rules and edge cases.
+- `experiments/measurements/X.py` writes only into `measurements-results/X/`, a directory holding one or more JSON files. `experiments.measurements.common.results_dir(__file__)` returns that directory, so the name always matches the script.
+- `X` starts with the review item it answers, as in the response letter and the checklists: `r1o2_count_query.py`, `r9o2_preparation_cost.py`. Shared helpers live in `experiments/measurements/common.py`.
+- A `experiments/measurements/X.py` that depends on a `experiments/measurements_gpu/Y.py` says so in its docstring and in the table below, and fails with a clear error when Y's outputs are missing. For example, R1.O4's accuracy script reads the canvas detections that a GPU script reruns, and R9.O2's preparation-cost script reads the training times that a GPU script records.
+- Every `experiments/measurements/X.py` has tests in `experiments/tests/test_measurements_X.py` covering its rules and edge cases.
 - Scripts follow `AGENTS.md`: comments on every operation, `parse_args` near the top without comments.
 
 ## Running
 
 ```sh
-# Mac: push code (measurements/ and measurements-gpu/ are in configs/sync.yaml).
+# Mac: push code (experiments/measurements/ and experiments/measurements_gpu/ are in configs/sync.yaml).
 ./sync
 # ace: run tests, then a measurement, inside the polyis container (/polyis is this checkout).
-ssh ace 'docker exec polyis bash -c "cd /polyis && pytest tests/test_measurements_r1o2_count_query.py -q"'
-ssh ace 'docker exec polyis bash -c "cd /polyis && python measurements/r1o2_count_query.py"'
+ssh ace 'docker exec polyis bash -c "cd /polyis && pytest experiments/tests/test_measurements_r1o2_count_query.py -q"'
+ssh ace 'docker exec polyis bash -c "cd /polyis && python experiments/measurements/r1o2_count_query.py"'
 # Mac: pull results back. measurements-results/ is not in sync.yaml, so ./sync never overwrites newer results on ace.
 rsync -az ace:/work/cwkt/projects/tetris/measurements-results/ measurements-results/
 ```
 
-Run long `measurements-gpu/` jobs in tmux on ace, since a dropped SSH session kills a foreground job.
+Run long `experiments/measurements_gpu/` jobs in tmux on ace, since a dropped SSH session kills a foreground job.
 
 ## Author decisions (2026-10-28)
 
@@ -53,11 +53,11 @@ Initial wording/threshold validation: 253 targeted tests passed in ace's polyis 
 
 ## Additional preparation overheads (2026-10-28)
 
-`measurements-gpu/r9o2_preparation_overheads.py` measures detector initialization/warm-up, p015 using the saved trained model and a fresh private compiler cache, and p130/p135 on validation-only inputs. Its shell driver uses one bombe Quadro RTX 6000 (GPU 0), pinned to that GPU's 40-CPU NUMA node. The saved inputs, recomputed tables, and compiler caches stay under `/data/cwkt/data/bombe-revision/scratch/r9o2-overheads-20261029/`. No detection/tracking experiments or accuracy scoring are rerun.
+`experiments/measurements_gpu/r9o2_preparation_overheads.py` measures detector initialization/warm-up, p015 using the saved trained model and a fresh private compiler cache, and p130/p135 on validation-only inputs. Its shell driver uses one bombe Quadro RTX 6000 (GPU 0), pinned to that GPU's 40-CPU NUMA node. The saved inputs, recomputed tables, and compiler caches stay under `/data/cwkt/data/bombe-revision/scratch/r9o2-overheads-20261029/`. No detection/tracking experiments or accuracy scoring are rerun.
 
 The canonical CSVs contained only the test pass. Validation table inputs were reconstructed from cached runtime logs using the existing p121 parser and the already-computed R9.O2 validation re-timing summaries (481 configurations per dataset including the reference). CalDoT2 uses its 50 complete validation videos; p130's cost is scaled by 60/50, while p135 already processes the full configuration count. The scratch frontier matches the saved selections on six datasets; CalDoT2 has six configurations in the symmetric difference, so that cost probe must never be used to replace the original selections. Source paths, hashes, and these diagnostics are retained in the timing records.
 
-`measurements/r9o2_preparation_overheads.py` reads the original preparation report and the new timings, replaces p015's old estimate, and adds the table costs and either detector-reuse assumption. The original extraction throughputs and HOTA values are unchanged. The persistent case initializes one detector per dataset and warms reference and representative packed-input shapes once each; it assumes reuse across stages. The repeated case loads per training video, validation reference video, and distinct p040 configuration, with CUDA initialized once per stage. p011's first inference is already timed, so it gets no extra warm-up. Reference process spans already include the 32-frame warm-up; the accounting subtracts that measured per-video proxy before adding either scenario to avoid double counting. This remains an accounting sensitivity, not a timed end-to-end serial replay.
+`experiments/measurements/r9o2_preparation_overheads.py` reads the original preparation report and the new timings, replaces p015's old estimate, and adds the table costs and either detector-reuse assumption. The original extraction throughputs and HOTA values are unchanged. The persistent case initializes one detector per dataset and warms reference and representative packed-input shapes once each; it assumes reuse across stages. The repeated case loads per training video, validation reference video, and distinct p040 configuration, with CUDA initialized once per stage. p011's first inference is already timed, so it gets no extra warm-up. Reference process spans already include the 32-frame warm-up; the accounting subtracts that measured per-video proxy before adding either scenario to avoid double counting. This remains an accounting sensitivity, not a timed end-to-end serial replay.
 
 Updated preparation work, at the instrumented boundary, in hours:
 
@@ -80,12 +80,12 @@ The table probes exposed a hardcoded cache path in `tetris.utilities.load_tradeo
 Results are in `measurements-results/r9o2_preparation_overheads/{timings.jsonl,launcher_runs.jsonl,preparation_overheads.json}`. Recompute the accounting with:
 
 ```sh
-python measurements/r9o2_preparation_overheads.py --timings measurements-results/r9o2_preparation_overheads/timings.jsonl
+python experiments/measurements/r9o2_preparation_overheads.py --timings measurements-results/r9o2_preparation_overheads/timings.jsonl
 ```
 
 ## Status
 
-| Item | `measurements/` | `measurements-gpu/` | Status |
+| Item | `experiments/measurements/` | `experiments/measurements_gpu/` | Status |
 | --- | --- | --- | --- |
 | R1.O2 counting query | `r1o2_count_query.py` | none | Done: bounds 5%, 10%, and LEAP's own accuracy per dataset (`leap_fit`) |
 | R1.O2 LEAP native queries | `r1o2_leap_native_queries.py` | none | Done for a merged vehicle class (selection F1, aggregation 1 - MAPE, top-10 precision); author accepts this scope |
@@ -119,10 +119,10 @@ Problems found while porting or running measurements, and what was changed. Numb
 | --- | --- | --- | --- | --- |
 | 2026-10-25 | `r1o2_count_query` | OTIF's Amsterdam rule needs tracks of at least 10 frames of OTIF's 30 FPS video; the feedback script applied 10 frames to our 15 FPS clips, twice as strict. | Threshold converted per video from the two videos' frame rates (5 clip frames for Amsterdam). | Amsterdam at the 5% bound: Tetris 19.5x to 22.0x over the reference, 10.3x to 11.6x over OTIF. 10% numbers unchanged. CalDoT unchanged. |
 | 2026-10-25 | `r1o2_count_query` | OTIF's CalDoT test videos are not all 15 FPS (19 of 60 CalDoT1 and 2 of 30 CalDoT2 videos are 30 FPS), so one threshold per dataset is wrong in general. | Duration threshold is per video; `configs.json` records the frame-rate groups. | None on CalDoT, whose polygon rule has no duration. |
-| 2026-10-26 | LEAP baseline (`evaluation/p140_otif_transform.py`) | LEAP's exporter (`export-leap-outputs.py`) writes boxes for intervals starting before the clip at negative list indices, i.e. at the clip's end; p140's gap interpolation then filled every frame between, inflating LEAP's cached box-frames by 45-102% over the whole file (33-80% inside the clip). | p140 drops the wrapped tail, clips to the clip length, and writes `unwrap.json` per video. Cache regenerated with `p140/p141/p142 --test --systems leap`; the old cache is in `/polyis-cache/SOTA/leap-wrapped-backup-20261026`. | LEAP HOTA rises slightly everywhere (CalDoT1 0.070 to 0.077, CalDoT2 0.093 to 0.107, Amsterdam 0.049 to 0.056, B3D 0.012-0.036 to 0.015-0.043). The paper's LEAP points need regenerating (p200-p205). |
+| 2026-10-26 | LEAP baseline (`experiments/evaluation/p140_otif_transform.py`) | LEAP's exporter (`export-leap-outputs.py`) writes boxes for intervals starting before the clip at negative list indices, i.e. at the clip's end; p140's gap interpolation then filled every frame between, inflating LEAP's cached box-frames by 45-102% over the whole file (33-80% inside the clip). | p140 drops the wrapped tail, clips to the clip length, and writes `unwrap.json` per video. Cache regenerated with `p140/p141/p142 --test --systems leap`; the old cache is in `/polyis-cache/SOTA/leap-wrapped-backup-20261026`. | LEAP HOTA rises slightly everywhere (CalDoT1 0.070 to 0.077, CalDoT2 0.093 to 0.107, Amsterdam 0.049 to 0.056, B3D 0.012-0.036 to 0.015-0.043). The paper's LEAP points need regenerating (p200-p205). |
 | 2026-10-26 | LEAP baseline (`p140`) | The CalDoT1/2 LEAP runtime CSVs hold two runs of every video and their `total` row sums both, halving LEAP's throughput. | Runtime is each video's mean run, summed. | LEAP CalDoT1 373.5 to 747.0 fps, CalDoT2 506.4 to 1012.8 fps. |
-| 2026-10-26 | `measurements/common.py` | The ground truth of the detector variants (caldot1-y05, ams-y05, ...) was read from their own stale `003_groundtruth` copies, not the root dataset's tracks that p110/p141 score against. | `output_path` maps to the root dataset. | Only R1.O2's reference-only ground-truth row changed. |
-| 2026-10-26 | `measurements/common.py` | Speedup ratios divided throughputs already rounded to 0.1 fps. | Ratios use unrounded throughput. | B3D4 Tetris over OTIF at 10%: 25.8x to 25.9x (matches p203). |
+| 2026-10-26 | `experiments/measurements/common.py` | The ground truth of the detector variants (caldot1-y05, ams-y05, ...) was read from their own stale `003_groundtruth` copies, not the root dataset's tracks that p110/p141 score against. | `output_path` maps to the root dataset. | Only R1.O2's reference-only ground-truth row changed. |
+| 2026-10-26 | `experiments/measurements/common.py` | Speedup ratios divided throughputs already rounded to 0.1 fps. | Ratios use unrounded throughput. | B3D4 Tetris over OTIF at 10%: 25.8x to 25.9x (matches p203). |
 | 2026-10-26 | `r9o1_classifier_cost` | The feedback script read p020's per-batch (16-frame) log lines as frames and used its own I/O exclusions instead of p121's. | Per-frame cost from batches; p121's exclusions. | Classifier 11-47 ms to 0.7-2.6 ms per frame; share 6.7% to 17.6% median; packing 26.8% to 6.7%. Replace the response's feedback numbers. |
 | 2026-10-26 | `r9o3_ilp_instance_sizes` | The feedback script counted the pruned output (kept polyominoes), not the ILP's input. | Variables counted from cached 020 scores with p022's grouping; checked against all 21,770 saved runs. | Variables are 1.45-5.41x the old counts. |
 
@@ -165,7 +165,7 @@ Found while measuring; resolutions and remaining limitations are recorded below.
 
 Read-only CPU analysis of the saved detector-matched CalDoT/Amsterdam runs and the saved B3D reruns.
 No detector, sampler, tracker, baseline configuration, cache, or paper result was changed.
-The script is `measurements/r1o2_leap_sampling_diagnostics.py`; its companion `r1o2_leap_sampling_plots.py` generates inspection-only Altair PDFs/HTML and `summary.csv`.
+The script is `experiments/measurements/r1o2_leap_sampling_diagnostics.py`; its companion `r1o2_leap_sampling_plots.py` generates inspection-only Altair PDFs/HTML and `summary.csv`.
 Results are in `measurements-results/r1o2_leap_sampling_diagnostics/`.
 
 - **Sampling target.** LEAP's paper targets sampling near 2-frame optimality, using predicted exits to choose the next frame. It also explicitly handles objects observed only once and refines patterns/intervals for changing traffic. Thus neither “every object is guaranteed two observations” nor “LEAP assumes identical travel times” is accurate. Reference: https://doi.org/10.1145/3639274, Sections 3.2 and 4.3-4.5. The runtime copy uses min/max gap clamps, with no guarantee of two linked observations. Runtime source hashes and rule locations are in `code_provenance.json`.
@@ -234,8 +234,8 @@ The paper now presents only LEAP using the unmasked CalDoT results, updates the 
 
 ## B3D rescored on human-verified ground truth (2026-11-02)
 
-- Labels: `annotation` commit `7d02503` (`fix/final/`), 20 test clips, 20,483 frames, 1,320 tracks. Installed by `preprocess/p004_install_human_groundtruth.py` into `003_groundtruth/` with `SOURCE.json`; the automatic labels are in `003_groundtruth.auto/`. Frame alignment checked against `002_naive` (peak at offset 0 on all 20 clips). `p003` now refuses to run on jnc0/2/6/7.
-- Runs: `measurements-gpu/b3d_human_gt_phase_a.sh` (snapshot, install, p110/p111/p130, p141/p142, gates) and `b3d_human_gt_phase_b.sh` (p201-p206, measurements, evidence, paper generators on ace). Logs, gates and the old-vs-new report are in `measurements-results/b3d_human_gt/`. Every overwritten output has a `<path>.auto-gt` copy on ace. Gates passed: same configurations, unchanged non-accuracy columns, CalDoT/Ams tables byte-identical.
+- Labels: `annotation` commit `7d02503` (`fix/final/`), 20 test clips, 20,483 frames, 1,320 tracks. Installed by `experiments/preprocess/p004_install_human_groundtruth.py` into `003_groundtruth/` with `SOURCE.json`; the automatic labels are in `003_groundtruth.auto/`. Frame alignment checked against `002_naive` (peak at offset 0 on all 20 clips). `p003` now refuses to run on jnc0/2/6/7.
+- Runs: `experiments/measurements_gpu/b3d_human_gt_phase_a.sh` (snapshot, install, p110/p111/p130, p141/p142, gates) and `b3d_human_gt_phase_b.sh` (p201-p206, measurements, evidence, paper generators on ace). Logs, gates and the old-vs-new report are in `measurements-results/b3d_human_gt/`. Every overwritten output has a `<path>.auto-gt` copy on ace. Gates passed: same configurations, unchanged non-accuracy columns, CalDoT/Ams tables byte-identical.
 - Result: reference HOTA drops 1.3-5.1 pp on B3D; B3D1 and B3D4 5% points moved to `ShuffleNet05_60_4_040_r025` and `ShuffleNet05_60_4_040_r050`; all 10% points unchanged. The B3D1/B3D4 JPEG control was rerun at the new points on bombe GPU 0 (uncontaminated). Matched-throughput comparison: 44 of 46 wins, two near-ties (B3D1 -0.05 pp, B3D2 -0.10 pp); the abstract's max gain moves 0.42 -> 0.41.
 - Fixed on the way: p205 scored the classifier against 30 FPS (jnc, ams) or stale variant detection labels and unpacked the confusion matrix in the wrong order (now root 15 FPS tracks and a shared `tile_confusion`); p110 deletes only `raw/<videoset>`; r7o1 checks canonical LEAP runtimes; `render_revised_hota.py` reports non-wins instead of asserting all wins and writes `p203_compare_stats.tex` itself.
 - Open: (1) TrackEval's truncated scoring window, deferred by the author; (2) `r1o2_leap_native_queries` cannot run on the canonical CalDoT/Ams LEAP reruns (no p140 `unwrap.json`); its outputs are not read by the paper; (3) `classifier_matched.json` (R9.O1 GPU timing) still names the old B3D1/B3D4 5% configurations; the timed classifier (ShuffleNet05, 60 px, s=4) is unchanged, so only provenance is stale; (4) stale tests `test_p201_compare_pareto::test_presentation_summary_uses_top_legend_and_single_line_titles` and `test_tradeoff_compute::test_build_tradeoff_table_aggregates_split_level_variants` fail independently of this pass.
@@ -243,7 +243,7 @@ The paper now presents only LEAP using the unmasked CalDoT results, updates the 
 ## Scoring-window padding compared (2026-11-03)
 
 - Shift by one: nothing left to fix. Against the current ground truth, reference, Tetris and OTIF outputs align at offset 0 on all seven datasets; the only shift was in the old automatic B3D labels, which the human labels replaced. LEAP's B3D clock is correct (finding 11, resolved).
-- Truncation (finding 12): `tetris/trackeval/dataset.py` pads both sides to the longer file when `POLYIS_PAD_SCORING_WINDOW=1` (default off). `measurements-gpu/scoring_window_compare.sh` rescored all datasets padded; the unpadded results are kept as `*.human-gt` on ace (cache tables, `figures/generated.human-gt`, `build/figure8-alternative.human-gt`). Report, logs and the 5%/10% details in `measurements-results/scoring_window/`. Gates passed.
+- Truncation (finding 12): `tetris/trackeval/dataset.py` pads both sides to the longer file when `POLYIS_PAD_SCORING_WINDOW=1` (default off). `experiments/measurements_gpu/scoring_window_compare.sh` rescored all datasets padded; the unpadded results are kept as `*.human-gt` on ace (cache tables, `figures/generated.human-gt`, `build/figure8-alternative.human-gt`). Report, logs and the 5%/10% details in `measurements-results/scoring_window/`. Gates passed.
 - Effect: HOTA drops by at most 0.74 pp (Tetris, CalDoT1), 1.37 pp (OTIF, B3D2), 0.27 pp (LEAP); reference at most 0.06 pp. Two operating points move: CalDoT2 5% (144.7 -> 204.0 fps) and Amsterdam 10% (1391.9 -> 1116.1 fps). Headline macros that change: 5% speedup over the reference 4.7-68.8x -> 6.6-68.8x; 10% 10.4-91.2x -> 10.4-73.1x; max HOTA gain 0.41 -> 0.42; matched throughput 44/46 -> 45/46 (B3D2's near-tie disappears). Accuracy-matched speedups (1.5-17.4x, 1.6-24.7x) and "prior fails on 3 of 7" do not change.
-- **Adopted (2026-11-03, author decision).** Padding is the default in `tetris/trackeval/dataset.py` (`POLYIS_PAD_SCORING_WINDOW=0` restores truncation; the two audits `r1o1_hota_scoring_window` and `r1o2_leap_hota_conversion` request it explicitly). On ace the padded tables are live and the unpadded ones are kept as `*.unpadded`. Canonical LEAP was rescored (`measurements/canonical_leap_padded_hota.py`; Amsterdam 0.5434 -> 0.5258, CalDoT1 0.5266 -> 0.5095, CalDoT2 0.1391 -> 0.1338; old values kept as `hota_unpadded`). The CalDoT2 JPEG control was rerun at its new 5% point on bombe (uncontaminated). Phase B was rerun with `RUN_NAME=padded SNAPSHOT_SUFFIX=.pre-padding`; the paper is regenerated (paper `4ea7ce0`).
+- **Adopted (2026-11-03, author decision).** Padding is the default in `tetris/trackeval/dataset.py` (`POLYIS_PAD_SCORING_WINDOW=0` restores truncation; the two audits `r1o1_hota_scoring_window` and `r1o2_leap_hota_conversion` request it explicitly). On ace the padded tables are live and the unpadded ones are kept as `*.unpadded`. Canonical LEAP was rescored (`experiments/measurements/canonical_leap_padded_hota.py`; Amsterdam 0.5434 -> 0.5258, CalDoT1 0.5266 -> 0.5095, CalDoT2 0.1391 -> 0.1338; old values kept as `hota_unpadded`). The CalDoT2 JPEG control was rerun at its new 5% point on bombe (uncontaminated). Phase B was rerun with `RUN_NAME=padded SNAPSHOT_SUFFIX=.pre-padding`; the paper is regenerated (paper `4ea7ce0`).
 - **Fig. 11 kept as committed (author decision).** Its CalDoT1/CalDoT2 panels and the two macros stay on the original (truncated) scoring; padding could change them because 9 of CalDoT1's and 2 of CalDoT2's 20 ablation clips have ground truth ending early, and rescoring would need the ILP and tracker rerun (per-configuration tracks were not kept). The B3D1 panel uses the human labels and is unaffected by padding. A rerun was started and stopped; `results.csv` was restored from `*.pre-padding`. Adopting padding means rerunning phase B's downstream steps with padding on, and the measurements that call TrackEval directly (r1o2_leap_otif_rerun, r1o1, the Fig. 11 ablation) would need it too.

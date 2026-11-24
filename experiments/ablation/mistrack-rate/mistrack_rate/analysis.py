@@ -148,7 +148,7 @@ _PRUNING_HOTA_FLAG_COL: str = 'is_pareto_pruning_vs_hota'
 
 def _paper_figures_generated_dir() -> Path:
     """Repo-relative ``paper/figures/generated`` (same layout as ``run.py`` in Docker)."""
-    return Path(__file__).resolve().parents[3] / 'paper' / 'figures' / 'generated'
+    return Path(__file__).resolve().parents[4] / 'paper' / 'figures' / 'generated'
 
 
 def _reference_hota_at_matched_pruning(

@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """R9.O1: relevance classifier against the reference detector, timed on the same frames, GPU, and run.
 
-Aggregates the raw timings of measurements-gpu/r9o1_matched_timing.py (measurements-results/
+Aggregates the raw timings of experiments/measurements_gpu/r9o1_matched_timing.py (measurements-results/
 r9o1_matched_timing/raw/, see that script for how and in which order it times each run), and fails with a clear
 error when they are missing. The runs and their frames per call come from the GPU job's manifest.
 
@@ -38,7 +38,7 @@ from pathlib import Path
 
 import duckdb
 
-from measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, query_dicts, results_dir, rounded,
+from experiments.measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exist, query_dicts, results_dir, rounded,
                                  write_json)
 
 
@@ -46,7 +46,7 @@ from measurements.common import (DATASET_LABELS, RESULTS_ROOT, assert_files_exis
 RAW_DIR = 'raw'
 MANIFEST = 'manifest.json'
 # The GPU job that writes the raw files.
-GPU_JOB = 'measurements-gpu/r9o1_matched_timing.py'
+GPU_JOB = 'experiments/measurements_gpu/r9o1_matched_timing.py'
 # Comparisons: name -> (Tetris-side runs, whose per-frame costs add up, and the reference-side run).
 PAIRS = {'as_deployed': (('classifier',), 'detector'),
          'as_deployed_with_rgb_copy': (('classifier', 'rgb_copy'), 'detector'),
@@ -327,7 +327,7 @@ def log_derived(datasets: list[str], manifest: dict, directory: Path) -> dict:
     """Per dataset, r9o1_classifier_cost's log-derived costs, ratios, and shares, checked to describe the same operating point."""
     # Both reports of the log-derived measurement.
     paths = [directory / 'classifier_vs_detector.json', directory / 'operator_share.json']
-    assert_files_exist(paths, 'r9o1_classifier_cost results (run measurements/r9o1_classifier_cost.py)')
+    assert_files_exist(paths, 'r9o1_classifier_cost results (run experiments/measurements/r9o1_classifier_cost.py)')
     per_frame, shares = (json.loads(p.read_text())['datasets'] for p in paths)
     out = {}
     for dataset in datasets:

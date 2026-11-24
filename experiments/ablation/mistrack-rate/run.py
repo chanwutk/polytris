@@ -14,7 +14,7 @@ from pathlib import Path
 # Must happen before any project imports that require in-container paths.
 if not Path('/.dockerenv').exists():
     _args = [shlex.quote(a) for a in sys.argv[1:]]
-    _cmd = 'cd /polyis && python /polyis/ablation/mistrack-rate/run.py ' + ' '.join(_args)
+    _cmd = 'cd /polyis && python /polyis/experiments/ablation/mistrack-rate/run.py ' + ' '.join(_args)
     os.execvp('docker', ['docker', 'exec', 'polyis', 'sh', '-lc', _cmd])
 
 

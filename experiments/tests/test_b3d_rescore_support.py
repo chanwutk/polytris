@@ -1,8 +1,8 @@
 """Support for re-scoring B3D on human ground truth: dataset subsetting, scoped p110 cleanup, snapshots."""
 import pytest
 
-from evaluation import p110_accuracy_compute as p110
-from measurements.snapshot_outputs import snapshot
+from experiments.evaluation import p110_accuracy_compute as p110
+from experiments.measurements.snapshot_outputs import snapshot
 from tetris.io import cache
 from tetris.utilities import get_config
 

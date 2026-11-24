@@ -1,6 +1,6 @@
 """Regression gates and old-vs-new report after re-scoring B3D on human ground truth.
 
-Compares every rescored table with its <path>.auto-gt snapshot (measurements/snapshot_outputs.py):
+Compares every rescored table with its <path>.auto-gt snapshot (experiments/measurements/snapshot_outputs.py):
 - Gates (any failure exits non-zero): each table keeps the same configurations and every non-accuracy
   column; non-B3D tables are byte-identical to the checksums recorded before the run.
 - Report: reference, OTIF and LEAP HOTA old vs new, the Tetris HOTA shift, and the fastest Tetris
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import duckdb
 
-from measurements.common import query_dicts
+from experiments.measurements.common import query_dicts
 
 
 # Columns a ground-truth change may alter; every other column must stay identical.

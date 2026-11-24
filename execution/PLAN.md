@@ -46,7 +46,7 @@ main ─q→ decode ─q→ classify ─q→ [prune] ─q→ pack ─q→ detect
   Decided 2026-11-20 after the step-1 smoke test:
   - On one caldot1 video, decord matched OpenCV exactly: 900/900 frames identical, and random access returned the same frames.
   - Uncontended, 1 thread each, decord was faster: 1.6 s against 3.1 s for all frames.
-  - The author chose to keep OpenCV unless decoding turns out to be the bottleneck. `execution/tools/compare_decoders.py` (modes `pixels` and `timings`) re-checks this before any switch.
+  - The author chose to keep OpenCV unless decoding turns out to be the bottleneck. `experiments/tools/execution/compare_decoders.py` (modes `pixels` and `timings`) re-checks this before any switch.
 - Frames needed, matching p020 ([p020:277-281](../scripts/p020_exec_classify.py)): sampled `idx % s == 0`, plus the last frame when it isn't already sampled, plus for each sampled frame `idx-1`, or `idx+1` for frame 0 (diff channel).
 - p020 asserts that frames read == `CAP_PROP_FRAME_COUNT`; execution keeps that assert.
 - A video with fewer than 2 frames is rejected at startup (p020 would raise IndexError).
@@ -116,8 +116,8 @@ Move these pure functions from the scripts into `tetris/` with no logic change. 
 5. ~~`main.py`: dummy-video timing and writing outputs~~: done (`python -m execution.main`, `tests/execution/test_main.py`).
    - Startup checks before any worker starts: video files only (other files ignored), no empty dir, no two videos with the same stem, every video openable with >= 2 frames, worst-case `/dev/shm` use within free space.
    - Results are kept in memory and written after the last arrival, so writing cannot stall the timed run. Prints `{"videos", "runtime_s", "frames"}` as one JSON line.
-6. ~~Stage-by-stage diff against p020→p060 on 2–3 test videos of one dataset [13A]~~: done (`execution/tools/compare_scripts.py`, reports in `measurements-results/execution-compare/`).
-   - caldot1-y05 te00–te02, real classifier and detector, two configs: s=4 without pruning, and s=8 with mistrack tolerance 0.8 (`execution/configs/`), both `canvas_format: jpeg`, compared with the cached April 2026 script outputs (read only).
+6. ~~Stage-by-stage diff against p020→p060 on 2–3 test videos of one dataset [13A]~~: done (`experiments/tools/execution/compare_scripts.py`, reports in `measurements-results/execution-compare/`).
+   - caldot1-y05 te00–te02, real classifier and detector, two configs: s=4 without pruning, and s=8 with mistrack tolerance 0.8 (`experiments/configs/execution/`), both `canvas_format: jpeg`, compared with the cached April 2026 script outputs (read only).
    - Each stage fed the script's previous output: classify, prune, and pack (index maps, offset lookups, JPEG canvases) are identical to p020, p022, and p030; detect has the same box count in every frame, with coordinates within 1.2e-4 px of p050 (batching order); track fed p050's detections is identical to p060.
    - Bit-identity (2026-11-20): our detector on our JPEG canvases, batched exactly as p040 batched its files and merged in p050's order (both read from p040's `detections.jsonl`), reproduces p040's raw detections, p050's per-frame detections, and p060's `tracking.jsonl` byte for byte on all six cases. The only differences in normal runs come from that order, which is p040's `os.listdir` order of files execution never writes.
    - End to end through `main` (multi-process): every output equals p060's tracks up to a consistent renaming of track ids, with every box matched within 9.2e-5 px. The renaming comes from box order within a frame (collage order here, p040's `os.listdir` order there), which sets SORT's id numbering.
@@ -127,7 +127,7 @@ Move these pure functions from the scripts into `tetris/` with no logic change. 
 
 ## Benchmark (2026-11-20)
 
-`execution/tools/benchmark.py`, results in `measurements-results/execution-benchmark/`. All 60 caldot1-y05 test videos (54,000 frames) on ace GPUs 2-3, in throwaway containers whose `/polyis-cache` is a scratch directory and whose real cache is mounted read-only, so no old result can be overwritten. Videos were read once beforehand. ace's load average was 12-17 (other users) during the runs.
+`experiments/tools/execution/benchmark.py`, results in `measurements-results/execution-benchmark/`. All 60 caldot1-y05 test videos (54,000 frames) on ace GPUs 2-3, in throwaway containers whose `/polyis-cache` is a scratch directory and whose real cache is mounted read-only, so no old result can be overwritten. Videos were read once beforehand. ace's load average was 12-17 (other users) during the runs.
 
 | config | p020-p060 (sum of stage wall clocks) | execution, 2 GPUs: process / first-to-last result | execution, 1 GPU: process / first-to-last result |
 |---|---|---|---|
@@ -142,7 +142,7 @@ Move these pure functions from the scripts into `tetris/` with no logic change. 
 
 ## Paper operating points (2026-11-20)
 
-The 14 operating points the paper reports (per dataset, the fastest configuration within 5% and within 10% HOTA loss; R1.O3's selection) as execution configs in `execution/configs/paper/` (`execution/tools/make_paper_configs.py`), run with `benchmark.py --skip-scripts` on all test videos on one ace GPU (classify and detect sharing it, JPEG canvases), outputs checked against the cached script tracks. Table: `measurements/execution_paper_throughput.py` -> `measurements-results/execution-paper/summary.json`.
+The 14 operating points the paper reports (per dataset, the fastest configuration within 5% and within 10% HOTA loss; R1.O3's selection) as execution configs in `experiments/configs/execution/paper/` (`experiments/tools/execution/make_paper_configs.py`), run with `benchmark.py --skip-scripts` on all test videos on one ace GPU (classify and detect sharing it, JPEG canvases), outputs checked against the cached script tracks. Table: `experiments/measurements/execution_paper_throughput.py` -> `measurements-results/execution-paper/summary.json`.
 
 - execution's first-to-last throughput beats the matched-boundary paper number (`one_decode`, logged ops plus one decode) on 13 of 14 points (1.31x-2.54x) and the clean staged-scripts wall clock without startup on all 14 (1.47x-10.8x). The exception is CalDoT2 at 10% (s=1, pruning, ByteTrack): 222 fps vs 263 fps.
 - Against the published p121 number, which does not count Tetris's decode, it is faster on 10 of 14 (1.05x-1.52x) and slower on Amsterdam (0.57x, 0.84x), CalDoT1 10% (0.95x), and CalDoT2 10% (0.69x).
@@ -153,7 +153,7 @@ The 14 operating points the paper reports (per dataset, the fastest configuratio
 
 ### Rerun with the current code (2026-11-21)
 
-All 14 points again on one ace GPU with the code at f1c7581 plus the classify commits (`measurements-results/execution-paper-current`; `python measurements/execution_paper_throughput.py --runs measurements-results/execution-paper-current --baseline measurements-results/execution-paper`).
+All 14 points again on one ace GPU with the code at f1c7581 plus the classify commits (`measurements-results/execution-paper-current`; `python experiments/measurements/execution_paper_throughput.py --runs measurements-results/execution-paper-current --baseline measurements-results/execution-paper`).
 
 - execution is now faster than the published p121 throughput at all 14 points (1.07x-1.72x), than the matched-boundary number (`one_decode`) at all 14 (1.41x-3.25x), and than the clean staged-scripts wall clock at all 14 (2.0x-13.9x).
 - Against the first run it is 1.00x-2.48x faster; the largest gains are where classify handles the most frames (Amsterdam 5%: 603 -> 1495 fps; CalDoT2 10%: 222 -> 527 fps).
@@ -164,8 +164,8 @@ All 14 points again on one ace GPU with the code at f1c7581 plus the classify co
 ## Figure 8 rerun (2026-11-21)
 
 Every point of Figure 8's full-Tetris curve (183 configurations, 7 datasets), run one at a time on one ace GPU
-(GPU 2, 128 GB /dev/shm, JPEG canvases) by `execution/tools/run_figure8.sh` in tmux; results in
-`measurements-results/execution-figure8/` (`measurements/execution_figure8_throughput.py`).
+(GPU 2, 128 GB /dev/shm, JPEG canvases) by `experiments/tools/execution/run_figure8.sh` in tmux; results in
+`measurements-results/execution-figure8/` (`experiments/measurements/execution_figure8_throughput.py`).
 
 - execution's first-to-last throughput beats the throughput Figure 8 reports on 162 of 183 points; per-dataset
   medians: Amsterdam 1.36x, CalDoT1 1.25x, CalDoT2 1.47x, B3D1 1.52x, B3D2 1.24x, B3D3 1.72x, B3D4 1.71x.

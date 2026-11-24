@@ -1,6 +1,6 @@
 import json
 
-from measurements import r1o2_leap_pattern_resample as resample
+from experiments.measurements import r1o2_leap_pattern_resample as resample
 
 
 def test_interval_counts_classify_patterns_against_intervals(tmp_path, monkeypatch):

@@ -1,6 +1,6 @@
 import pytest
 
-from measurements.r7o3_noscope_score import recost
+from experiments.measurements.r7o3_noscope_score import recost
 
 
 def run(**record):

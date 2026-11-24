@@ -13,8 +13,8 @@ import duckdb
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from evaluation.manifests import list_split_videos
-from measurements.common import DATASET_LABELS, canonical_leap_result, output_path, query_dicts, write_json
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import DATASET_LABELS, canonical_leap_result, output_path, query_dicts, write_json
 from tetris.utilities import get_video_frame_count
 
 

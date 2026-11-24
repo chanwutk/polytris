@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """R1.O3: classifier and reference-detector time per frame as the frame size grows.
 
-Detector: measurements-gpu/r1o3_resolution_scaling.py's timings, each detector run at the frame's own resolution.
+Detector: experiments/measurements_gpu/r1o3_resolution_scaling.py's timings, each detector run at the frame's own resolution.
 Classifier: not rerun. It classifies each tile independently, so its time per frame is the per-tile time from
 measurements-results/r9o1_matched_timing/ (mean ms per frame over the tiles it infers, same GPU model) times the
 tiles of the larger frame (p020's grid drops partial tiles). That per-tile time carries the per-frame fixed cost
@@ -13,7 +13,7 @@ Writes measurements-results/r1o3_resolution_scaling/summary.json.
 """
 import duckdb
 
-from measurements.common import DATASET_LABELS, RESULTS_ROOT, assert_files_exist, query_dicts, results_dir, write_json
+from experiments.measurements.common import DATASET_LABELS, RESULTS_ROOT, assert_files_exist, query_dicts, results_dir, write_json
 
 
 # Inputs: the GPU job's timings and R9.O1's matched classifier timing.

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from measurements import r9o1_classifier_cost as rc
+from experiments.measurements import r9o1_classifier_cost as rc
 
 
 # The two synthetic test videos of every dataset and their frame counts.

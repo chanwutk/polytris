@@ -2,7 +2,7 @@
 Golden tests for the helpers execution shares with the p0xx scripts (PLAN.md 5A/11A/19B).
 
 The goldens in tests/golden/shared_helpers.pkl were recorded from the helpers while they
-still lived in scripts/p020, p030 and p050.  After the move to tetris/, these tests
+still lived in experiments/scripts/p020, p030 and p050.  After the move to tetris/, these tests
 assert byte-equal outputs, so the move cannot have changed behaviour.
 
 Record (only before the move, or after a deliberate behaviour change):

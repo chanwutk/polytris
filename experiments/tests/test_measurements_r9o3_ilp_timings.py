@@ -7,8 +7,8 @@ import duckdb
 import pandas as pd
 import pytest
 
-from measurements import common
-from measurements import r9o3_ilp_timings as it
+from experiments.measurements import common
+from experiments.measurements import r9o3_ilp_timings as it
 from tetris.io import store
 
 

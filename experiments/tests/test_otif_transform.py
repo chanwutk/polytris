@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 
-from evaluation import p140_otif_transform
+from experiments.evaluation import p140_otif_transform
 
 
 def test_normalize_otif_stat_csv_renames_param_id_and_runtime_total(tmp_path):

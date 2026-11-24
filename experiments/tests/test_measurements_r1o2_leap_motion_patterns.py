@@ -8,7 +8,7 @@ import pytest
 
 
 SPEC = importlib.util.spec_from_file_location('leap_motion_patterns', Path(__file__).resolve().parent.parent /
-                                             'measurements-gpu/r1o2_leap_motion_patterns.py')
+                                             'experiments/measurements_gpu/r1o2_leap_motion_patterns.py')
 motion = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(motion)
 

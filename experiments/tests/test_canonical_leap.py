@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from tetris import leap_results
-from evaluation import p200_compare_compute as compare
+from experiments.evaluation import p200_compare_compute as compare
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def test_promoted_point_changes_only_test_results_and_preserves_cache(registry, 
 
 
 def test_canonical_track_path_uses_reviewed_output_without_replacing_old_cache(registry, tmp_path, monkeypatch):
-    from measurements import common
+    from experiments.measurements import common
     target = tmp_path/'runs/tracks/te00.mp4/tracking.jsonl'
     target.parent.mkdir(parents=True)
     target.write_text('{"frame_idx":0,"tracks":[]}\n')

@@ -38,7 +38,7 @@ Per-frame counts are the number of distinct track ids in each frame of a trackin
 missing from the file count 0, and frames at or past the clip length are dropped and reported.
 Systems: the reference pipeline (002_naive), every validated Tetris configuration, every OTIF
 configuration, and LEAP, all read through common.output_path. LEAP's tracks are the corrected
-cache (wrapped interval starts removed, ends clipped; see evaluation/p140_otif_transform.py).
+cache (wrapped interval starts removed, ends clipped; see experiments/evaluation/p140_otif_transform.py).
 Objects LEAP holds on every exported frame are ambiguous (their wrapped part may overlap their
 real part, so both their true start and their true end are unknown) and kept whole as an upper
 bound; system `leap_ambiguous_dropped` removes them (the lower bound), with LEAP's throughput
@@ -86,9 +86,9 @@ from pathlib import Path
 import duckdb
 import numpy as np
 
-from evaluation.manifests import list_split_videos
-from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id
-from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, best_accuracy_bounds,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id
+from experiments.measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, best_accuracy_bounds,
                                  leap_intervals, load_leap_exports, load_unwrap, operating_points, output_path,
                                  print_operating_points, query_dicts, results_dir, rounded, system_configs,
                                  unwrap_totals, write_json)
@@ -148,7 +148,7 @@ BLOCKERS = {
         'libraries are not on ace.',
         "Whether LEAP's empty exports (diagnostics leap_unwrap.empty_export_videos) are genuine empty outputs or "
         'failed runs is unknown; diagnostics leap_excluding_empty_exports rescores LEAP without those clips.',
-        "LEAP's runtime is inference_total - decode per video (evaluation/p140_otif_transform.py), so it excludes "
+        "LEAP's runtime is inference_total - decode per video (experiments/evaluation/p140_otif_transform.py), so it excludes "
         'decoding and includes the JPEG writes of inference.py and the JSON writes of main.py.',
         "On B3D3 (jnc6), LEAP's reid stage takes 159.1 s of its 174.4 s inference total (/sota-results/jnc6/"
         "leap_jnc6.csv), against totals of 21.0-26.9 s on the other B3D cameras, so Tetris-over-LEAP ratios on "
@@ -828,7 +828,7 @@ def method(args: argparse.Namespace) -> dict:
                        median="the ground-truth variant's lower median count on every frame (uses the ground truth)",
                        use='datasets[*].baselines; a cell is trivial when the best of them meets its bound, and a '
                            "query is non-informative on a dataset when one is at least as accurate as the reference"),
-        throughput_and_hota='measurements.common.system_configs',
+        throughput_and_hota='experiments.measurements.common.system_configs',
         ground_truth=dict(
             path=('root dataset 003_groundtruth via common.output_path' if args.gt_root is None else
                   f'{args.gt_root}/<root dataset>/teNN.mp4/tracking.jsonl for datasets it fully covers, else the root '

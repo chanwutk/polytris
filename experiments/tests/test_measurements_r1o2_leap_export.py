@@ -7,14 +7,14 @@ import sys
 
 import pytest
 
-from evaluation.p140_otif_transform import unwrap_leap_frames
+from experiments.evaluation.p140_otif_transform import unwrap_leap_frames
 
 
 import numpy as np
 
 
 # The exporter wrapper the LEAP runs call, and the exporter LEAP's scored outputs were written with.
-EVAL = Path(__file__).resolve().parent.parent / 'baselines/tetris-leap/experiments/eval'
+EVAL = Path(__file__).resolve().parents[2] / 'baselines/tetris-leap/experiments/eval'
 SPEC = importlib.util.spec_from_file_location('leap_export', EVAL / 'export_tracks.py')
 EXPORT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(EXPORT)

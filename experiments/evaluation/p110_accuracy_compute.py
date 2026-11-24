@@ -17,7 +17,7 @@ from rich.progress import track
 sys.path.append('/polyis/modules/TrackEval')
 from trackeval.metrics import Count
 
-from evaluation.manifests import build_query_task_manifest
+from experiments.evaluation.manifests import build_query_task_manifest
 from tetris.io import cache
 from tetris.pareto import load_pareto_params, pareto_params_exist
 from tetris.trackeval.dataset import Dataset

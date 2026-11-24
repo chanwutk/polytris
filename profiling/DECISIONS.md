@@ -56,7 +56,7 @@ Its prune StageTiming has start == end and charged 0; its scores are classify's,
 Decode: the author decides later whether it counts (PLAN 1).  Evaluate: measurement, not system work.
 
 ### D12. p110's TrackEval call is now `run_trackeval()`, shared with the evaluate stage
-`evaluation/p110_accuracy_compute.py` behaves as before (full suite: 1484 passed; the 1 failure is a
+`experiments/evaluation/p110_accuracy_compute.py` behaves as before (full suite: 1484 passed; the 1 failure is a
 `measurements-results/` export missing on the profiling checkout, unrelated).
 
 ### D13. classify charges with a GPU synchronize after each batch
@@ -199,7 +199,7 @@ mounted from the main checkout (`weights/` is not synced to the profiling checko
   solve-skip (removed in 9691538) could return, binarizing as p022 does.
 
 ### D30. Equivalence rechecked on the current code (caldot1-y05 and jnc0, 3 videos each, 2026-11-21)
-`profiling.tools.compare_scripts` with its small grid and a 10 s solve limit.
+`experiments.tools.profiling.compare_scripts` with its small grid and a 10 s solve limit.
 - caldot1-y05 (va00-02): identical totals to the first check (7ae340d).
 - jnc0 (va05-07): every mismatch is explained.
   - Classifier scores: s=1 equal on all 3 videos; s=4 differs by at most 1 (out of 255) on 3-7 values per

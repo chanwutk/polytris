@@ -1,7 +1,7 @@
 import altair as alt
 import pytest
 
-from evaluation import colors
+from experiments.evaluation import colors
 
 
 @pytest.mark.parametrize('domain', [None, [], ['second', 'first']])

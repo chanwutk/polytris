@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import duckdb
 
-from measurements.common import decode_grids
-from measurements import r9o3_ilp_instance_sizes as sizes
+from experiments.measurements.common import decode_grids
+from experiments.measurements import r9o3_ilp_instance_sizes as sizes
 from tetris.io import cache
 
 

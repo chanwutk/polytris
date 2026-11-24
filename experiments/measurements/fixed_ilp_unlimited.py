@@ -11,8 +11,8 @@ import duckdb
 import gurobipy
 import numpy as np
 
-from measurements.common import decode_grids
-from measurements import r9o3_ilp_instance_sizes as sizes
+from experiments.measurements.common import decode_grids
+from experiments.measurements import r9o3_ilp_instance_sizes as sizes
 from tetris.io import cache
 from tetris.sample.ilp.c.gurobi import solve_ilp
 

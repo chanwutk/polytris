@@ -1,4 +1,4 @@
-"""TrackEval scoring shared by evaluation/p110 and profiling's evaluate stage, so both score tracks identically."""
+"""TrackEval scoring shared by experiments/evaluation/p110 and profiling's evaluate stage, so both score tracks identically."""
 
 import multiprocessing as mp
 import os

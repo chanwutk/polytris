@@ -12,7 +12,7 @@ import duckdb
 from PIL import Image
 import vl_convert as vlc
 
-from measurements.common import query_dicts
+from experiments.measurements.common import query_dicts
 
 
 ROOT = Path(__file__).resolve().parent.parent

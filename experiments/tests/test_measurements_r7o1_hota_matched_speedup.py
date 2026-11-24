@@ -6,10 +6,10 @@ import duckdb
 import pandas as pd
 import pytest
 
-from evaluation import p203_compare_stats as p203
-from evaluation import p204_ablation_stats as p204
-from measurements import common
-from measurements import r7o1_hota_matched_speedup as ms
+from experiments.evaluation import p203_compare_stats as p203
+from experiments.evaluation import p204_ablation_stats as p204
+from experiments.measurements import common
+from experiments.measurements import r7o1_hota_matched_speedup as ms
 
 
 # Header of LEAP's raw stat CSV.

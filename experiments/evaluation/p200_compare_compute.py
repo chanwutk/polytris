@@ -15,7 +15,7 @@ from tetris.utilities import (
     print_best_data_points,
     split_tradeoff_variants,
 )
-from evaluation.utilities import ColorScheme
+from experiments.evaluation.utilities import ColorScheme
 
 
 config = get_config()

@@ -9,14 +9,14 @@ reference detector on the same frame. Both cover every frame of every test video
   classifier  <video>/020_relevancy/<classifier>_<tile size>_<s>/score/runtime.jsonl for the operating
               point's classifier and tile size. The comparison uses sample rate s = 1, which classifies
               every frame; the runs at every other sample rate p020 executed show the run-to-run spread.
-              scripts/p020_exec_classify.py classifies 16 frames per batch and logs one line per batch
+              experiments/scripts/p020_exec_classify.py classifies 16 frames per batch and logs one line per batch
               (send, resize, diff, reshape, mask, inference, collect), then one line per video with read
               (video decoding) and retrieve (copy to CPU and hex encoding). A batch's time is split evenly
               over its frames, so per-frame values are batch averages.
   detector    <video>/002_naive/detection_runtime.jsonl, one line per frame: detect (the reference
               detector on the full frame, batch size 1) and read (video decoding).
 
-Op boundaries follow evaluation/p121_throughput_compute.py, which produces the reported extraction
+Op boundaries follow experiments/evaluation/p121_throughput_compute.py, which produces the reported extraction
 time: read and retrieve are excluded from the classifier, and video read/decode is excluded from
 the reference detector in both this comparison and p121.
 The headline ratio is the ratio of means, which equals the ratio of throughputs (frames over time).
@@ -41,7 +41,7 @@ import re
 import duckdb
 import numpy as np
 
-from measurements.common import (DATASET_LABELS, OP_LIST_PATHS, PRUNE_STAGE, assert_files_exist, fastest_tetris,
+from experiments.measurements.common import (DATASET_LABELS, OP_LIST_PATHS, PRUNE_STAGE, assert_files_exist, fastest_tetris,
                                  host_info, iso_utc, load_p121_per_op, load_test_tradeoff, load_tradeoff_points,
                                  query_dicts, results_dir, runtime_items_sql, write_json)
 from tetris.io import cache
@@ -59,7 +59,7 @@ REFERENCE_STAGES = {'001_preprocess_groundtruth_detection': 'detect', '002_prepr
 DETECTOR_STAGE = '001_preprocess_groundtruth_detection'
 # The RetinaNet configuration under configs/ that names the B3D detector's weights (tetris/models/retinanet_b3d.py).
 RETINANET_CONFIG = 'retinanet.json'
-# Frames per classifier batch (BATCH_SIZE in scripts/p020_exec_classify.py), checked against every log's line count.
+# Frames per classifier batch (BATCH_SIZE in experiments/scripts/p020_exec_classify.py), checked against every log's line count.
 CLASSIFIER_BATCH = 16
 # Ops p020 logs per batch, sorted: tile preparation (send, resize, diff, reshape, mask), inference, and collect.
 CLASSIFIER_BATCH_OPS = ['collect', 'diff', 'inference', 'mask', 'reshape', 'resize', 'send']
@@ -144,7 +144,7 @@ def runtime_files(con: duckdb.DuckDBPyConnection, manifests: dict[str, str]) -> 
     `manifests` maps each dataset to its throughput manifest (query_execution.csv); needs table chosen.
     """
     # A missing manifest would otherwise surface as a bare DuckDB error.
-    assert_files_exist(manifests.values(), 'throughput manifests (run evaluation/p120 --test)')
+    assert_files_exist(manifests.values(), 'throughput manifests (run experiments/evaluation/p120 --test)')
     # The manifest lists the reference detector's log of every test video; the classifier logs sit beside it.
     rows = query_dicts(con, """
         SELECT m.dataset, m.video, m.runtime_file, c.classifier, c.tilesize

@@ -2,19 +2,19 @@
 """R9.O1 matched timing (GPU): the relevance classifier and the reference detector on the same frames and GPU.
 
 measurements-results/r9o1_classifier_cost/ compares the two from pipeline logs written six weeks apart under
-concurrent multi-GPU load (REVISION.md finding 4). This job times both models in one process, on one idle GPU,
+concurrent multi-GPU load (experiments/REVISION.md finding 4). This job times both models in one process, on one idle GPU,
 pinned to that GPU's NUMA node, on the same decoded frames of the same test videos.
 
 Per dataset:
   operating point  the fastest Tetris test configuration within --loss of the reference pipeline's HOTA
-                   (common.fastest_tetris, as measurements/r9o1_classifier_cost.py chooses it); its classifier
+                   (common.fastest_tetris, as experiments/measurements/r9o1_classifier_cost.py chooses it); its classifier
                    and tile size are timed.
-  classifier       loaded and prepared as scripts/p020_exec_classify.py's classify_all does (load_model, the
+  classifier       loaded and prepared as experiments/scripts/p020_exec_classify.py's classify_all does (load_model, the
                    optimization its model_compilation.jsonl selects, ImageNet normalization, the always-relevant
                    mask, tile positions) and run through p020's own classify_batch on every frame, each paired
                    with its previous frame as p020 pairs them at sample rate 1.
   detector         tetris.models.detector.get_detector(dataset, batch_size=1), as
-                   preprocess/p002_preprocess_naive_detection.py loads the reference pipeline's detector.
+                   experiments/preprocess/p002_preprocess_naive_detection.py loads the reference pipeline's detector.
   runs             per video, in this order, on the same decoded frames (RUNS; a call's time is split evenly
                    over its frames):
                      decode             cv2 decoding of the whole video to BGR frames, one interval.
@@ -52,9 +52,9 @@ Writes measurements-results/r9o1_matched_timing/raw/ (never the cache):
                           and end, the launch's idle check, and the environment (placement included)
   host_compute_apps.<start ms>.jsonl.gz  the launcher's host-side samples (t_ms, apps on the GPU, apps on all
                           GPUs, 1-minute load average), one file per launch
-measurements/r9o1_matched_timing.py aggregates them.
+experiments/measurements/r9o1_matched_timing.py aggregates them.
 
-Run with measurements-gpu/r9o1_matched_timing.sh <staging dir> <physical GPU index> (see that file): it checks
+Run with experiments/measurements_gpu/r9o1_matched_timing.sh <staging dir> <physical GPU index> (see that file): it checks
 the GPU from the host, starts the host-side sampler, and runs this script in the polyis image with
 CUDA_VISIBLE_DEVICES=<gpu>, CUDA_DEVICE_ORDER=PCI_BUS_ID, and numactl bound to the GPU's NUMA node.
 """
@@ -82,12 +82,12 @@ import ultralytics
 
 import tetris.models.detector
 import tetris.models.retinanet_b3d
-from measurements.common import (DATASET_LABELS, fastest_tetris, file_record, host_info, iso_utc, load_test_tradeoff,
+from experiments.measurements.common import (DATASET_LABELS, fastest_tetris, file_record, host_info, iso_utc, load_test_tradeoff,
                                  load_tradeoff_points, results_dir, write_json)
-from measurements.r9o1_matched_timing import MANIFEST, RAW_DIR
+from experiments.measurements.r9o1_matched_timing import MANIFEST, RAW_DIR
 from tetris.io import cache, store
 from tetris.train.select_model_optimization import select_model_optimization
-from scripts.p020_exec_classify import BATCH_SIZE, classify_batch, load_model
+from experiments.scripts.p020_exec_classify import BATCH_SIZE, classify_batch, load_model
 
 
 # Reference detector frames run before timing, as p002 warms up.
@@ -238,7 +238,7 @@ def select_videos(videos: list[str], n: int) -> list[str]:
 
 
 def operating_point(dataset: str, loss: float) -> dict:
-    """The dataset's operating point as measurements/r9o1_classifier_cost.py chooses it, with its classifier and tile size."""
+    """The dataset's operating point as experiments/measurements/r9o1_classifier_cost.py chooses it, with its classifier and tile size."""
     # The test split's Tetris configurations and reference row.
     tetris, naive = load_test_tradeoff(dataset)
     # The fastest Tetris configuration within the bound, by the shared rule.
@@ -454,7 +454,7 @@ def parse_cpulist(text: str) -> list[int]:
 def numactl_show() -> dict:
     """numactl --show for this process (policy, membind, cpubind, ...), keyed by its field names."""
     # numactl is installed by the launcher; without it the job cannot say where its memory is bound.
-    assert shutil.which('numactl'), 'numactl not found: start the job with measurements-gpu/r9o1_matched_timing.sh'
+    assert shutil.which('numactl'), 'numactl not found: start the job with experiments/measurements_gpu/r9o1_matched_timing.sh'
     out = subprocess.run(['numactl', '--show'], capture_output=True, text=True, check=True).stdout
     # One 'name: value' line per field.
     return {k.strip(): v.strip() for k, v in (line.split(':', 1) for line in out.splitlines() if ':' in line)}
@@ -565,7 +565,7 @@ def main():
     manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else dict(datasets={})
     manifest['method'] = dict(
         operating_point=f'fastest Tetris test configuration with HOTA >= reference HOTA x (1 - {args.loss}) (common.fastest_tetris)',
-        classifier=('scripts/p020_exec_classify.py load_model, select_model_optimization, and classify_batch, prepared as '
+        classifier=('experiments/scripts/p020_exec_classify.py load_model, select_model_optimization, and classify_batch, prepared as '
                     'classify_all; every frame paired with its previous frame (sample rate 1)'),
         runs=RUN_DESCRIPTIONS,
         timing=('torch.cuda.synchronize() before and after every timed call; time.perf_counter_ns; a call\'s time split '

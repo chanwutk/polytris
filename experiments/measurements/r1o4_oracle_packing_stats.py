@@ -1,7 +1,7 @@
 """Object and polyomino statistics behind the ground-truth-tile packing experiment (r1o4_oracle_packing).
 
 Run in a container whose /polyis-cache is one dataset's oracle-packing scratch cache (bombe), after
-measurements-gpu/r1o4_oracle_packing.py finished for that dataset and stride. For each padding, it reads the
+experiments/measurements_gpu/r1o4_oracle_packing.py finished for that dataset and stride. For each padding, it reads the
 canvases p030 wrote (033_compressed_frames index maps and offset lookups) and the ground-truth boxes of the
 sampled frames, and writes measurements-results/r1o4_oracle_packing/sr<stride>/stats/<dataset>.json with:
   - objects: boxes per sampled frame, box size relative to the tile, how many tiles a box overlaps,
@@ -17,8 +17,8 @@ from pathlib import Path
 import duckdb
 import numpy as np
 
-from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
-from measurements.common import DATASET_LABELS
+from experiments.evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
+from experiments.measurements.common import DATASET_LABELS
 from tetris.io import cache
 from tetris.utilities import build_param_str
 

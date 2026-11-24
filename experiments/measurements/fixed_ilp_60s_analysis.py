@@ -6,7 +6,7 @@ from pathlib import Path
 import duckdb
 import numpy as np
 
-from measurements.common import decode_grids
+from experiments.measurements.common import decode_grids
 from tetris.io import cache
 
 

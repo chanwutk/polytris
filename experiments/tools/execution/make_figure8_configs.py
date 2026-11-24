@@ -3,9 +3,9 @@ Write one execution config per full-Tetris point of the paper's Figure 8 (fig:e2
 
 Reads measurements-results/execution-figure8/figure8_points.json (the "Tetris" rows of Figure 8's
 Vega-Lite data, with the throughput and HOTA the figure plots) and configs/detectors.yaml; writes
-execution/configs/figure8/<dataset>/<configuration name>.yaml.  Run in the polyis container:
+experiments/configs/execution/figure8/<dataset>/<configuration name>.yaml.  Run in the polyis container:
 
-  python -m execution.tools.make_figure8_configs
+  python -m experiments.tools.execution.make_figure8_configs
 """
 
 import json
@@ -13,12 +13,13 @@ from pathlib import Path
 
 import yaml
 
-from execution.tools.make_paper_configs import build_params
+from experiments.tools.execution.make_paper_configs import build_params
 from tetris.utilities import build_param_str
 
 ROOT = Path(__file__).resolve().parents[2]
+REPO = ROOT.parent
 POINTS = ROOT / 'measurements-results' / 'execution-figure8' / 'figure8_points.json'
-OUT = ROOT / 'execution' / 'configs' / 'figure8'
+OUT = ROOT / 'configs' / 'execution' / 'figure8'
 
 
 def params_of(point: dict) -> dict:
@@ -40,7 +41,7 @@ def config_name(p: dict) -> str:
 
 def main() -> None:
     points = json.loads(POINTS.read_text())['points']
-    detectors = yaml.safe_load((ROOT / 'configs' / 'detectors.yaml').read_text())
+    detectors = yaml.safe_load((REPO / 'configs' / 'detectors.yaml').read_text())
     written = 0
     for point in points:
         p = params_of(point)

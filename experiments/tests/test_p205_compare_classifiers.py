@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from evaluation import p205_compare_classifiers as p205
+from experiments.evaluation import p205_compare_classifiers as p205
 from tetris.io import cache
 
 TILE = 60
@@ -95,7 +95,7 @@ def test_tile_confusion_skips_masked_tiles_and_checks_the_mask_shape():
 
 
 def test_p024_uses_the_same_counts_on_track_rows():
-    from evaluation import p024_exec_classify_tradeoff as p024
+    from experiments.evaluation import p024_exec_classify_tradeoff as p024
     scores = np.array([[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
     result = p024.evaluate_classification_accuracy(scores, [[9, 5, 5, 50, 50], [3, 5, 65, 50, 110]], TILE, 0.5)
     assert {k: result[k] for k in ('tp', 'fp', 'fn', 'tn')} == {'tp': 1, 'fp': 2, 'fn': 1, 'tn': 2}

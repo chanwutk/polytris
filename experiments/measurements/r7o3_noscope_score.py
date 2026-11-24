@@ -2,7 +2,7 @@
 
 The replay charges each detector call the rate in the run's manifest. Every system in §7.3 is charged the reference
 detector's batched per-image time, as Tetris and OTIF batch detection, which Seiden's manifest for the same split
-records (measurements/r7o3_seiden_prepare.py). Each record is re-costed from its saved detector frames and measured
+records (experiments/measurements/r7o3_seiden_prepare.py). Each record is re-costed from its saved detector frames and measured
 frame-differencing and CNN time; the replay's unbatched charge and FPS are kept alongside.
 """
 
@@ -13,8 +13,8 @@ from pathlib import Path
 
 import numpy as np
 
-from evaluation.manifests import list_split_videos
-from measurements import r7o3_seiden_score as seiden
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements import r7o3_seiden_score as seiden
 
 
 def parse_args():

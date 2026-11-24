@@ -4,7 +4,7 @@
 # keyed by 'tl{value}' subdirectory, so runs are independent and never overwrite each other.
 #
 # Usage (from repo root, inside the container):
-#   bash scripts/p022t_exec_prune_timelimit.sh [--test] [--valid]
+#   bash experiments/scripts/p022t_exec_prune_timelimit.sh [--test] [--valid]
 #
 # By default (no flags) the valid videoset is used.
 
@@ -19,7 +19,7 @@ for tl in "${TIME_LIMITS[@]}"; do
     echo "========================================================"
     echo ">>> Time limit: ${tl}s"
     echo "========================================================"
-    python scripts/p022_exec_prune_polyominoes.py ${VIDEOSET_FLAGS} --time-limit "${tl}"
+    python experiments/scripts/p022_exec_prune_polyominoes.py ${VIDEOSET_FLAGS} --time-limit "${tl}"
 done
 
 echo ""

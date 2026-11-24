@@ -9,13 +9,13 @@ import duckdb
 import numpy as np
 import pytest
 
-import evaluation.p140_otif_transform as p140
-from measurements import common
-from measurements import r1o2_leap_otif_rerun as m
+import experiments.evaluation.p140_otif_transform as p140
+from experiments.measurements import common
+from experiments.measurements import r1o2_leap_otif_rerun as m
 
-# The host-side GPU script (standard library only), loaded from its file since measurements-gpu/ is not a package.
+# The host-side GPU script (standard library only), loaded from its file since experiments/measurements_gpu/ is not a package.
 _spec = importlib.util.spec_from_file_location(
-    'r1o2_leap_otif_rerun_gpu', Path(__file__).resolve().parent.parent / 'measurements-gpu' / 'r1o2_leap_otif_rerun.py')
+    'r1o2_leap_otif_rerun_gpu', Path(__file__).resolve().parent.parent / 'measurements_gpu' / 'r1o2_leap_otif_rerun.py')
 gpu_script = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gpu_script)
 
@@ -284,7 +284,7 @@ def test_results_name():
 
 
 def test_missing_raw_files_name_the_gpu_script(tmp_path):
-    with pytest.raises(AssertionError, match='measurements-gpu/r1o2_leap_otif_rerun.py'):
+    with pytest.raises(AssertionError, match='experiments/measurements_gpu/r1o2_leap_otif_rerun.py'):
         m.raw_paths(tmp_path, DATASET)
 
 

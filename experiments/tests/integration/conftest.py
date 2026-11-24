@@ -1,6 +1,6 @@
 """Integration tests run only with POLYIS_INTEGRATION=1: they need a GPU, a Gurobi license, and the detector weights.
 
-    POLYIS_INTEGRATION=1 pytest tests/integration -v -s
+    POLYIS_INTEGRATION=1 pytest experiments/tests/integration -v -s
 """
 
 import os

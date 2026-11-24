@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from evaluation.p203_compare_stats import (
+from experiments.evaluation.p203_compare_stats import (
     DEFAULT_THRESHOLDS,
     DETAIL_THRESHOLDS,
     add_loss_pct,

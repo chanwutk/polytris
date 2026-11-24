@@ -21,8 +21,8 @@ Timing: torch.cuda.synchronize() before and after every call, time.perf_counter_
 
 Writes measurements-results/r1o3_resolution_scaling/detector_timing.jsonl (one line per detector and size) and
 manifest.json. Run on bombe with
-  measurements-gpu/bombe_container.sh <GPU> /data/cwkt/data/bombe-revision/scratch/r1o3_resolution \
-    'python measurements-gpu/r1o3_resolution_scaling.py'
+  experiments/measurements_gpu/bombe_container.sh <GPU> /data/cwkt/data/bombe-revision/scratch/r1o3_resolution \
+    'python experiments/measurements_gpu/r1o3_resolution_scaling.py'
 """
 import argparse
 import json
@@ -36,10 +36,10 @@ from detectron2.data import transforms as T
 
 import tetris.models.detector
 import tetris.models.retinanet_b3d
-from measurements.common import DATASET_LABELS, RESULTS_ROOT, host_info, iso_utc, results_dir, write_json
+from experiments.measurements.common import DATASET_LABELS, RESULTS_ROOT, host_info, iso_utc, results_dir, write_json
 from tetris.io import cache, store
 from tetris.train.select_model_optimization import select_model_optimization
-from scripts.p020_exec_classify import classify_batch, load_model
+from experiments.scripts.p020_exec_classify import classify_batch, load_model
 
 
 # One dataset per distinct detector checkpoint (the four B3D datasets share one RetinaNet).

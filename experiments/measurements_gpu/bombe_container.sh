@@ -1,6 +1,6 @@
 #!/bin/bash
-# Run one command in a throwaway polyis container on one idle bombe GPU (see measurements-gpu/BOMBE.md).
-# Usage: measurements-gpu/bombe_container.sh <physical GPU 0-6> <scratch dir> '<command>'
+# Run one command in a throwaway polyis container on one idle bombe GPU (see experiments/measurements_gpu/BOMBE.md).
+# Usage: experiments/measurements_gpu/bombe_container.sh <physical GPU 0-6> <scratch dir> '<command>'
 #   <scratch dir> must be under /data/cwkt/data/bombe-revision/scratch/. It is mounted at /scratch; <scratch>/polyis-cache is
 #   /polyis-cache and <scratch>/global.yaml (a copy of configs/global.yaml, created when missing) is CONFIG.
 #   Inside, the GPU is the only one visible (cuda:0). The command runs with bash -c under taskset on the CPUs of the

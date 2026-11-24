@@ -18,7 +18,7 @@ The charge is the reference detector's per-image time when it runs batched, as i
 frame's resolution, so this is the batched cost of one frame on the same detector and GPU. The unbatched per-frame time
 of the reference pipeline (002_naive/detection_runtime.jsonl) is recorded alongside for reference.
 
-Run inside ace's polyis container: python measurements/r7o3_seiden_prepare.py --datasets caldot1-y05
+Run inside ace's polyis container: python experiments/measurements/r7o3_seiden_prepare.py --datasets caldot1-y05
 """
 import argparse
 import csv
@@ -28,7 +28,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from evaluation.manifests import list_split_videos
+from experiments.evaluation.manifests import list_split_videos
 from tetris.io import cache, store
 
 

@@ -2,7 +2,7 @@
 """R1.O2 and R9.O2 on bombe: rerun LEAP's inference on our test clips, and time LEAP's preparation. Host-side.
 
 Runs on the bombe host (python3 standard library only) from the shared checkout, and starts every GPU job through
-measurements-gpu/bombe_container.sh (idle-GPU check, NUMA pinning, GPU sampling, contamination flag) with
+experiments/measurements_gpu/bombe_container.sh (idle-GPU check, NUMA pinning, GPU sampling, contamination flag) with
 BOMBE_IMAGE set to the LEAP image. Without --run it prints what it would do. Actions:
 
   setup   Build the LEAP image and the run inputs under SCRATCH (nothing outside it is written):
@@ -59,7 +59,7 @@ BOMBE_IMAGE set to the LEAP image. Without --run it prints what it would do. Act
           the run (the launcher's <run>.gpus.csv) as <record>_gpus.jsonl.gz next to its samples, so the aggregation
           can report what else ran on the host's GPUs (GPU 4 shares NUMA node 1, and GPUs 5 and 6 a PCIe switch).
 
-raw/ is measurements-results/r1o2_leap_otif_rerun/raw/ in the shared checkout; measurements/r1o2_leap_otif_rerun.py
+raw/ is measurements-results/r1o2_leap_otif_rerun/raw/ in the shared checkout; experiments/measurements/r1o2_leap_otif_rerun.py
 aggregates it.
 """
 import argparse
@@ -80,9 +80,9 @@ ROOT = Path('/data/cwkt/data/bombe-revision')
 SCRATCH = ROOT / 'scratch' / 'r1o2_leap_otif_rerun'
 TETRIS = Path('/work/cwkt/projects/tetris')
 RAW = TETRIS / 'measurements-results' / 'r1o2_leap_otif_rerun' / 'raw'
-LAUNCHER = TETRIS / 'measurements-gpu' / 'bombe_container.sh'
+LAUNCHER = TETRIS / 'experiments/measurements_gpu' / 'bombe_container.sh'
 # LEAP runner, adaptations, and exporter wrapper from the tetris-leap submodule (baselines/tetris-leap). The
-# measurements-gpu originals stay unchanged because completed runs record their hashes.
+# experiments/measurements_gpu originals stay unchanged because completed runs record their hashes.
 LEAP_TOOLS = '/polyis/baselines/tetris-leap/experiments'
 RUNNER = f'{LEAP_TOOLS}/run/run_leap.py'
 # The exporter that wrote the scored /sota-results/<dataset>/leap/<clip>.json files.

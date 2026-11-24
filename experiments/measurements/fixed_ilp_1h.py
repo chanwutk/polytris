@@ -6,7 +6,7 @@ its selection is from optimal. Uses the container's default cache, which reprodu
 import json
 from pathlib import Path
 
-from measurements import fixed_ilp_unlimited as benchmark
+from experiments.measurements import fixed_ilp_unlimited as benchmark
 
 
 SIXTY_SECOND_RESULTS = Path('/polyis/measurements-results/fixed_ilp_60s/results.jsonl')

@@ -4,13 +4,13 @@
 Every component is one measurement added as is: a sum of runtimes over work units, or one measured run. All times
 include I/O. The places that leave work out are marked EXCLUDED with their reason. Nothing is subtracted.
 
-Tetris, from measurements/r9o2_preparation_cost.py (cache runtimes and the serial re-runs on bombe),
-measurements/r9o2_preparation_overheads.py, measurements/r9o2_packing_serial.py, and, for CalDoT2's 10 clips whose sweep
-outputs were cleared on ace, measurements/r9o2_caldot2_resweep_units.py (re-swept and timed on bombe):
+Tetris, from experiments/measurements/r9o2_preparation_cost.py (cache runtimes and the serial re-runs on bombe),
+experiments/measurements/r9o2_preparation_overheads.py, experiments/measurements/r9o2_packing_serial.py, and, for CalDoT2's 10 clips whose sweep
+outputs were cleared on ace, experiments/measurements/r9o2_caldot2_resweep_units.py (re-swept and timed on bombe):
   training    p011 reference detection, p012 training data, p013 pruning, p014 classifier training,
               p015 classifier benchmark, p016 mistrack profiling, detector loading
   validation  reference outputs (002), sweep p020-p060, p110 scoring, p130/p135 tables, detector loading
-OTIF and LEAP, from measurements-gpu/r1o2_leap_otif_rerun.py prep (LEAP on Amsterdam and CalDoT from its
+OTIF and LEAP, from experiments/measurements_gpu/r1o2_leap_otif_rerun.py prep (LEAP on Amsterdam and CalDoT from its
 matched-detector reruns, measurements-results/r1o2_leap_matched): the GNU time wall clock of each preparation step.
 
 Writes measurements-results/r9o2_preparation_total/preparation_total.json.
@@ -22,8 +22,8 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
-from measurements.common import DATASET_LABELS, RESULTS_ROOT, results_dir, write_json
-from measurements.r1o2_leap_otif_rerun import RAW_DIR, preparation
+from experiments.measurements.common import DATASET_LABELS, RESULTS_ROOT, results_dir, write_json
+from experiments.measurements.r1o2_leap_otif_rerun import RAW_DIR, preparation
 
 
 def parse_args():

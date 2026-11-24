@@ -14,10 +14,10 @@ import cv2
 import numpy as np
 import pytest
 
-from evaluation.p121_throughput_compute import (QUERY_DATA_ACCESSORS, aggregate_per_op, filter_excluded_runtime_ops,
+from experiments.evaluation.p121_throughput_compute import (QUERY_DATA_ACCESSORS, aggregate_per_op, filter_excluded_runtime_ops,
                                                 parse_runtime_file)
-from measurements import r1o3_clean_extraction_timing as ct
-from measurements.common import OP_LIST_PATHS
+from experiments.measurements import r1o3_clean_extraction_timing as ct
+from experiments.measurements.common import OP_LIST_PATHS
 
 
 # The GPU job, as the aggregator loads it.
@@ -338,7 +338,7 @@ def op_ratio(a: tuple[str, str], b: tuple[str, str], stage: str, op: str, videos
 
 def test_stage_tables_match_p120():
     # Every stage the GPU job runs has p121's op-list path, and the stage names are p120's.
-    from evaluation.p121_throughput_compute import STAGE_TO_SCRIPT_PATH
+    from experiments.evaluation.p121_throughput_compute import STAGE_TO_SCRIPT_PATH
     assert set(gpu.STAGES) <= set(OP_LIST_PATHS) and set(gpu.STAGES) <= set(STAGE_TO_SCRIPT_PATH)
     assert [s[0] for s in gpu.TETRIS_STAGES] == ['020_exec_classify', '022_exec_prune_polyominoes', '030_exec_compress',
                                                  '040_exec_detect', '050_exec_uncompress', '060_exec_track']

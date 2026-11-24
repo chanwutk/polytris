@@ -1,5 +1,5 @@
 """
-Shared setup for the scripts-vs-pipelines integration tests (tests/integration).
+Shared setup for the scripts-vs-pipelines integration tests (experiments/tests/integration).
 
 Each test builds a scratch tree from the committed fixtures (tests/data/equivalence: short clips and each dataset's
 small trained artifacts) and never touches /polyis-data or /polyis-cache:
@@ -21,7 +21,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[3]
 FIXTURES = REPO / 'tests' / 'data' / 'equivalence'
 REFERENCE_FILE = '002_naive/tracking.jsonl'
 # The scripts' config keys for each grid dimension (profiling's sweep config names).
@@ -106,14 +106,14 @@ def scripts(tree: Tree, *names: str, **extra: str) -> None:
 def reference(tree: Tree) -> None:
     """The reference tracks (full-frame detector and tracker) the profiling sweep and HOTA score against."""
     flag = f'--{tree.split}'
-    tree.run('preprocess/p002_preprocess_naive_detection.py', flag)
-    tree.run('preprocess/p002_preprocess_naive_tracking.py', flag)
+    tree.run('experiments/preprocess/p002_preprocess_naive_detection.py', flag)
+    tree.run('experiments/preprocess/p002_preprocess_naive_tracking.py', flag)
 
 
 def mirror_p022(tree: Tree, pipeline_execution: Path | None, report: Path) -> None:
-    """tests/integration/mirror_p022.py: p022's solve per grid combination, one at a time (one Gurobi session);
+    """experiments/tests/integration/mirror_p022.py: p022's solve per grid combination, one at a time (one Gurobi session);
     with pipeline_execution, a pair where either side's ILP hit its limit takes the pipeline's pruned grid."""
-    args = ['-m', 'tests.integration.mirror_p022', '--split', tree.split, '--videos', *tree.videos,
+    args = ['-m', 'experiments.tests.integration.mirror_p022', '--split', tree.split, '--videos', *tree.videos,
             '--report', str(report)]
     if pipeline_execution is not None:
         args += ['--pipeline-execution', str(pipeline_execution)]

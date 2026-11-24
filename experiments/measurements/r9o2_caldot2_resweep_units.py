@@ -1,12 +1,12 @@
 #!/usr/local/bin/python
 """R9.O2: per-stage process time of CalDoT2's re-swept validation clips va00-va09, by the cost report's rules.
 
-CalDoT2's sweep outputs on va00-va09 were cleared on ace on 2026-05-29, so measurements/r9o2_preparation_cost.py times
-its sweep on the other 50 clips and scales by 60/50. measurements-gpu/r9o2_caldot2_resweep_bombe.sh re-runs the sweep
+CalDoT2's sweep outputs on va00-va09 were cleared on ace on 2026-05-29, so experiments/measurements/r9o2_preparation_cost.py times
+its sweep on the other 50 clips and scales by 60/50. experiments/measurements_gpu/r9o2_caldot2_resweep_bombe.sh re-runs the sweep
 on those 10 clips on bombe; this script, run in the same bombe container (its /polyis-cache is that scratch cache),
 times them with the cost report's own functions: p120's validation manifest, load_runtime_ops, load_units (each unit's
 span from file timestamps, chained to the previous video of the same task), and stage_summary (shared outputs counted
-once). Videos are ranked among all 60 validation clips, as on ace. measurements/r9o2_preparation_total.py adds these
+once). Videos are ranked among all 60 validation clips, as on ace. experiments/measurements/r9o2_preparation_total.py adds these
 stages to the 50 clips' instead of scaling.
 
 Writes measurements-results/r9o2_caldot2_resweep_units/units.json.
@@ -17,9 +17,9 @@ import os
 import duckdb
 import pandas as pd
 
-from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest
-from measurements.common import host_info, query_dicts, results_dir, write_json
-from measurements.r9o2_preparation_cost import (STAGE_BUILDERS, dropped_ops, load_manifest, load_runtime_ops,
+from experiments.evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest
+from experiments.measurements.common import host_info, query_dicts, results_dir, write_json
+from experiments.measurements.r9o2_preparation_cost import (STAGE_BUILDERS, dropped_ops, load_manifest, load_runtime_ops,
                                                 load_units, stage_summary)
 
 

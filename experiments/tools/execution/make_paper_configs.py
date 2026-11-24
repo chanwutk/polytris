@@ -3,9 +3,9 @@ Write one execution config per operating point the paper reports (the fastest Te
 within 5% and within 10% HOTA loss of the reference, per dataset), as chosen by R1.O3's clean timing job.
 
 Reads measurements-results/r1o3_clean_extraction_timing/{throughput.json, raw/plan.json} and
-configs/detectors.yaml; writes execution/configs/paper/<dataset>-<loss>.yaml.  Run in the polyis container:
+configs/detectors.yaml; writes experiments/configs/execution/paper/<dataset>-<loss>.yaml.  Run in the polyis container:
 
-  python -m execution.tools.make_paper_configs
+  python -m experiments.tools.execution.make_paper_configs
 """
 
 import json
@@ -17,8 +17,9 @@ import yaml
 from execution.config import DETECTOR_FIELDS
 
 ROOT = Path(__file__).resolve().parents[2]
+REPO = ROOT.parent
 R1O3 = ROOT / 'measurements-results' / 'r1o3_clean_extraction_timing'
-OUT = ROOT / 'execution' / 'configs' / 'paper'
+OUT = ROOT / 'configs' / 'execution' / 'paper'
 CACHE = '/polyis-cache'
 RETINANET_CONFIG = '/polyis/configs/retinanet.json'
 
@@ -76,7 +77,7 @@ def build_params(dataset: str, p: dict, detectors: dict) -> dict:
 def main() -> None:
     throughput = json.loads((R1O3 / 'throughput.json').read_text())
     labels = {v['label']: k for k, v in json.loads((R1O3 / 'raw' / 'plan.json').read_text())['datasets'].items()}
-    detectors = yaml.safe_load((ROOT / 'configs' / 'detectors.yaml').read_text())
+    detectors = yaml.safe_load((REPO / 'configs' / 'detectors.yaml').read_text())
     OUT.mkdir(parents=True, exist_ok=True)
     for label, levels in throughput['datasets'].items():
         dataset = labels[label]

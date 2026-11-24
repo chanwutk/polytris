@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Item 1: rescore every dataset with the TrackEval scoring window padded, to compare with the current results.
 #
-# Run on ace (host), inside tmux, after the B3D human-GT phases:  measurements-gpu/scoring_window_compare.sh
+# Run on ace (host), inside tmux, after the B3D human-GT phases:  experiments/measurements_gpu/scoring_window_compare.sh
 # The current (human ground truth, unpadded) outputs are kept as <path>.human-gt; the padded results replace them in place.
 # Stops at the first failure; each stage writes a done marker, so a rerun resumes after the last finished stage.
 set -euo pipefail
@@ -32,15 +32,15 @@ for d in "${ALL[@]}"; do
   for s in otif leap; do SNAPSHOT+=("$CACHE/SOTA/$s/$d/accuracy" "$CACHE/SOTA/$s/$d/tradeoff.csv"); done
 done
 
-stage C01_snapshot plain measurements/snapshot_outputs.py --suffix .human-gt "${SNAPSHOT[@]}"
-stage C02_p110 padded evaluation/p110_accuracy_compute.py --test
-stage C03_p111 padded evaluation/p111_accuracy_aggregate.py --test
-stage C04_p130 padded evaluation/p130_tradeoff_compute.py --test
-stage C05_p141 padded evaluation/p141_otif_accuracy.py --test
-stage C06_p142 padded evaluation/p142_otif_tradeoff.py --test
+stage C01_snapshot plain experiments/measurements/snapshot_outputs.py --suffix .human-gt "${SNAPSHOT[@]}"
+stage C02_p110 padded experiments/evaluation/p110_accuracy_compute.py --test
+stage C03_p111 padded experiments/evaluation/p111_accuracy_aggregate.py --test
+stage C04_p130 padded experiments/evaluation/p130_tradeoff_compute.py --test
+stage C05_p141 padded experiments/evaluation/p141_otif_accuracy.py --test
+stage C06_p142 padded experiments/evaluation/p142_otif_tradeoff.py --test
 # Gates and per-dataset report against the unpadded snapshot (no tables are expected to stay byte-identical).
 echo '{}' > "$OUT/no_untouched.json"
-stage C07_report plain measurements/b3d_human_gt_report.py --datasets "${ALL[@]}" --suffix .human-gt \
+stage C07_report plain experiments/measurements/b3d_human_gt_report.py --datasets "${ALL[@]}" --suffix .human-gt \
   --untouched-checksums "$COUT/no_untouched.json" --output "$COUT/report.json"
 # Matched comparisons (5%/10% points, prior matches, headline macros) on the padded tables, in ace's paper build only.
 stage C08_render plain "$PAPER/scripts/render_revised_hota.py" --alternative

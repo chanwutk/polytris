@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 """R1.O1: TrackEval's scoring window, and HOTA re-scored on full clips, for every system on every dataset.
 
-Mechanism (read on the vendored TrackEval, reproduced by tests/test_measurements_r1o1_hota_scoring_window.py)
+Mechanism (read on the vendored TrackEval, reproduced by experiments/tests/test_measurements_r1o1_hota_scoring_window.py)
   tetris/trackeval/dataset.py (_load_raw_file) gives each file its own number of time steps, its largest
   frame_idx + 1 (lines 58-67), and builds that file's per-frame lists only that far (line 76).
   TrackEval's _base_dataset.get_raw_seq_data keeps the ground truth's num_timesteps (line 94) and computes
@@ -67,8 +67,8 @@ from pathlib import Path
 
 import duckdb
 
-from evaluation.manifests import list_split_videos
-from measurements.common import (DATASET_LABELS, LOOSEST_ALPHA, PRIOR_SYSTEMS, TRACK_COLUMNS, accuracy_matched,
+from experiments.evaluation.manifests import list_split_videos
+from experiments.measurements.common import (DATASET_LABELS, LOOSEST_ALPHA, PRIOR_SYSTEMS, TRACK_COLUMNS, accuracy_matched,
                                  arrange_matched, assert_files_exist, bound_specs, choose, load_test_tradeoff,
                                  matched_stats, metric_summary, operating_points, output_path, query_dicts, results_dir,
                                  rounded, system_configs, trackeval_rerun, unscored_boxes, write_json)
