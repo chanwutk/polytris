@@ -12,7 +12,7 @@ import pytest
 from execution import frames, operators, stages
 from execution.stages import Classified, Decoded, Detected
 from tetris.utilities import save_tracking_results
-from tests.execution.test_stages import (FakeCache, N_FRAMES, TS, make_cfg, prefix, score_rows, synthetic_scores, video)  # noqa: F401  (fixtures included)
+from tests.execution.test_stages import (H, W, FakeCache, N_FRAMES, TS, make_cfg, prefix, score_rows, synthetic_scores, video)  # noqa: F401  (fixtures included)
 
 
 def test_constants_match_the_scripts(monkeypatch):
