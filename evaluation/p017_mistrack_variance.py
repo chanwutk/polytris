@@ -4,8 +4,8 @@ import os
 import json
 import numpy as np
 
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 CONFIG = get_config()
 DATASETS = CONFIG['EXEC']['DATASETS']

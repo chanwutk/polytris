@@ -1,0 +1,18 @@
+{
+  "config": "profiling/configs/jnc2.yaml",
+  "dataset": "jnc2",
+  "videoset": "valid",
+  "videos": 5,
+  "configurations": 432,
+  "records": 2160,
+  "wall_s": 20257.811552762985,
+  "reduce_search_space": true,
+  "frames": 4691,
+  "video_frames": {
+    "va05.mp4": 938,
+    "va06.mp4": 938,
+    "va07.mp4": 938,
+    "va14.mp4": 939,
+    "va17.mp4": 938
+  }
+}

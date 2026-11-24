@@ -17,7 +17,7 @@ import os
 import duckdb
 import pandas as pd
 
-from evaluation.manifests import build_polytris_variant_manifest, build_split_video_manifest
+from evaluation.manifests import build_tetris_variant_manifest, build_split_video_manifest
 from measurements.common import host_info, query_dicts, results_dir, write_json
 from measurements.r9o2_preparation_cost import (STAGE_BUILDERS, dropped_ops, load_manifest, load_runtime_ops,
                                                 load_units, stage_summary)
@@ -36,7 +36,7 @@ def main():
     # Every validation configuration on every clip, as p120 lists them, with which runtime files exist here.
     # split_manifest also lists the reference pipeline's files, which this scratch cache does not hold.
     configs = build_split_video_manifest(datasets=[args.dataset], videosets=['valid']).merge(
-        build_polytris_variant_manifest(), how='cross')
+        build_tetris_variant_manifest(), how='cross')
     manifest = pd.concat([build(configs) for build in STAGE_BUILDERS], ignore_index=True)
     manifest['exists'] = manifest['runtime_file'].map(os.path.exists)
     load_manifest(con, 'valid_manifest', manifest)

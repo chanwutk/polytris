@@ -3,7 +3,7 @@
 
 # Remote host configuration
 remote:
-  host: ace                               # SSH alias (defined in ~/.ssh/config)
+  host: ace                               # SSH alias; REMOTE_HOST in .env overrides it
   path: /work/cwkt/projects/tetris        # Destination path on remote machine
 
 # Local source directory (defaults to current directory if not specified)
@@ -44,7 +44,7 @@ includes:
     - "ablation"
     - "gcp"
     - "lib"
-    - "polyis"
+    - "tetris"
     - "preprocess"
     - "scripts"
     - "tests"
@@ -93,6 +93,8 @@ excludes:
   - "venv"
   - ".git/**"
   - ".git"
+  - ".claude/worktrees/"
+  - ".claude/worktrees/**"
 
 # Rsync options
 # Common options:

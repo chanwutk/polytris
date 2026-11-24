@@ -14,13 +14,16 @@ import multiprocessing as mp
 #   1. $GUROBI_HOME  — standalone Gurobi installation (e.g. /opt/gurobi1100/linux64).
 #      Provides the official gurobi_c.h and libgurobi*.so.
 #   2. gurobipy wheel — libgurobi*.so bundled under <gurobipy>/.libs; use the
-#      hand-written header at polyis/sample/ilp/c/gurobi_c.h as a fallback.
+#      hand-written header at tetris/sample/ilp/c/gurobi_c.h as a fallback.
 _GUROBI_HOME = os.environ.get("GUROBI_HOME", "")
 if _GUROBI_HOME:
     # Official standalone install: header and library live under $GUROBI_HOME.
     _GUROBI_INCLUDE_DIR = os.path.join(_GUROBI_HOME, "include")
     _GUROBI_LIB_DIR     = os.path.join(_GUROBI_HOME, "lib")
-    _gurobi_libs = glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi[0-9]*.so"))
+    # The full library only: the pattern also matches libgurobi<ver>_light.so (a size-limited build that cannot
+    # start a WLS session), and glob order is arbitrary, so filter and sort rather than take whichever comes first.
+    _gurobi_libs = sorted(p for p in glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi[0-9]*.so"))
+                          if not p.endswith("_light.so"))
     if not _gurobi_libs:
         raise RuntimeError(
             f"No libgurobi[0-9]*.so found in {_GUROBI_LIB_DIR}. "
@@ -29,7 +32,7 @@ if _GUROBI_HOME:
 # else:
 #     # Fallback: resolve library from the installed gurobipy wheel.
 #     import gurobipy as _gurobipy_mod
-#     _GUROBI_INCLUDE_DIR = "polyis/sample/ilp/c"  # hand-written gurobi_c.h
+#     _GUROBI_INCLUDE_DIR = "tetris/sample/ilp/c"  # hand-written gurobi_c.h
 #     _gurobipy_file: str = _gurobipy_mod.__file__ or ""
 #     _GUROBI_LIB_DIR     = os.path.join(os.path.dirname(_gurobipy_file), ".libs")
 #     _gurobi_libs = glob.glob(os.path.join(_GUROBI_LIB_DIR, "libgurobi*.so"))
@@ -50,76 +53,76 @@ MACROS: list[tuple[str, str | None]] = [("NPY_NO_DEPRECATED_API", "NPY_2_3_API_V
 
 extensions = [
     Extension(
-        "polyis.pack.cython.utilities",
-        ["polyis/pack/cython/utilities.pyx"],
+        "tetris.pack.cython.utilities",
+        ["tetris/pack/cython/utilities.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.pack.group_tiles",
+        "tetris.pack.group_tiles",
         [
-            "polyis/pack/group_tiles.pyx",
-            "polyis/pack/c/utilities.c",
-            "polyis/pack/c/group_tiles.c",
+            "tetris/pack/group_tiles.pyx",
+            "tetris/pack/c/utilities.c",
+            "tetris/pack/c/group_tiles.c",
         ],
-        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        include_dirs=["tetris/cbinpack", numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.adapters",
+        "tetris.pack.adapters",
         [
-            "polyis/pack/adapters.pyx",
-            "polyis/pack/c/utilities.c",
+            "tetris/pack/adapters.pyx",
+            "tetris/pack/c/utilities.c",
         ],
-        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        include_dirs=["tetris/cbinpack", numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.pack",
+        "tetris.pack.pack",
         [
-            "polyis/pack/pack.pyx",
-            "polyis/pack/c/utilities.c",
-            "polyis/pack/c/pack.c",
+            "tetris/pack/pack.pyx",
+            "tetris/pack/c/utilities.c",
+            "tetris/pack/c/pack.c",
         ],
-        include_dirs=["polyis/cbinpack", numpy.get_include()],
+        include_dirs=["tetris/cbinpack", numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS + ["-std=c11"],
     ),
     Extension(
-        "polyis.pack.cython.adapters",
-        ["polyis/pack/cython/adapters.pyx"],
+        "tetris.pack.cython.adapters",
+        ["tetris/pack/cython/adapters.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.pack.cython.pack_append",
-        ["polyis/pack/cython/pack_append.pyx"],
+        "tetris.pack.cython.pack_append",
+        ["tetris/pack/cython/pack_append.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.pack.cython.group_tiles",
-        ["polyis/pack/cython/group_tiles.pyx"],
+        "tetris.pack.cython.group_tiles",
+        ["tetris/pack/cython/group_tiles.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.sort.cython.kalman_filter",
-        ["polyis/tracker/sort/cython/kalman_filter.pyx"],
+        "tetris.tracker.sort.cython.kalman_filter",
+        ["tetris/tracker/sort/cython/kalman_filter.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.sort.cython.sort",
+        "tetris.tracker.sort.cython.sort",
         [
-            "polyis/tracker/sort/cython/sort.pyx",
+            "tetris/tracker/sort/cython/sort.pyx",
             "modules/lap/_lapjv_cpp/lapjv.cpp",
         ],
         include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
@@ -128,16 +131,16 @@ extensions = [
         language="c++",
     ),
     Extension(
-        "polyis.tracker.ocsort.cython.kalman_filter",
-        ["polyis/tracker/ocsort/cython/kalman_filter.pyx"],
+        "tetris.tracker.ocsort.cython.kalman_filter",
+        ["tetris/tracker/ocsort/cython/kalman_filter.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.ocsort.cython.association",
+        "tetris.tracker.ocsort.cython.association",
         [
-            "polyis/tracker/ocsort/cython/association.pyx",
+            "tetris/tracker/ocsort/cython/association.pyx",
             "modules/lap/_lapjv_cpp/lapjv.cpp",
         ],
         include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
@@ -146,9 +149,9 @@ extensions = [
         language="c++",
     ),
     Extension(
-        "polyis.tracker.ocsort.cython.ocsort",
+        "tetris.tracker.ocsort.cython.ocsort",
         [
-            "polyis/tracker/ocsort/cython/ocsort.pyx",
+            "tetris/tracker/ocsort/cython/ocsort.pyx",
         ],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
@@ -156,23 +159,23 @@ extensions = [
         language="c++",
     ),
     Extension(
-        "polyis.tracker.bytetrack.cython_bbox",
-        ["polyis/tracker/bytetrack/cython_bbox.pyx"],
+        "tetris.tracker.bytetrack.cython_bbox",
+        ["tetris/tracker/bytetrack/cython_bbox.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.bytetrack.cython.kalman_filter",
-        ["polyis/tracker/bytetrack/cython/kalman_filter.pyx"],
+        "tetris.tracker.bytetrack.cython.kalman_filter",
+        ["tetris/tracker/bytetrack/cython/kalman_filter.pyx"],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
         extra_compile_args=ARGS,
     ),
     Extension(
-        "polyis.tracker.bytetrack.cython.matching",
+        "tetris.tracker.bytetrack.cython.matching",
         [
-            "polyis/tracker/bytetrack/cython/matching.pyx",
+            "tetris/tracker/bytetrack/cython/matching.pyx",
             "modules/lap/_lapjv_cpp/lapjv.cpp",
         ],
         include_dirs=["modules/lap/_lapjv_cpp", numpy.get_include()],
@@ -181,9 +184,9 @@ extensions = [
         language="c++",
     ),
     Extension(
-        "polyis.tracker.bytetrack.cython.bytetrack",
+        "tetris.tracker.bytetrack.cython.bytetrack",
         [
-            "polyis/tracker/bytetrack/cython/bytetrack.pyx",
+            "tetris/tracker/bytetrack/cython/bytetrack.pyx",
         ],
         include_dirs=[numpy.get_include()],
         define_macros=MACROS,
@@ -192,12 +195,12 @@ extensions = [
     ),
     # ILP solver: Cython wrapper around the Gurobi C API.
     # _GUROBI_INCLUDE_DIR points to the official $GUROBI_HOME/include (with the
-    # real gurobi_c.h) or to polyis/sample/ilp/c (hand-written header fallback).
+    # real gurobi_c.h) or to tetris/sample/ilp/c (hand-written header fallback).
     # The RPATH bakes _GUROBI_LIB_DIR into the .so so the extension resolves
     # libgurobi*.so at import time without requiring LD_LIBRARY_PATH.
     Extension(
-        "polyis.sample.ilp.c.gurobi",
-        ["polyis/sample/ilp/c/gurobi.pyx"],
+        "tetris.sample.ilp.c.gurobi",
+        ["tetris/sample/ilp/c/gurobi.pyx"],
         include_dirs=[_GUROBI_INCLUDE_DIR, numpy.get_include()],
         library_dirs=[_GUROBI_LIB_DIR],
         libraries=[_GUROBI_LIB_NAME],
@@ -216,17 +219,17 @@ class CleanCommand(Command):
     
     # Patterns to clean - can be overridden in subclasses
     c_patterns = [
-        'polyis/pack/cython/**/*.c',
-        'polyis/pack/cython/*.c',
-        'polyis/pack/*.c',
+        'tetris/pack/cython/**/*.c',
+        'tetris/pack/cython/*.c',
+        'tetris/pack/*.c',
     ]
     so_patterns = [
-        'polyis/pack/**/*.so',
-        'polyis/pack/*.so',
+        'tetris/pack/**/*.so',
+        'tetris/pack/*.so',
     ]
     html_patterns = [
-        'polyis/pack/**/*.html',
-        'polyis/pack/*.html',
+        'tetris/pack/**/*.html',
+        'tetris/pack/*.html',
     ]
     
     def initialize_options(self):
@@ -279,7 +282,7 @@ class DocCommand(Command):
         import shutil
 
         # Path to C code directory
-        c_dir = os.path.join('polyis', 'pack', 'c')
+        c_dir = os.path.join('tetris', 'pack', 'c')
         doxyfile = os.path.join(c_dir, 'Doxyfile')
         docs_dir = os.path.join(c_dir, 'docs')
         theme_dir = os.path.join(c_dir, 'doxygen-awesome-css')
@@ -412,8 +415,8 @@ ext_modules = cythonize(
 )
 
 # mypyc_extensions = mypycify([
-#     'polyis/tracker/kalman_filter.py',
-#     'polyis/tracker/sort.py',
+#     'tetris/tracker/kalman_filter.py',
+#     'tetris/tracker/sort.py',
 # ])
 # # Add optimization flags and include directories to mypyc-compiled extensions
 # for ext in mypyc_extensions:
@@ -427,7 +430,7 @@ ext_modules = cythonize(
 # ext_modules.extend(mypyc_extensions)
 
 setup(
-    name="polyis",
+    name="tetris",
     version="0.1.0",
     cmdclass={
         'clean': CleanCommand,

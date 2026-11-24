@@ -92,8 +92,8 @@ from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exi
                                  leap_intervals, load_leap_exports, load_unwrap, operating_points, output_path,
                                  print_operating_points, query_dicts, results_dir, rounded, system_configs,
                                  unwrap_totals, write_json)
-from polyis.io import cache
-from polyis.utilities import dataset_root_name, get_video_frame_count
+from tetris.io import cache
+from tetris.utilities import dataset_root_name, get_video_frame_count
 
 
 # LEAP's top-k query: k frames, gap 300, cluster radius int(0.25 * gap), 5000 candidate frames (evaluate.py).

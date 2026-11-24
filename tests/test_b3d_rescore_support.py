@@ -3,8 +3,8 @@ import pytest
 
 from evaluation import p110_accuracy_compute as p110
 from measurements.snapshot_outputs import snapshot
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 
 def test_polyis_datasets_restricts_the_configured_datasets(monkeypatch):
@@ -15,6 +15,14 @@ def test_polyis_datasets_restricts_the_configured_datasets(monkeypatch):
 def test_without_polyis_datasets_the_config_is_unchanged(monkeypatch):
     monkeypatch.delenv('POLYIS_DATASETS', raising=False)
     assert 'caldot1-y05' in get_config()['EXEC']['DATASETS']
+
+
+def test_polyis_datasets_leaves_configs_without_exec_alone(monkeypatch):
+    # detectors.yaml has no EXEC section; p040 loads it while POLYIS_DATASETS is set.
+    monkeypatch.delenv('POLYIS_DATASETS', raising=False)
+    expected = get_config('detectors.yaml')
+    monkeypatch.setenv('POLYIS_DATASETS', 'jnc6')
+    assert get_config('detectors.yaml') == expected
 
 
 @pytest.mark.parametrize('value', ['', ' , ', 'jnc0,jnc9', 'JNC0'])

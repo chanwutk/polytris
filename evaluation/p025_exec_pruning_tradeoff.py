@@ -36,10 +36,10 @@ ACCURACY_LABELS     = ['60%', '70%', '80%', '90%', '95%', '100%']
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ── Config (same source as p022 via polyis config) ──────────────────────────
+# ── Config (same source as p022 via tetris config) ──────────────────────────
 try:
     sys.path.insert(0, '/polyis')
-    from polyis.io import cache, store
+    from tetris.io import cache, store
 except Exception:
     cache = None  # type: ignore
     store = None  # type: ignore

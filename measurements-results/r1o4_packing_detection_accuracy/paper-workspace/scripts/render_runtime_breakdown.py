@@ -9,7 +9,7 @@ import duckdb
 sys.path.insert(0, '/polyis')
 from measurements import r9o1_classifier_cost as costs
 from measurements.common import DATASET_LABELS, query_dicts
-from polyis.io import cache
+from tetris.io import cache
 
 
 root = Path(__file__).resolve().parents[1]

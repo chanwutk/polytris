@@ -15,11 +15,11 @@ from typing import Callable
 import numpy as np
 import torch
 
-import polyis.models.detector
-import polyis.dtypes
-from polyis.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
-from polyis.io import cache, store
-from polyis.pareto import build_pareto_combo_filter
+import tetris.models.detector
+import tetris.dtypes
+from tetris.utilities import TilePadding, format_time, ProgressBar, get_config, build_param_str
+from tetris.io import cache, store
+from tetris.pareto import build_pareto_combo_filter
 
 
 config = get_config()
@@ -69,7 +69,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
     torch.cuda.set_device(gpu_id)
 
     # Get detector instance for this thread
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, first_video_num_images)
+    detector = tetris.models.detector.get_detector(dataset, gpu_id, batch_size, first_video_num_images)
 
     with torch.no_grad(), torch.inference_mode():
         # Process batches from the queue until a None sentinel is received
@@ -88,7 +88,7 @@ def detect_worker_thread(dataset: str, batch_queue: queue.Queue, result_queue: q
                 # Run detection on the batch of images (already numpy arrays)
                 # The detect_batch function will handle device placement, and since we're
                 # in a stream context, PyTorch operations will use this stream
-                batch_output = polyis.models.detector.detect_batch(batch_images, detector)
+                batch_output = tetris.models.detector.detect_batch(batch_images, detector)
 
             # Send results back to main thread with video identifier
             result_queue.put((video, batch_start, batch_output))
@@ -161,7 +161,7 @@ def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: 
     for image_file in first_image_files[:min(4, first_video_num_images)]:
         frame = cv2.imread(os.path.join(first_compressed_frames_dir, image_file))
         assert frame is not None
-        assert polyis.dtypes.is_np_image(frame)
+        assert tetris.dtypes.is_np_image(frame)
         warmup_frames.append(frame)
     # Queue warmup batches with a special video identifier
     warmup_num_batches = (len(warmup_frames) + batch_size - 1) // batch_size
@@ -204,7 +204,7 @@ def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: 
             image_path = os.path.join(compressed_frames_dir, image_file)
             frame = cv2.imread(image_path)
             assert frame is not None
-            assert polyis.dtypes.is_np_image(frame)
+            assert tetris.dtypes.is_np_image(frame)
             frames.append(frame)
 
         # Queue all batches for this video
@@ -217,7 +217,7 @@ def detect_parallel(dataset: str, videos: list[str], classifier: str, tilesize: 
 
         # Collect all results for this video
         # Results may arrive out of order, so we collect them all first
-        results_dict: dict[int, polyis.dtypes.DetArray] = {}
+        results_dict: dict[int, tetris.dtypes.DetArray] = {}
         completed_batches = 0
         while completed_batches < num_batches:
             result_video, batch_start, batch_output = result_queue.get(block=True)
@@ -305,14 +305,14 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
             batch_files = image_files[batch_start:batch_end]
 
             # Read all images in the batch
-            batch_images: list[polyis.dtypes.NPImage] = []
+            batch_images: list[tetris.dtypes.NPImage] = []
             batch_runtimes: list[dict] = []
             start_time = (time.time_ns() / 1e6)
             for image_file in batch_files:
                 image_path = os.path.join(compressed_frames_dir, image_file)
                 frame = cv2.imread(image_path)
                 assert frame is not None
-                assert polyis.dtypes.is_np_image(frame)
+                assert tetris.dtypes.is_np_image(frame)
                 batch_images.append(frame)
                 batch_runtimes.append({'image_file': image_file})
             end_time = (time.time_ns() / 1e6)
@@ -320,7 +320,7 @@ def detect_objects(dataset: str, video: str, classifier: str, tilesize: int,
 
             # Detect objects in the batch
             start_time = (time.time_ns() / 1e6)
-            batch_outputs = polyis.models.detector.detect_batch(batch_images, detector)
+            batch_outputs = tetris.models.detector.detect_batch(batch_images, detector)
             end_time = (time.time_ns() / 1e6)
             detect_time_per_image = (end_time - start_time) / len(batch_files)
 
@@ -355,7 +355,7 @@ def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
     # Use the first video's image count as a representative batch-size hint.
     first_compressed_frames_dir = cache.exec(dataset, 'comp-frames', videos[0], param_str, 'images')
     first_image_files = sorted(f for f in os.listdir(first_compressed_frames_dir) if f.endswith('.jpg'))
-    detector = polyis.models.detector.get_detector(dataset, gpu_id, batch_size, len(first_image_files))
+    detector = tetris.models.detector.get_detector(dataset, gpu_id, batch_size, len(first_image_files))
 
     # Warm up the detector once using the first few frames of the first video.
     warmup_starts = list(range(0, min(4, len(first_image_files)), batch_size))
@@ -363,13 +363,13 @@ def detect_all(dataset: str, videos: list[str], classifier: str, tilesize: int,
     with torch.no_grad():
         for warmup_i, batch_start in enumerate(warmup_starts):
             batch_files = first_image_files[batch_start:batch_start + batch_size]
-            warmup_images: list[polyis.dtypes.NPImage] = []
+            warmup_images: list[tetris.dtypes.NPImage] = []
             for image_file in batch_files:
                 frame = cv2.imread(os.path.join(first_compressed_frames_dir, image_file))
                 assert frame is not None
-                assert polyis.dtypes.is_np_image(frame)
+                assert tetris.dtypes.is_np_image(frame)
                 warmup_images.append(frame)
-            polyis.models.detector.detect_batch(warmup_images, detector)
+            tetris.models.detector.detect_batch(warmup_images, detector)
             command_queue.put((device, {'completed': warmup_i + 1, 'total': len(warmup_starts), 'description': 'Warm up'}))
         torch.cuda.synchronize()
 

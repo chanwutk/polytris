@@ -14,7 +14,7 @@ Pruning runs
     (median, mean, p95, max), overall and by split, whole-frame sampling rate,
     dataset, p022 invocation, and clip position.
 
-    Timing boundaries, from polyis/sample/ilp/c/gurobi.pyx: build_ilp starts
+    Timing boundaries, from tetris/sample/ilp/c/gurobi.pyx: build_ilp starts
     before the Gurobi environment is created and started (license check) and
     ends after the last constraint is added; solve_ilp covers GRBoptimize,
     reading the solution back, and freeing the model and environment.
@@ -70,7 +70,7 @@ from evaluation.manifests import list_split_videos
 from measurements.common import (DATASET_LABELS, PRUNE_DIR, PRUNE_STAGE, SPLIT_PREFIXES, VARIANT_PATTERN,
                                  default_time_limit, load_p121_per_op, load_prune_runs, load_pruning_points,
                                  load_test_tradeoff, pruning_operating_points, query_dicts, results_dir, write_json)
-from polyis.io import cache
+from tetris.io import cache
 
 
 # p022 runs mp.cpu_count() // 4 processes at once; the logs were written on ace, which has 80 CPUs.

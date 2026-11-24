@@ -1,0 +1,79 @@
+[
+  {
+    "dataset": "ams-y05",
+    "dataset_display": "Amsterdam",
+    "points": 22,
+    "run": 22,
+    "faster": 16,
+    "median_x": 1.36,
+    "min_x": 0.52,
+    "max_x": 1.55,
+    "outputs_match": 22
+  },
+  {
+    "dataset": "caldot1-y05",
+    "dataset_display": "CalDoT 1",
+    "points": 30,
+    "run": 30,
+    "faster": 23,
+    "median_x": 1.25,
+    "min_x": 0.51,
+    "max_x": 1.54,
+    "outputs_match": 28
+  },
+  {
+    "dataset": "caldot2-y05",
+    "dataset_display": "CalDoT 2",
+    "points": 28,
+    "run": 28,
+    "faster": 25,
+    "median_x": 1.47,
+    "min_x": 0.84,
+    "max_x": 2.13,
+    "outputs_match": 24
+  },
+  {
+    "dataset": "jnc0",
+    "dataset_display": "B3D 1",
+    "points": 27,
+    "run": 27,
+    "faster": 27,
+    "median_x": 1.52,
+    "min_x": 1.18,
+    "max_x": 2.06,
+    "outputs_match": 24
+  },
+  {
+    "dataset": "jnc2",
+    "dataset_display": "B3D 2",
+    "points": 26,
+    "run": 26,
+    "faster": 23,
+    "median_x": 1.24,
+    "min_x": 0.82,
+    "max_x": 1.74,
+    "outputs_match": 26
+  },
+  {
+    "dataset": "jnc6",
+    "dataset_display": "B3D 3",
+    "points": 27,
+    "run": 27,
+    "faster": 26,
+    "median_x": 1.72,
+    "min_x": 0.88,
+    "max_x": 2.05,
+    "outputs_match": 21
+  },
+  {
+    "dataset": "jnc7",
+    "dataset_display": "B3D 4",
+    "points": 23,
+    "run": 23,
+    "faster": 22,
+    "median_x": 1.71,
+    "min_x": 0.69,
+    "max_x": 1.94,
+    "outputs_match": 20
+  }
+]

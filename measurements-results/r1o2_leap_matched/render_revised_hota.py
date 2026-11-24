@@ -42,7 +42,7 @@ def main():
 
     charts.load_sota_tradeoff_data = load_prior
     stats.load_sota_tradeoff_data = load_prior
-    tetris, reference = stats.load_polytris_and_naive_test_data(stats.DATASETS)
+    tetris, reference = stats.load_tetris_and_naive_test_data(stats.DATASETS)
     prior = stats.load_prior_test_data(stats.DATASETS, stats.build_frame_count_lookup(tetris, reference))
     for dataset, label in DATASET_LABELS.items():
         if 'extraction' in report['datasets'][label]:

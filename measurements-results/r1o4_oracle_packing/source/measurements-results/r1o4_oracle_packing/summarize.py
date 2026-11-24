@@ -8,7 +8,7 @@ import duckdb
 
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 from measurements.common import DATASET_LABELS
-from polyis.io import cache
+from tetris.io import cache
 
 
 root = Path(__file__).resolve().parent

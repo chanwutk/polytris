@@ -6,8 +6,8 @@ import os
 import pandas as pd
 
 from evaluation.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
-from polyis.pareto import compute_pareto_front
-from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+from tetris.pareto import compute_pareto_front
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 
 
 CONFIG = get_config()
@@ -35,9 +35,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_polytris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load canonical test-split Polytris and naive tradeoff rows for all datasets."""
-    polytris_frames: list[pd.DataFrame] = []
+def load_tetris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load canonical test-split Tetris and naive tradeoff rows for all datasets."""
+    tetris_frames: list[pd.DataFrame] = []
     naive_frames: list[pd.DataFrame] = []
 
     for dataset in datasets:
@@ -48,18 +48,18 @@ def load_polytris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame
             tradeoff_df['dataset'] = dataset
 
         tradeoff_df = tradeoff_df[tradeoff_df['videoset'] == 'test'].copy()
-        polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+        tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
 
-        if 'classifier' in polytris_df.columns:
-            polytris_df = polytris_df[polytris_df['classifier'] != 'Perfect'].copy()
+        if 'classifier' in tetris_df.columns:
+            tetris_df = tetris_df[tetris_df['classifier'] != 'Perfect'].copy()
 
-        polytris_frames.append(polytris_df)
+        tetris_frames.append(tetris_df)
         naive_frames.append(naive_df)
 
-    polytris_all_df = pd.concat(polytris_frames, ignore_index=True) if polytris_frames else pd.DataFrame()
+    tetris_all_df = pd.concat(tetris_frames, ignore_index=True) if tetris_frames else pd.DataFrame()
     naive_all_df = pd.concat(naive_frames, ignore_index=True) if naive_frames else pd.DataFrame()
 
-    return polytris_all_df, naive_all_df
+    return tetris_all_df, naive_all_df
 
 
 def add_loss_pct(df: pd.DataFrame, oracle_hota: float, accuracy_col: str = ACCURACY_COL) -> pd.DataFrame:
@@ -81,7 +81,7 @@ def select_best_feasible_row(df: pd.DataFrame, threshold: float, throughput_col:
 
 def compute_ablation_stats(
     datasets: list[str],
-    polytris_df: pd.DataFrame,
+    tetris_df: pd.DataFrame,
     naive_df: pd.DataFrame,
     threshold: float = 0.05
 ) -> pd.DataFrame:
@@ -96,14 +96,14 @@ def compute_ablation_stats(
         oracle_hota = float(oracle_row[ACCURACY_COL])
         naive_throughput = float(oracle_row[THROUGHPUT_COL])
 
-        dataset_polytris_df = polytris_df[polytris_df['dataset'] == dataset].copy()
-        dataset_polytris_df = add_loss_pct(dataset_polytris_df, oracle_hota)
+        dataset_tetris_df = tetris_df[tetris_df['dataset'] == dataset].copy()
+        dataset_tetris_df = add_loss_pct(dataset_tetris_df, oracle_hota)
 
         row = {'dataset': dataset, 'naive_throughput': naive_throughput}
 
         for condition in ABLATION_CONDITIONS:
             # Filter rows for the ablation condition
-            filtered_df = filter_by_ablation_condition(dataset_polytris_df, condition)
+            filtered_df = filter_by_ablation_condition(dataset_tetris_df, condition)
             
             # Recompute Pareto front on this restricted search space
             pareto_df = compute_pareto_front(
@@ -184,12 +184,12 @@ def main():
 
     print(f'Processing datasets: {DATASETS}')
 
-    polytris_df, naive_df = load_polytris_and_naive_test_data(DATASETS)
+    tetris_df, naive_df = load_tetris_and_naive_test_data(DATASETS)
 
-    assert not polytris_df.empty, 'No Polytris tradeoff rows found for the test split.'
+    assert not tetris_df.empty, 'No Tetris tradeoff rows found for the test split.'
     assert not naive_df.empty, 'No naive oracle rows found for the test split.'
 
-    stats_df = compute_ablation_stats(DATASETS, polytris_df, naive_df, threshold=0.05)
+    stats_df = compute_ablation_stats(DATASETS, tetris_df, naive_df, threshold=0.05)
     
     print("\nAblation speedups per dataset (at <= 5% HOTA loss):")
     print(stats_df)

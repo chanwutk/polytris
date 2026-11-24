@@ -9,9 +9,9 @@ from multiprocessing import Queue
 from pathlib import Path
 
 from evaluation.manifests import build_split_video_manifest
-from polyis.io import cache, store
-from polyis.pareto import load_pareto_params, pareto_params_exist
-from polyis.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, get_config
+from tetris.io import cache, store
+from tetris.pareto import load_pareto_params, pareto_params_exist
+from tetris.utilities import PREFIX_TO_VIDEOSET, ProgressBar, create_tracking_visualization, get_config
 
 
 CONFIG = get_config()
@@ -19,7 +19,7 @@ DATASETS = CONFIG['EXEC']['DATASETS']
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Render Polytris and naive tracking results on original videos')
+    parser = argparse.ArgumentParser(description='Render Tetris and naive tracking results on original videos')
     parser.add_argument('--test', action='store_true', default=False)
     parser.add_argument('--speed_up', type=int, default=4)
     parser.add_argument('--track_ids', type=int, nargs='*', default=None)
@@ -71,7 +71,7 @@ def visualize_video(dataset: str, video_file: str, stage: str, variant_id: str |
 
 
 def build_render_tasks(datasets: list[str], variant_id_filter: str | None) -> list[partial]:
-    """Discover and return render tasks for Pareto-optimal Polytris variants and naive baseline."""
+    """Discover and return render tasks for Pareto-optimal Tetris variants and naive baseline."""
     tasks: list[partial] = []
 
     for dataset in datasets:
@@ -91,10 +91,10 @@ def build_render_tasks(datasets: list[str], variant_id_filter: str | None) -> li
 
                 tasks.append(partial(visualize_video, dataset, video, 'naive', None))
 
-        # --- Pareto-optimal Polytris tasks ---
+        # --- Pareto-optimal Tetris tasks ---
         # Skip datasets without Pareto params.
         if not pareto_params_exist(dataset):
-            print(f"  No Pareto params found for dataset {dataset}, skipping Polytris variants")
+            print(f"  No Pareto params found for dataset {dataset}, skipping Tetris variants")
             continue
 
         # Load the Pareto-optimal variant_ids for this dataset.
@@ -109,7 +109,7 @@ def build_render_tasks(datasets: list[str], variant_id_filter: str | None) -> li
         for variant_id in variant_ids:
             for video in videos:
                 tracking_path = cache.exec(dataset, 'ucomp-tracks', video, variant_id, 'tracking.jsonl')
-                assert os.path.exists(tracking_path), f"Missing Polytris tracking: {tracking_path}"
+                assert os.path.exists(tracking_path), f"Missing Tetris tracking: {tracking_path}"
 
                 tasks.append(partial(visualize_video, dataset, video, 'ucomp-tracks', variant_id))
 

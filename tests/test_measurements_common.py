@@ -253,12 +253,30 @@ def test_imported_measurement_modules_sees_every_import_form():
                                                     'measurements.r1o5_gap_tolerance', 'measurements.r9o3_ilp_instance_sizes'}
 
 
+# Cross-script imports that predate the rule, in finished measurement scripts (allowed 2026-11-20 instead of moving
+# their shared code into common.py). Do not add to this list: put new shared code in common.py.
+ALLOWED_CROSS_IMPORTS = {
+    'fixed_ilp_1h.py': ['measurements.fixed_ilp_unlimited'],
+    'fixed_ilp_60s.py': ['measurements.fixed_ilp_unlimited'],
+    'fixed_ilp_unlimited.py': ['measurements.r9o3_ilp_instance_sizes'],
+    'fixed_runtime_operator_details.py': ['measurements.r9o3_ilp_instance_sizes'],
+    'r1o2_leap_pattern_resample.py': ['measurements.r1o2_leap_otif_rerun'],
+    'r7o3_noscope_score.py': ['measurements.r7o3_seiden_score'],
+    'r7o3_seiden_score.py': ['measurements.r1o2_leap_native_queries'],
+    'r9o2_caldot2_resweep_units.py': ['measurements.r9o2_preparation_cost'],
+    'r9o2_packing_serial.py': ['measurements.r9o2_packing_untimed'],
+    'r9o2_preparation_total.py': ['measurements.r1o2_leap_otif_rerun'],
+}
+
+
 def test_measurement_scripts_import_shared_code_only_from_common():
     # A script importing another script would tie its semantics to that script's; shared code belongs in common.py.
     scripts = sorted(Path(common.__file__).resolve().parent.glob('*.py'))
     assert len(scripts) > 1
     offenders = {p.name: sorted(imported_measurement_modules(p.read_text()) - {'measurements.common'}) for p in scripts}
-    assert not {name: mods for name, mods in offenders.items() if mods}
+    offenders = {name: mods for name, mods in offenders.items() if mods}
+    # Exactly the allowed imports: a new one fails, and so does an allowed one that was since removed (shrink the list).
+    assert offenders == ALLOWED_CROSS_IMPORTS
 
 
 def test_rounded_rounds_floats_only():

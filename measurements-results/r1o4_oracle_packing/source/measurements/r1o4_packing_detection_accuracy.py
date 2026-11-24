@@ -101,8 +101,8 @@ from evaluation.manifests import list_split_videos
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset
 from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, fastest_tetris, load_test_tradeoff,
                                  load_tradeoff_points, query_dicts, results_dir, write_json)
-from polyis.io import cache, store
-from polyis.utilities import build_param_str
+from tetris.io import cache, store
+from tetris.utilities import build_param_str
 
 
 # COCO's matching threshold: a detection matches a ground-truth box at IoU >= 0.5.

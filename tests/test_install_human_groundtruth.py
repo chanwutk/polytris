@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from polyis import groundtruth
-from polyis.io import cache, store
+from tetris import groundtruth
+from tetris.io import cache, store
 from preprocess import p004_install_human_groundtruth as p004
 
 

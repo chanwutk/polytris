@@ -1,0 +1,409 @@
+{
+  "frames": 5375,
+  "clips": [
+    [
+      "te01.mp4",
+      1075
+    ],
+    [
+      "te04.mp4",
+      1075
+    ],
+    [
+      "te08.mp4",
+      1075
+    ],
+    [
+      "te12.mp4",
+      1075
+    ],
+    [
+      "te13.mp4",
+      1075
+    ]
+  ],
+  "detector_ms_per_frame": 66.50455913880813,
+  "records": [
+    {
+      "window_size": 30,
+      "target": 0.0,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1214959,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.0,
+      "skip_cnn": false,
+      "num_cnn_evals": 328,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.994413407821229,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 265.1941341230445,
+      "threshold_diff": 0.0,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 358,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00185506,
+      "cnn_seconds": 2.39862,
+      "detector_seconds": 23.80863217169331,
+      "fps": 205.08138459215778,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00185728,
+          "cnn_seconds": 2.3727,
+          "fps": 205.2843871414752
+        },
+        {
+          "difference_seconds": 0.00185506,
+          "cnn_seconds": 2.39862,
+          "fps": 205.08138459215778
+        },
+        {
+          "difference_seconds": 0.00177319,
+          "cnn_seconds": 2.4024,
+          "fps": 205.05245149589675
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.01,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1214159,
+      "threshold_lower_cnn": 0.0,
+      "false_positive": 1.0,
+      "false_negative": 0.0056179775280898875,
+      "skip_cnn": false,
+      "num_cnn_evals": 326,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9888268156424581,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 265.3688684925121,
+      "threshold_diff": 131.06589189189188,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 356,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00189581,
+      "cnn_seconds": 2.38381,
+      "detector_seconds": 23.6756230534157,
+      "fps": 206.24427972072073,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00178411,
+          "cnn_seconds": 2.4407,
+          "fps": 205.79592412151905
+        },
+        {
+          "difference_seconds": 0.00189581,
+          "cnn_seconds": 2.38381,
+          "fps": 206.24427972072073
+        },
+        {
+          "difference_seconds": 0.00773458,
+          "cnn_seconds": 2.26328,
+          "fps": 207.1559358071791
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.02,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1214959,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.0,
+      "skip_cnn": false,
+      "num_cnn_evals": 328,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.994413407821229,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 265.1941341230445,
+      "threshold_diff": 0.0,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 358,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00186191,
+      "cnn_seconds": 2.40683,
+      "detector_seconds": 23.80863217169331,
+      "fps": 205.01710942167375,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00175097,
+          "cnn_seconds": 2.24425,
+          "fps": 206.29728197549568
+        },
+        {
+          "difference_seconds": 0.00191549,
+          "cnn_seconds": 2.43123,
+          "fps": 204.82606282600312
+        },
+        {
+          "difference_seconds": 0.00186191,
+          "cnn_seconds": 2.40683,
+          "fps": 205.01710942167375
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.03,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1214159,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.0056179775280898875,
+      "skip_cnn": false,
+      "num_cnn_evals": 326,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9888268156424581,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 265.3688684925121,
+      "threshold_diff": 131.0273073073073,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 356,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00187407,
+      "cnn_seconds": 2.39434,
+      "detector_seconds": 23.6756230534157,
+      "fps": 206.1611529159406,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00183444,
+          "cnn_seconds": 2.33486,
+          "fps": 206.63287695763876
+        },
+        {
+          "difference_seconds": 0.00187407,
+          "cnn_seconds": 2.39434,
+          "fps": 206.1611529159406
+        },
+        {
+          "difference_seconds": 0.0018872,
+          "cnn_seconds": 2.41599,
+          "fps": 205.98999550841788
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.04,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1213359,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.011235955056179775,
+      "skip_cnn": false,
+      "num_cnn_evals": 324,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9832402234636871,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 265.54383327605433,
+      "threshold_diff": 133.24104804804804,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 356,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00183571,
+      "cnn_seconds": 2.43026,
+      "detector_seconds": 23.6756230534157,
+      "fps": 205.8778114130713,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00178803,
+          "cnn_seconds": 2.43436,
+          "fps": 205.84586096550953
+        },
+        {
+          "difference_seconds": 0.00169416,
+          "cnn_seconds": 2.39446,
+          "fps": 206.16162665099014
+        },
+        {
+          "difference_seconds": 0.00183571,
+          "cnn_seconds": 2.43026,
+          "fps": 205.8778114130713
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.05,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1212559,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.016853932584269662,
+      "skip_cnn": false,
+      "num_cnn_evals": 322,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9776536312849162,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 265.7190289297263,
+      "threshold_diff": 134.97715715715717,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 356,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00183473,
+      "cnn_seconds": 2.42356,
+      "detector_seconds": 23.6756230534157,
+      "fps": 205.9306669418545,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00168711,
+          "cnn_seconds": 2.42836,
+          "fps": 205.89396733942064
+        },
+        {
+          "difference_seconds": 0.00183473,
+          "cnn_seconds": 2.42356,
+          "fps": 205.9306669418545
+        },
+        {
+          "difference_seconds": 0.00200019,
+          "cnn_seconds": 2.35704,
+          "fps": 206.45552238358087
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.1,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1209359,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.03932584269662921,
+      "skip_cnn": false,
+      "num_cnn_evals": 314,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.9553072625698324,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 266.42212940905057,
+      "threshold_diff": 146.2721801801802,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 355,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.00173196,
+      "cnn_seconds": 2.40983,
+      "detector_seconds": 23.60911849427689,
+      "fps": 206.56646583262346,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00173196,
+          "cnn_seconds": 2.40983,
+          "fps": 206.56646583262346
+        },
+        {
+          "difference_seconds": 0.00181933,
+          "cnn_seconds": 2.24155,
+          "fps": 207.91035804889088
+        },
+        {
+          "difference_seconds": 0.00186717,
+          "cnn_seconds": 2.41882,
+          "fps": 206.49405029468238
+        }
+      ]
+    },
+    {
+      "window_size": 30,
+      "target": 0.25,
+      "window_thres": 28,
+      "num_true_negatives": 1,
+      "threshold_upper_cnn": 1.0,
+      "skip_dd": false,
+      "num_true_positives": 178,
+      "num_windows": 179,
+      "num_diff_evals": 358,
+      "optimizer_cost": 1198159,
+      "threshold_lower_cnn": 0.998998998998999,
+      "false_positive": 1.0,
+      "false_negative": 0.11797752808988764,
+      "skip_cnn": false,
+      "num_cnn_evals": 286,
+      "threshold_skip_distance": 15,
+      "accuracy": 0.8770949720670391,
+      "num_yolo_evals": 0,
+      "optimizer_predicted_speedup": 268.91255668070767,
+      "threshold_diff": 187.1382972972973,
+      "graph": "compat-gpu-shards/gpu-1/jnc0_convnet_32_32_0.pb",
+      "stride": 15,
+      "detector_frames": 313,
+      "tail_held_frames": 5,
+      "difference_seconds": 0.0018824,
+      "cnn_seconds": 2.43101,
+      "detector_seconds": 20.81592701044695,
+      "fps": 231.19453530550987,
+      "timing_repeats": [
+        {
+          "difference_seconds": 0.00185644,
+          "cnn_seconds": 2.43925,
+          "fps": 231.1128808174245
+        },
+        {
+          "difference_seconds": 0.00187582,
+          "cnn_seconds": 2.41572,
+          "fps": 231.34675009147549
+        },
+        {
+          "difference_seconds": 0.0018824,
+          "cnn_seconds": 2.43101,
+          "fps": 231.19453530550987
+        }
+      ]
+    }
+  ],
+  "retiming": {
+    "device": "GPU-0997b8f5-904d-8e15-0da8-1c28bb1e348c, Quadro RTX 6000",
+    "executions": "serial",
+    "statistic": "median-of-three"
+  }
+}

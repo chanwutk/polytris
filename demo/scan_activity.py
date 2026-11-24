@@ -24,9 +24,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from polyis.io import store
-from polyis.pack.adapters import group_tiles_all
-from polyis.utilities import (
+from tetris.io import store
+from tetris.pack.adapters import group_tiles_all
+from tetris.utilities import (
     TILEPADDING_MAPS,
     load_tracking_results,
     mark_detections,

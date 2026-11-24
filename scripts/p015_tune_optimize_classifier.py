@@ -10,9 +10,10 @@ from typing import Callable
 import cv2
 import torch
 
-from polyis.utilities import get_config
-from polyis.train.benchmark_model_optimization import benchmark_model_optimization
-from polyis.io import cache, store
+from tetris.classify import load_checkpoint
+from tetris.utilities import get_config
+from tetris.train.benchmark_model_optimization import benchmark_model_optimization
+from tetris.io import cache, store
 
 
 config = get_config()
@@ -99,7 +100,7 @@ def benchmark_classifier(datasets: list[str], width: int, height: int, classifie
         
     # Load the model
     print(f"Loading model from {model_path}...")
-    model = torch.load(model_path, map_location=device, weights_only=False)
+    model = load_checkpoint(model_path, map_location=device)
     print(f"Model loaded from {model_path}... done")
     model = model.to(device)
     model.eval()

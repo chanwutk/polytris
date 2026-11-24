@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from measurements import r1o4_packing_detection_accuracy as pa
-from polyis.io import cache, store
+from tetris.io import cache, store
 
 
 @pytest.fixture

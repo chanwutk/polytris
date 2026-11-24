@@ -161,7 +161,7 @@ For each `(dataset, tracker, tile_size)` combination:
 ### Scripts
 - **p011_tune_detect.py** must be run first to generate detections on all frames
 
-### Utilities (from polyis/utilities.py)
+### Utilities (from tetris/utilities.py)
 - `get_config()`: Loads global configuration
 - `create_tracker()`: Creates SORT/ByteTrack tracker instances
 - `register_tracked_detections()`: Registers tracker output to frame_tracks
@@ -171,7 +171,7 @@ For each `(dataset, tracker, tile_size)` combination:
 
 ### External Libraries
 - `scipy.optimize.linear_sum_assignment`: Hungarian matching algorithm
-- `polyis.b3d.sort.iou_batch`: Vectorized IoU computation
+- `tetris.b3d.sort.iou_batch`: Vectorized IoU computation
 
 ## Example Output Interpretation
 

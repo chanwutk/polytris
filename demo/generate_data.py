@@ -36,12 +36,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from polyis.io import cache, store
-from polyis.pack.adapters import group_tiles_all
-from polyis.pack.group_tiles import group_tiles
-from polyis.pack.pack import pack
-from polyis.sample.ilp.c.gurobi import solve_ilp
-from polyis.utilities import (
+from tetris.io import cache, store
+from tetris.pack.adapters import group_tiles_all
+from tetris.pack.group_tiles import group_tiles
+from tetris.pack.pack import pack
+from tetris.sample.ilp.c.gurobi import solve_ilp
+from tetris.utilities import (
     TILEPADDING_MAPS,
     get_overlapping_tiles,
     load_tracking_results,
@@ -52,7 +52,7 @@ from polyis.utilities import (
 # Sample rates used when p016 builds accuracy.npy. Must match SAMPLE_RATES in p016.
 INDEX_SAMPLE_RATES = [1, 2, 4, 8, 16]
 
-# Packing mode integer constants (see polyis/pack/c/pack.h)
+# Packing mode integer constants (see tetris/pack/c/pack.h)
 PACK_MODE_EASIEST_FIT = 0
 PACK_MODE_FIRST_FIT = 1
 PACK_MODE_BEST_FIT = 2
@@ -381,7 +381,7 @@ def _build_accuracy_from_train_set(dataset: str, tracker: str, tile_size: int,
     import multiprocessing as mp
 
     # Lazy import keeps the module importable in environments without these heavy deps.
-    from polyis.utilities import ProgressBar
+    from tetris.utilities import ProgressBar
     from scripts.p016_tune_track_rate import process_video_tracker
     from functools import partial as fpartial
 

@@ -14,7 +14,7 @@ requested, then the steps that read its detections):
   p012, p013     training-data creation and pruning (GPU; p012's seek and decode are untimed and p013 writes no
                  timings)
   detector_load  detector construction with get_detector as p040 calls it once per configuration, without p040's
-                 warm-up (GPU; not recorded). Its batch_size and num_images differ from p040's, but only polyis's
+                 warm-up (GPU; not recorded). Its batch_size and num_images differ from p040's, but only tetris's
                  yolov3 detector reads them, and these datasets use ultralytics and RetinaNet.
   p011           reference detection on the training split (GPU; per-frame times exist, this adds each video's
                  whole-process span)
@@ -22,7 +22,7 @@ requested, then the steps that read its detections):
                  seconds (the measurement's estimate is an upper bound from p016's 40-worker elapsed time)
   otif, leap     OTIF's and LEAP's preparation (printed only)
 
-Every polyis command runs with CONFIG pointing at a copy of configs/global.yaml whose CACHE_DIR is
+Every Tetris command runs with CONFIG pointing at a copy of configs/global.yaml whose CACHE_DIR is
 <scratch>/cache and whose DATASETS holds only the dataset being timed, so it writes only under the
 scratch directory. Inputs that a step needs from earlier stages (p011's detections, the validation
 tracking outputs) are copied from the source cache (the configured CACHE_DIR) first; videos and
@@ -40,7 +40,7 @@ outside this container, their arguments come from the projects' READMEs, and eac
 what must be checked against the reported runs first. Their outputs are directed to
 --host-scratch, a host path, after copying the inputs there.
 
-With --run, the polyis steps execute in order; each step's output goes to <scratch>/logs/, and one
+With --run, the Tetris steps execute in order; each step's output goes to <scratch>/logs/, and one
 record per step is appended to <scratch>/timings.jsonl: its wall clock and exit code, the CPU
 seconds of its processes (getrusage of the reaped children), GPU snapshots before and after,
 `interference` (the busy CPUs of this process's CPU set and of the host from /proc/stat over the
@@ -70,8 +70,8 @@ from evaluation.manifests import build_query_task_manifest, list_split_videos
 from evaluation.p110_accuracy_compute import resolve_groundtruth_tracking_dataset, resolve_prediction_relative_path
 # file_times: GNU stat with creation times, the one implementation the plan and the R9.O2 measurement share.
 from measurements.common import DATASET_LABELS, file_times
-from polyis.io import cache, store
-from polyis.utilities import get_config
+from tetris.io import cache, store
+from tetris.utilities import get_config
 
 
 # Roots of real data: read by the plan, never written.
@@ -134,7 +134,7 @@ SUMMARY_SUFFIXES = {'p013': '_optimization_stats.json'}
 DETECTOR_LOAD_PROGRAM = '''
 import json, sys, time
 import torch
-import polyis.models.detector
+import tetris.models.detector
 dataset, out, loads = sys.argv[1], sys.argv[2], int(sys.argv[3])
 start = time.time()
 torch.zeros(1, device='cuda')
@@ -143,7 +143,7 @@ cuda_init_s = time.time() - start
 times = []
 for _ in range(loads):
     begin = time.time()
-    detector = polyis.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)
+    detector = tetris.models.detector.get_detector(dataset, 0, batch_size=16, num_images=0)
     torch.cuda.synchronize()
     times.append(time.time() - begin)
     del detector
@@ -193,7 +193,7 @@ def scratch_config(dataset: str, scratch: Path, data: dict | None = None) -> dic
     DATA entries overridden."""
     # The checked-in configuration, as the pipeline reads it.
     config = get_config()
-    # Every cache path in polyis derives from DATA.CACHE_DIR.
+    # Every cache path in tetris derives from DATA.CACHE_DIR.
     config['DATA']['CACHE_DIR'] = str(scratch / 'cache') + '/'
     # Step-specific data locations (p110's directory of covered validation videos).
     config['DATA'].update(data or {})
@@ -225,10 +225,10 @@ def covered_validation_videos(dataset: str) -> tuple[list[str], list[str]]:
 
 
 def polyis_steps(dataset: str, steps: list[str], scratch: Path, gpu: int) -> list[dict]:
-    """The executable polyis steps for one dataset, in STEPS order, with the copies their inputs need."""
+    """The executable Tetris steps for one dataset, in STEPS order, with the copies their inputs need."""
     # p013 prunes what p012 creates; the cached training data is not copied (gigabytes per dataset).
     assert 'p013' not in steps or 'p012' in steps, 'p013 needs p012 in the same run'
-    # The scratch cache every polyis step writes into.
+    # The scratch cache every Tetris step writes into.
     scratch_cache = scratch / 'cache'
     # CONFIG is resolved relative to configs/, and an absolute path overrides that directory. GPU steps see only the
     # chosen GPU and CPU steps none, so a CPU step cannot take a GPU by accident.
@@ -278,7 +278,7 @@ def polyis_steps(dataset: str, steps: list[str], scratch: Path, gpu: int) -> lis
         target = scratch_cache / source.relative_to(Path(cache.root(dataset)).parent).parent
         plan.append(executable('copy cached p011 detections', dataset, ['cp', '-r', str(source), str(target)],
                                writes=[target], mkdir=[target], gpu=False))
-    # The remaining polyis steps, each a whole-process wall clock: (argv, uses a GPU, paths written).
+    # The remaining Tetris steps, each a whole-process wall clock: (argv, uses a GPU, paths written).
     load_times = scratch / 'detector_load.jsonl'
     commands = dict(
         p011=(['python', 'scripts/p011_tune_detect.py'], True, [scratch_cache]),
@@ -362,7 +362,7 @@ def plan(args, scratch: Path) -> list[dict]:
     """Every step for the requested datasets and steps, in execution order."""
     # Steps of every dataset, in order.
     steps = []
-    # Per dataset: the polyis steps, then the printed baseline steps.
+    # Per dataset: the Tetris steps, then the printed baseline steps.
     for dataset in args.datasets:
         steps += polyis_steps(dataset, args.steps, scratch, args.gpu)
         # OTIF's steps, if requested.
@@ -492,7 +492,7 @@ def output_times(step: dict, scratch: Path) -> list[dict]:
 
 
 def run(steps: list[dict], scratch: Path, gpu: int, allow_busy: bool = False):
-    """Execute the polyis steps in order, appending one timing record per step to <scratch>/timings.jsonl and its
+    """Execute the Tetris steps in order, appending one timing record per step to <scratch>/timings.jsonl and its
     outputs' timestamps to <scratch>/files.jsonl."""
     # Check every step's writes before running any, so a bad plan writes nothing.
     outside = [(s['step'], p) for s in steps if not s['manual'] for p in s['writes'] + s['mkdir'] if not inside(p, scratch)]
@@ -565,7 +565,7 @@ def main():
     scratch = check_scratch(args.scratch, get_config()['DATA']['CACHE_DIR'])
     # Every step for the requested datasets.
     steps = plan(args, scratch)
-    # Always show the plan; only --run executes the polyis steps.
+    # Always show the plan; only --run executes the Tetris steps.
     print(f"{'RUN' if args.run else 'DRY RUN'}: {len(steps)} steps, scratch {scratch}, GPU {args.gpu}", flush=True)
     # Print each step, executable or not.
     for step in steps:

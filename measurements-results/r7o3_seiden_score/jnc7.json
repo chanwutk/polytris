@@ -1,0 +1,504 @@
+{
+  "dataset": "jnc7",
+  "evaluator": "/polyis/measurements-results/r1o2_leap_original_evaluator/evaluate.py",
+  "frames": 5225,
+  "ground_truth_count_sha256": "fcc1fc700dd9826a1e941aa85f1209a608a4a41b6b19723d2c38abb54d441ed4",
+  "records": [
+    {
+      "aggregation": {
+        "acc": 0.893125842449068,
+        "acc_raw": 0.8917213829743729,
+        "mae": 1.0545454545454545,
+        "mae_raw": 1.0640101856656288,
+        "mape": 0.10687415755093199,
+        "mape_raw": 0.10827861702562713
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 12,
+      "detector_frames": 435,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 28.14681987866275,
+      "excluded_s": {
+        "disk_write": 0.009855266660451889,
+        "ground_truth": 0.03177847433835268,
+        "iframe_scan": 0.06686533708125353,
+        "label_load": 0.408996619284153,
+        "model_load": 1.609443393535912
+      },
+      "fps": 183.18226984618983,
+      "fraction": 0.08333333333333333,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.37668299302458763,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 28.523502871687338,
+      "wall_s": 2.5036220839247108
+    },
+    {
+      "aggregation": {
+        "acc": 0.8887214778171,
+        "acc_raw": 0.8871990534343273,
+        "mae": 1.1031578947368421,
+        "mae_raw": 1.1146475904556403,
+        "mape": 0.11127852218290002,
+        "mape_raw": 0.11280094656567274
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 16,
+      "detector_frames": 325,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 21.029233242679066,
+      "excluded_s": {
+        "disk_write": 0.00899625476449728,
+        "ground_truth": 0.10216222424060106,
+        "iframe_scan": 0.07071652077138424,
+        "label_load": 0.3665898507460952,
+        "model_load": 1.564898569136858
+      },
+      "fps": 244.8292736896004,
+      "fraction": 0.0625,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.31216895673424006,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 21.341402199413306,
+      "wall_s": 2.425532376393676
+    },
+    {
+      "aggregation": {
+        "acc": 0.8846483413949305,
+        "acc_raw": 0.8825223802822794,
+        "mae": 1.155598086124402,
+        "mae_raw": 1.1710564143458886,
+        "mape": 0.11535165860506946,
+        "mape_raw": 0.11747761971772064
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 20,
+      "detector_frames": 260,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 16.82338659414325,
+      "excluded_s": {
+        "disk_write": 0.00954122468829155,
+        "ground_truth": 0.030135375447571278,
+        "iframe_scan": 0.07345015089958906,
+        "label_load": 0.3668495751917362,
+        "model_load": 1.5344524392858148
+      },
+      "fps": 304.8173207935843,
+      "fraction": 0.05,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.31802776642143726,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 17.14141436056469,
+      "wall_s": 2.33245653193444
+    },
+    {
+      "aggregation": {
+        "acc": 0.8832774776904472,
+        "acc_raw": 0.8812114415457796,
+        "mae": 1.1735885167464115,
+        "mae_raw": 1.1881193514088255,
+        "mape": 0.11672252230955282,
+        "mape_raw": 0.11878855845422043
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 24,
+      "detector_frames": 220,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 14.23517327196737,
+      "excluded_s": {
+        "disk_write": 0.009399416856467724,
+        "ground_truth": 0.029299121350049973,
+        "iframe_scan": 0.06898055598139763,
+        "label_load": 0.3836658773943782,
+        "model_load": 1.6040387079119682
+      },
+      "fps": 359.1575720507778,
+      "fraction": 0.041666666666666664,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.3127589076757431,
+      "topk": 0.9,
+      "topk_rounded": 0.9,
+      "total_s": 14.547932179643112,
+      "wall_s": 2.408142587170005
+    },
+    {
+      "aggregation": {
+        "acc": 0.8803568208191387,
+        "acc_raw": 0.8784665758271283,
+        "mae": 1.19311004784689,
+        "mae_raw": 1.2074827684277443,
+        "mape": 0.11964317918086131,
+        "mape_raw": 0.12153342417287172
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 28,
+      "detector_frames": 185,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 11.97048661506347,
+      "excluded_s": {
+        "disk_write": 0.009011914022266865,
+        "ground_truth": 0.02832083497196436,
+        "iframe_scan": 0.06259361188858747,
+        "label_load": 0.36203435342758894,
+        "model_load": 1.5599344372749329
+      },
+      "fps": 426.12076435755216,
+      "fraction": 0.03571428571428571,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.2912955768406391,
+      "topk": 0.9,
+      "topk_rounded": 1.0,
+      "total_s": 12.261782191904109,
+      "wall_s": 2.3131907284259796
+    },
+    {
+      "aggregation": {
+        "acc": 0.8736517896517116,
+        "acc_raw": 0.8718381079500245,
+        "mae": 1.2591387559808613,
+        "mae_raw": 1.2742309783922012,
+        "mape": 0.12634821034828836,
+        "mape_raw": 0.12816189204997552
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 32,
+      "detector_frames": 165,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 10.676379953975527,
+      "excluded_s": {
+        "disk_write": 0.008602657355368137,
+        "ground_truth": 0.09753565955907106,
+        "iframe_scan": 0.06525780353695154,
+        "label_load": 0.28676824551075697,
+        "model_load": 1.5698916725814342
+      },
+      "fps": 476.59064503590554,
+      "fraction": 0.03125,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.2869069976732135,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 10.96328695164874,
+      "wall_s": 2.3149630362167954
+    },
+    {
+      "aggregation": {
+        "acc": 0.8930670331949213,
+        "acc_raw": 0.8927902458872697,
+        "mae": 1.0579904306220096,
+        "mae_raw": 1.060134136995381,
+        "mape": 0.10693296680507869,
+        "mape_raw": 0.10720975411273026
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 4,
+      "detector_frames": 1305,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 84.44045963598826,
+      "excluded_s": {
+        "disk_write": 0.010328762233257294,
+        "ground_truth": 0.023703300394117832,
+        "iframe_scan": 0.0753349456936121,
+        "label_load": 0.4264264637604356,
+        "model_load": 1.6772413086146116
+      },
+      "fps": 61.29336085117545,
+      "fraction": 0.25,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.8053145790472627,
+      "topk": 0.9,
+      "topk_rounded": 0.8,
+      "total_s": 85.24577421503552,
+      "wall_s": 3.018349359743297
+    },
+    {
+      "aggregation": {
+        "acc": 0.8941003708970167,
+        "acc_raw": 0.8928592525839009,
+        "mae": 1.0465071770334928,
+        "mae_raw": 1.0551729185222005,
+        "mape": 0.10589962910298334,
+        "mape_raw": 0.10714074741609914
+      },
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 8,
+      "detector_frames": 655,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 42.38199315063012,
+      "excluded_s": {
+        "disk_write": 0.00929927732795477,
+        "ground_truth": 0.028138676658272743,
+        "iframe_scan": 0.06697206385433674,
+        "label_load": 0.3929427284747362,
+        "model_load": 1.565072770230472
+      },
+      "fps": 122.16339297055096,
+      "fraction": 0.125,
+      "frames": 5225,
+      "query": "count",
+      "seed": 0,
+      "seiden_s": 0.3885936262086034,
+      "topk": 0.8,
+      "topk_rounded": 0.9,
+      "total_s": 42.77058677683873,
+      "wall_s": 2.451019142754376
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 12,
+      "detector_frames": 435,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 28.14681987866275,
+      "excluded_s": {
+        "disk_write": 0.009296594187617302,
+        "ground_truth": 0.028035764582455158,
+        "iframe_scan": 0.06257649045437574,
+        "label_load": 0.374953699298203,
+        "model_load": 1.602571495808661
+      },
+      "fps": 183.5061126062217,
+      "fraction": 0.08333333333333333,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.326346087269485,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 28.473165965932235,
+      "wall_s": 2.403780131600797
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 16,
+      "detector_frames": 325,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 21.029233242679066,
+      "excluded_s": {
+        "disk_write": 0.009007980115711689,
+        "ground_truth": 0.03041375707834959,
+        "iframe_scan": 0.06490867491811514,
+        "label_load": 0.3449998330324888,
+        "model_load": 1.5405171876773238
+      },
+      "fps": 244.85013741839109,
+      "fraction": 0.0625,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.310350451618433,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 21.3395836942975,
+      "wall_s": 2.300197884440422
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 20,
+      "detector_frames": 260,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 16.82338659414325,
+      "excluded_s": {
+        "disk_write": 0.009007302112877369,
+        "ground_truth": 0.02776852436363697,
+        "iframe_scan": 0.06118565704673529,
+        "label_load": 0.3501130612567067,
+        "model_load": 1.7224548729136586
+      },
+      "fps": 304.9794190690474,
+      "fraction": 0.05,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.30891700834035873,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 17.13230360248361,
+      "wall_s": 2.4794464260339737
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 24,
+      "detector_frames": 220,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 14.23517327196737,
+      "excluded_s": {
+        "disk_write": 0.00950333010405302,
+        "ground_truth": 0.031039015389978886,
+        "iframe_scan": 0.07926617562770844,
+        "label_load": 0.4454764211550355,
+        "model_load": 1.653572372160852
+      },
+      "fps": 359.0619846825574,
+      "fraction": 0.041666666666666664,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.31663177255541086,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 14.55180504452278,
+      "wall_s": 2.5354890869930387
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 28,
+      "detector_frames": 185,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 11.97048661506347,
+      "excluded_s": {
+        "disk_write": 0.009117129258811474,
+        "ground_truth": 0.028996297158300877,
+        "iframe_scan": 0.07324578985571861,
+        "label_load": 0.43593733198940754,
+        "model_load": 1.6261365562677383
+      },
+      "fps": 425.5876046674197,
+      "fraction": 0.03571428571428571,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.30665666330605745,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 12.277143278369527,
+      "wall_s": 2.4800897678360343
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 32,
+      "detector_frames": 165,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 10.676379953975527,
+      "excluded_s": {
+        "disk_write": 0.009424960240721703,
+        "ground_truth": 0.0321945995092392,
+        "iframe_scan": 0.0633043572306633,
+        "label_load": 0.36224594060331583,
+        "model_load": 1.7727297004312277
+      },
+      "fps": 476.7868199324226,
+      "fraction": 0.03125,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.28239613119512796,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 10.958776085170655,
+      "wall_s": 2.5222956892102957
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 4,
+      "detector_frames": 1305,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 84.44045963598826,
+      "excluded_s": {
+        "disk_write": 0.014007994905114174,
+        "ground_truth": 0.025829482823610306,
+        "iframe_scan": 0.06937003694474697,
+        "label_load": 0.39748981315642595,
+        "model_load": 1.8782223286107183
+      },
+      "fps": 61.274373265287316,
+      "fraction": 0.25,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.8317303769290447,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 85.2721900129173,
+      "wall_s": 3.2166500333696604
+    },
+    {
+      "clips": 5,
+      "dataset": "jnc7",
+      "denominator": 8,
+      "detector_frames": 655,
+      "detector_ms_per_frame": 64.70533305439713,
+      "detector_s": 42.38199315063012,
+      "excluded_s": {
+        "disk_write": 0.010464378632605076,
+        "ground_truth": 0.03213104512542486,
+        "iframe_scan": 0.06288248207420111,
+        "label_load": 0.48024630453437567,
+        "model_load": 1.6316467290744185
+      },
+      "fps": 121.97424175672516,
+      "fraction": 0.125,
+      "frames": 5225,
+      "query": "presence",
+      "seed": 0,
+      "seiden_s": 0.4549199938774109,
+      "selection": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "total_s": 42.836913144507534,
+      "wall_s": 2.672290933318436
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 """R1.O1: TrackEval's scoring window, and HOTA re-scored on full clips, for every system on every dataset.
 
 Mechanism (read on the vendored TrackEval, reproduced by tests/test_measurements_r1o1_hota_scoring_window.py)
-  polyis/trackeval/dataset.py (_load_raw_file) gives each file its own number of time steps, its largest
+  tetris/trackeval/dataset.py (_load_raw_file) gives each file its own number of time steps, its largest
   frame_idx + 1 (lines 58-67), and builds that file's per-frame lists only that far (line 76).
   TrackEval's _base_dataset.get_raw_seq_data keeps the ground truth's num_timesteps (line 94) and computes
   similarities over zip(gt_dets, tracker_dets) (line 98); HOTA (hota.py lines 53 and 72), CLEAR (clear.py 68), and
@@ -11,7 +11,7 @@ Mechanism (read on the vendored TrackEval, reproduced by tests/test_measurements
   tracker boxes after the ground truth's last row are not false positives. Count, and the dataset's num_gt_dets and
   num_tracker_dets (dataset.py lines 158-159), count every box. When one side of a clip has no box at all, the
   metrics' early exits count the other side in full (all misses or all false positives), so that clip loses nothing.
-  save_tracking_results (polyis/utilities.py) writes rows from the first to the last frame with a track, so every
+  save_tracking_results (tetris/utilities.py) writes rows from the first to the last frame with a track, so every
   file (ground truth included) ends at its own last row. p110 (reference, Tetris) and p141 (OTIF, LEAP) both score
   with this dataset class and the HOTA metric only.
 
@@ -26,7 +26,7 @@ against) read at once by DuckDB:
               against every configuration's cached DATASET.json (Count GT_Dets - HOTA TP - FN and Dets - TP - FP at
               alpha 0.05, common.unscored_boxes), whose HOTA must also match the tradeoff table.
   padded      HOTA, DetA, AssA (means over TrackEval's 19 alphas, as p130 and p142 compute HOTA_HOTA) re-scored by
-              common.trackeval_rerun (TrackEval with polyis.trackeval.dataset.Dataset, configured as p110 and p141, HOTA
+              common.trackeval_rerun (TrackEval with tetris.trackeval.dataset.Dataset, configured as p110 and p141, HOTA
               only) after padding both sides to the clip length n: a copy of each file with an empty row on frame
               n - 1 where the file ends earlier, written under a temporary directory and removed after the run. Every
               configuration is re-scored. Padded runs must score every box (TP + FN = GT_Dets, TP + FP = Dets), and a
@@ -72,8 +72,8 @@ from measurements.common import (DATASET_LABELS, LOOSEST_ALPHA, PRIOR_SYSTEMS, T
                                  arrange_matched, assert_files_exist, bound_specs, choose, load_test_tradeoff,
                                  matched_stats, metric_summary, operating_points, output_path, query_dicts, results_dir,
                                  rounded, system_configs, trackeval_rerun, unscored_boxes, write_json)
-from polyis.io import cache
-from polyis.utilities import get_video_frame_count
+from tetris.io import cache
+from tetris.utilities import get_video_frame_count
 
 
 # Systems compared at the operating points (the reference sets the bound).
@@ -768,7 +768,7 @@ def method(args: argparse.Namespace) -> dict:
     """Inputs, rules, and checks, for results.json."""
     # Plain-text descriptions, keyed by the reading they describe.
     return dict(
-        mechanism=('polyis/trackeval/dataset.py: num_timesteps = largest frame_idx + 1 per file (l.58-67), lists built '
+        mechanism=('tetris/trackeval/dataset.py: num_timesteps = largest frame_idx + 1 per file (l.58-67), lists built '
                    'to that length (l.76); TrackEval _base_dataset.get_raw_seq_data keeps the ground truth\'s '
                    'num_timesteps (l.94) and zips similarities (l.98); HOTA (hota.py l.53, l.72), CLEAR (clear.py l.68), '
                    'Identity (identity.py l.53) iterate zip(gt_ids, tracker_ids); Count and num_*_dets (dataset.py '
@@ -776,7 +776,7 @@ def method(args: argparse.Namespace) -> dict:
         scorers='p110 (reference, Tetris: 002_naive, 060_uncompressed_tracks) and p141 (OTIF, LEAP: SOTA '
                 'tracking_results) against the root dataset\'s 003_groundtruth, HOTA metric only, skip 1',
         inputs='common.system_configs test-split configurations; common.output_path files; DATASET.json of p110/p141',
-        clip_length=('n = max(polyis.utilities.get_video_frame_count (the frames the systems decode, as p140; checked '
+        clip_length=('n = max(tetris.utilities.get_video_frame_count (the frames the systems decode, as p140; checked '
                      'to add up to the tradeoff frame_count), ground-truth file length); clips_lengthened lists where '
                      'the ground truth is longer; scores do not depend on padding past both files, whose frames are '
                      'empty on both sides'),
@@ -789,7 +789,7 @@ def method(args: argparse.Namespace) -> dict:
                 'frame_count, past every system\'s decoded frames; checked to the box against DATASET.json Count - TP - '
                 'FN/FP (common.unscored_boxes)'),
         padded=('both sides copied to a temporary directory with an empty row on frame n - 1 where they end earlier; '
-                'common.trackeval_rerun (TrackEval HOTA with polyis.trackeval.dataset.Dataset as p110/p141); every '
+                'common.trackeval_rerun (TrackEval HOTA with tetris.trackeval.dataset.Dataset as p110/p141); every '
                 'configuration re-scored; checked: TP + FN = GT_Dets, TP + FP = Dets, unchanged HOTA where nothing '
                 'was unscored'),
         reproduction=('unpadded TrackEval rerun of the cached operating points of both rules and the reference must '

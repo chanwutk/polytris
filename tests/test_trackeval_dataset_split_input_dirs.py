@@ -1,7 +1,7 @@
 import json
 import os
 
-from polyis.trackeval.dataset import Dataset
+from tetris.trackeval.dataset import Dataset
 
 
 def write_tracking_jsonl(path: str, track_id: int):

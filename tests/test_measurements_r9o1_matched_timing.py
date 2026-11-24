@@ -424,7 +424,7 @@ def test_gpu_copies_of_p020_and_p002_still_match():
                     'model = load_model(dataset, tile_size, classifier, device)', 'select_model_optimization(model, benchmark_results'):
         assert snippet in p020, f'p020 no longer contains {snippet!r}'
     p002 = (root / 'preprocess' / 'p002_preprocess_naive_detection.py').read_text()
-    for snippet in ('get_detector(dataset, gpu_id, batch_size=1)', 'polyis.models.detector.detect(frame, detector)',
+    for snippet in ('get_detector(dataset, gpu_id, batch_size=1)', 'tetris.models.detector.detect(frame, detector)',
                     f'for _ in range({gpu.DETECTOR_WARMUP_FRAMES}):'):
         assert snippet in p002, f'p002 no longer contains {snippet!r}'
 
@@ -665,8 +665,8 @@ def test_gpu_run_video_feeds_the_measurement(world, monkeypatch):
     frames = [np.dstack([np.full((2, 3), i, np.uint8), np.zeros((2, 3), np.uint8), np.full((2, 3), 255, np.uint8)]) for i in range(40)]
     monkeypatch.setattr(gpu, 'decode', lambda path: (events.append('decode'), frames)[1])
     detected = []
-    monkeypatch.setattr(gpu.polyis.models.detector, 'detect', lambda frame, detector: (events.append('detect'), detected.append([int(frame[0, 0, 0])]))[0])
-    monkeypatch.setattr(gpu.polyis.models.detector, 'detect_batch',
+    monkeypatch.setattr(gpu.tetris.models.detector, 'detect', lambda frame, detector: (events.append('detect'), detected.append([int(frame[0, 0, 0])]))[0])
+    monkeypatch.setattr(gpu.tetris.models.detector, 'detect_batch',
                         lambda batch, detector: (events.append('detect_batch'), detected.append([int(f[0, 0, 0]) for f in batch]))[0])
     batches = []
 

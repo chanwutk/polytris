@@ -13,11 +13,12 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
-from polyis.images import ImgNHWC, splitNHWC
+from tetris.classify import load_checkpoint
+from tetris.images import ImgNHWC, splitNHWC
 
-from polyis.io import cache, store
-from polyis.train.select_model_optimization import select_baseline_model_optimization
-from polyis.utilities import format_time, ProgressBar, get_config
+from tetris.io import cache, store
+from tetris.train.select_model_optimization import select_baseline_model_optimization
+from tetris.utilities import format_time, ProgressBar, get_config
 
 
 config = get_config()
@@ -47,7 +48,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     model_path = results_path / 'model_best.pth'
 
     if os.path.exists(model_path):
-        model = torch.load(model_path, map_location='cpu', weights_only=False)
+        model = load_checkpoint(model_path, map_location='cpu')
         model.eval()
         model.half()
         return model

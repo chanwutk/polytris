@@ -2,9 +2,9 @@
 Comparison tests: verify that all three solve_ilp implementations agree on
 objective value and selected set:
 
-  * polyis.sample.ilp.pulp   — PuLP + Gurobi backend  (reference)
-  * polyis.sample.ilp.gurobi — gurobipy Python API
-  * polyis.sample.ilp.c      — Cython / Gurobi C API
+  * tetris.sample.ilp.pulp   — PuLP + Gurobi backend  (reference)
+  * tetris.sample.ilp.gurobi — gurobipy Python API
+  * tetris.sample.ilp.c      — Cython / Gurobi C API
 """
 import random
 from time import monotonic
@@ -14,9 +14,9 @@ import pytest
 
 import gurobipy  # noqa: F401
 
-from polyis.sample.ilp.gurobi import solve_ilp as solve_ilp_gurobi
-from polyis.sample.ilp.pulp import solve_ilp as solve_ilp_pulp
-from polyis.sample.ilp.c.gurobi import solve_ilp as solve_ilp_c
+from tetris.sample.ilp.gurobi import solve_ilp as solve_ilp_gurobi
+from tetris.sample.ilp.pulp import solve_ilp as solve_ilp_pulp
+from tetris.sample.ilp.c.gurobi import solve_ilp as solve_ilp_c
 
 
 # ---------------------------------------------------------------------------

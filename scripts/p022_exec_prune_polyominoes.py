@@ -11,11 +11,11 @@ import numpy as np
 import multiprocessing as mp
 from functools import partial
 
-from polyis.pack.adapters import group_tiles_all
-from polyis.utilities import format_time, ProgressBar, get_config, load_classification_results, build_param_str
-from polyis.io import cache, store
-from polyis.pareto import build_pareto_combo_filter
-from polyis.sample.ilp.c.gurobi import solve_ilp
+from tetris.pack.adapters import group_tiles_all
+from tetris.utilities import format_time, ProgressBar, get_config, load_classification_results, build_param_str
+from tetris.io import cache, store
+from tetris.pareto import build_pareto_combo_filter
+from tetris.sample.ilp.c.gurobi import solve_ilp
 
 
 config = get_config()

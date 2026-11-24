@@ -6,8 +6,8 @@ import os
 import altair as alt
 from rich.progress import track
 
-from polyis.io import cache
-from polyis.utilities import (
+from tetris.io import cache
+from tetris.utilities import (
     METRICS,
     get_config,
     load_tradeoff_data,
@@ -42,10 +42,10 @@ def build_metric_columns(metric: str) -> tuple[str, str] | None:
 
 
 def prepare_plot_df(tradeoff_df, x_column: str):
-    # Split the canonical tradeoff table into Polytris and naive subsets.
-    polytris_df, naive_df = split_tradeoff_variants(tradeoff_df)
-    # Fail fast when the canonical tradeoff table does not contain Polytris rows.
-    assert not polytris_df.empty, "No Polytris tradeoff rows found"
+    # Split the canonical tradeoff table into Tetris and naive subsets.
+    tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+    # Fail fast when the canonical tradeoff table does not contain Tetris rows.
+    assert not tetris_df.empty, "No Tetris tradeoff rows found"
     # Fail fast when the canonical tradeoff table does not contain naive rows.
     assert not naive_df.empty, "No naive baseline rows found"
 
@@ -53,8 +53,8 @@ def prepare_plot_df(tradeoff_df, x_column: str):
     naive_cols = ['dataset', 'videoset', x_column]
     naive_merge_df = naive_df[naive_cols].rename(columns={x_column: f'{x_column}_naive'})
 
-    # Attach the split-specific naive baseline to each Polytris row.
-    plot_df = polytris_df.merge(naive_merge_df, on=['dataset', 'videoset'], how='left')
+    # Attach the split-specific naive baseline to each Tetris row.
+    plot_df = tetris_df.merge(naive_merge_df, on=['dataset', 'videoset'], how='left')
     # Reuse the existing scatter utility by exposing the split name through the legacy video field.
     plot_df['video'] = plot_df['videoset']
 
@@ -78,7 +78,7 @@ def visualize_tradeoff(tradeoff_df, output_dir: str, x_column: str, x_title: str
         if accuracy_col not in plot_df.columns or plot_df[accuracy_col].isna().all():
             continue
 
-        # Reuse the shared tradeoff scatter helper for Polytris rows and naive baselines.
+        # Reuse the shared tradeoff scatter helper for Tetris rows and naive baselines.
         scatter, baseline = tradeoff_scatter_and_naive_baseline(
             base_chart,
             x_column,

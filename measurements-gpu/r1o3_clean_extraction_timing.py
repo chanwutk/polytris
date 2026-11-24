@@ -16,9 +16,9 @@ What runs, per dataset (a "unit" is one launcher container, measurements-gpu/bom
   tetris     scripts/p020_exec_classify.py, p022_exec_prune_polyominoes.py (pruning configurations only),
              p030_exec_compress.py, p040_exec_detect.py, p050_exec_uncompress.py, p060_exec_track.py, each --test: the
              scripts that write the 020-060 runtime files p120 lists for one Tetris configuration. Each stage selects
-             its work through the test pass's Pareto filter (polyis.pareto.build_pareto_combo_filter), so the unit's
+             its work through the test pass's Pareto filter (tetris.pareto.build_pareto_combo_filter), so the unit's
              cache holds a pareto_params.csv with only the unit's configuration (its row copied verbatim from ace's).
-  workers    polyis.utilities.ProgressBar starts one worker process per task and runs at most num_workers at once:
+  workers    tetris.utilities.ProgressBar starts one worker process per task and runs at most num_workers at once:
              the number of visible GPUs for p002 (both), p020, p040, and p060 (1 here, 8 in the paper's runs on ace),
              cpu_count // 4 = 20 for p022, 20 for p030, and cpu_count // 2 = 40 for p050 (cpu_count is 80 on both
              hosts). A Tetris stage has one task per configuration, which processes the videos one after another in
@@ -423,8 +423,8 @@ def make_plan(args):
     import duckdb
     from measurements.common import (DATASET_LABELS, fastest_tetris, file_record, host_info, load_test_tradeoff,
                                      load_tradeoff_points)
-    from polyis.io import cache, store
-    from polyis.utilities import build_param_str, get_video_frame_count
+    from tetris.io import cache, store
+    from tetris.utilities import build_param_str, get_video_frame_count
 
     datasets = args.datasets or list(DATASET_LABELS)
     # Cached tradeoff tables, and the fastest configuration within each bound (the rule r7o1 and r9o1 use).

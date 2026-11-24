@@ -8,9 +8,9 @@ from functools import partial
 import queue
 import multiprocessing as mp
 
-from polyis.groundtruth import assert_no_human_groundtruth, assert_not_installed
-from polyis.io import cache, store
-from polyis.utilities import create_tracker, dedupe_datasets_by_root, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
+from tetris.groundtruth import assert_no_human_groundtruth, assert_not_installed
+from tetris.io import cache, store
+from tetris.utilities import create_tracker, dedupe_datasets_by_root, get_video_resolution, load_detection_results, ProgressBar, register_tracked_detections, get_config, save_tracking_results
 
 
 CONFIG = get_config()

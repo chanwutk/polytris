@@ -1,0 +1,71 @@
+# jnc0 validation sweep: the grid of configs/global.yaml (written by profiling/tools/make_sweep_configs.py).
+# Run with the real cache read-only at /polyis-cache and a scratch directory at /polyis-profiling.
+dataset: jnc0
+videoset: valid
+output_root: /polyis-profiling
+params:
+  classifier: ShuffleNet05
+  tile_size: 60
+  canvas_format: jpeg
+  sample_rates:
+  - 1
+  - 2
+  - 4
+  - 8
+  - 16
+  relevance_thresholds:
+  - 0.25
+  - 0.5
+  - 0.75
+  mistrack_tolerances:
+  - null
+  - 0.4
+  - 0.6
+  - 0.8
+  tile_paddings:
+  - none
+  - tr
+  - bl
+  - square
+  canvas_scales:
+  - 1.0
+  trackers:
+  - sortcython
+  - bytetrackcython
+  reduce_search_space: true
+artifacts:
+  classifier_weights: /polyis-cache/jnc0/indexing/training/results/ShuffleNet05_60/model_best.pth
+  compilation_benchmark: /polyis-cache/jnc0/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl
+  never_relevant_bitmap: /polyis-cache/jnc0/indexing/always_relevant/60_all.npy
+  max_rate_tables:
+    sortcython: /polyis-cache/jnc0/indexing/track_rate/sortcython_60/max_rate_table.npy
+    bytetrackcython: /polyis-cache/jnc0/indexing/track_rate/bytetrackcython_60/max_rate_table.npy
+  detector:
+    type: retina
+    config_path: /polyis/configs/retinanet.json
+evaluation:
+  reference_dir: /polyis-cache/jnc0/execution
+  reference_file: 002_naive/tracking.jsonl
+system:
+  queue_maxsize: 4
+  save_queue_maxsize: 256
+  max_videos_in_flight: 4
+  stages:
+    decode:
+      procs: 2
+    classify:
+      procs: 1
+      gpus:
+      - 0
+    prune:
+      procs: 1
+    pack:
+      procs: 4
+    detect:
+      procs: 1
+      gpus:
+      - 0
+    track:
+      procs: 4
+    evaluate:
+      procs: 4

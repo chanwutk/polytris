@@ -24,7 +24,7 @@ What this script reports per dataset:
                root dataset's 003_groundtruth, in a temporary directory) on three readings of the rerun:
                  raw      only the observations, each at its frame with LEAP's object id
                  linear   the observations linearly interpolated between consecutive observations of an object
-                          (polyis.utilities.register_tracked_detections, as the pipeline interpolates tracks)
+                          (tetris.utilities.register_tracked_detections, as the pipeline interpolates tracks)
                  pattern  the rerun's export through p140's transform (transform_tracking_json with unwrap_leap),
                           which is how the reported LEAP tracks were built
                and the reported LEAP HOTA (p141's DATASET.json for parameter 000). pattern must reproduce it when
@@ -70,8 +70,8 @@ from evaluation.manifests import list_split_videos
 from evaluation.p140_otif_transform import dataset_name_in_sota, extract_video_id, transform_tracking_json
 from measurements.common import (DATASET_LABELS, TRACK_COLUMNS, assert_files_exist, file_record, metric_summary,
                                  output_path, query_dicts, results_dir, rounded, trackeval_rerun, write_json)
-from polyis.io import cache
-from polyis.utilities import register_tracked_detections, save_tracking_results
+from tetris.io import cache
+from tetris.utilities import register_tracked_detections, save_tracking_results
 
 
 # The GPU script's outputs, inside this script's result directory.

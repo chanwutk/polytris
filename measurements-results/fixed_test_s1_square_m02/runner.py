@@ -12,8 +12,8 @@ import torch
 from evaluation.manifests import list_split_videos
 from evaluation.p121_throughput_compute import QUERY_DATA_ACCESSORS, parse_runtime_file, filter_excluded_runtime_ops
 from measurements.common import metric_summary, trackeval_rerun
-from polyis.io import cache, store
-from polyis.models import detector as detectors
+from tetris.io import cache, store
+from tetris.models import detector as detectors
 from scripts import p022_exec_prune_polyominoes as pruning
 from scripts import p030_exec_compress as packing
 from scripts import p040_exec_detect as detection
