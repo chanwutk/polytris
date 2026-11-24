@@ -47,7 +47,7 @@ def solve_ilp(
     x = {}
     for b in range(B):
         for k in range(len(polyomino_lengths[b])):
-            x[(b, k)] = pulp.LpVariable(f"x_{b}_{k}", cat='Binary')
+            x[(b, k)] = prob.add_variable(f"x_{b}_{k}", cat="Binary")
 
     # Objective: minimize total number of cells in selected polyominoes
     prob += pulp.lpSum([x[(b, k)] * polyomino_lengths[b][k] for (b, k) in x])
