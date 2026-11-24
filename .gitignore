@@ -43,15 +43,15 @@ det_otif
 .claude/.nfs*
 
 *.mp4
-# Short clips the scripts-vs-pipelines integration tests run on (tests/integration).
+# Short clips the scripts-vs-pipelines integration tests run on (experiments/tests/integration).
 !tests/data/equivalence/**/*.mp4
 
 ./paper/*
 ./paper
 
 # Revision measurements: commit JSON results, keep raw GPU outputs and run logs on ace only.
-measurements-results/**/*.jsonl.gz
-measurements-results/*.log
-measurements-results/**/*.log
+experiments/measurements-results/**/*.jsonl.gz
+experiments/measurements-results/*.log
+experiments/measurements-results/**/*.log
 .env
 .claude/worktrees/

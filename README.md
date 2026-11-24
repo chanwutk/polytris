@@ -143,8 +143,8 @@ appear at `/otif-dataset` inside the container. Then materialize the
 tile-aligned splits and segmentations Tetris consumes:
 
 ```bash
-./run preprocess/p000_preprocess_dataset.py --help
-./run preprocess/p001_preprocess_split.py --help
+./run experiments/preprocess/p000_preprocess_dataset.py --help
+./run experiments/preprocess/p001_preprocess_split.py --help
 ```
 
 The active dataset list lives in `configs/global.yaml` under `EXEC.DATASETS`.
@@ -158,25 +158,26 @@ the paper:
 Decode -> Classify -> [Prune] -> Compress -> Detect+Uncompress -> Track
 ```
 
-Each stage has a standalone script under `scripts/` and a streaming
-implementation under `execution/`. Pick the entrypoint that matches your use
-case:
+`execution/` runs the stages as one streaming pipeline. The original
+per-stage scripts, which the paper's numbers come from, are kept under
+`experiments/scripts/` as the reference the pipeline is checked against.
+Pick the entrypoint that matches your use case:
 
 | Mode               | Command                                  | Notes                                                                          |
 | ------------------ | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Pipeline-parallel  | `python -m execution.main --config <yaml> --videos <dir> --out <dir>` | One configuration over a directory of clips; write the YAML with `profiling` or `execution/tools/make_*_configs.py`. |
-| Per-stage scripts  | `./run scripts/p020_exec_classify.py`    | Useful for debugging a single stage. See each script's `--help`.               |
-| Phase orchestrator | `bash scripts/run.sh`                    | Legacy two-pass (`--valid` then `--test`) driver. Most phases are commented out; uncomment what you need. |
+| Pipeline-parallel  | `python -m execution.main --config <yaml> --videos <dir> --out <dir>` | One configuration over a directory of clips; write the YAML with `profiling` or `experiments/tools/execution/make_*_configs.py`. |
+| Per-stage scripts  | `./run experiments/scripts/p020_exec_classify.py`    | Useful for debugging a single stage. See each script's `--help`.               |
+| Phase orchestrator | `bash experiments/scripts/run.sh`                    | Legacy two-pass (`--valid` then `--test`) driver. Most phases are commented out; uncomment what you need. |
 
 The full reproduction recipe also involves three other phases that are
 orthogonal to the online pipeline:
 
 - **Tuning** (`scripts/p011`–`p017_tune_*.py`): trains the relevance
   classifier, learns per-tile sampling thresholds, and selects baselines.
-- **Preprocessing** (`preprocess/p000`–`p008_preprocess_*.py`): builds
+- **Preprocessing** (`experiments/preprocess/p000`–`p008_preprocess_*.py`): builds
   ground-truth detections, naive baselines, and torchvision/ultralytics
   training sets.
-- **Evaluation** (`evaluation/p1**`–`evaluation/p2**`): computes accuracy
+- **Evaluation** (`experiments/evaluation/p1**`–`p2**`): computes accuracy
   and throughput, runs comparisons against OTIF and other SOTA trackers,
   and produces the figures in the paper.
 
@@ -186,12 +187,22 @@ Every entrypoint takes `--help`. Use it.
 
 ```
 tetris/         Core library: Cython modules, models, trackers, IO helpers
-scripts/        Per-stage offline tuning + online execution scripts
-preprocess/     Dataset prep, ground truth, baseline tracking
 execution/      Pipeline-parallel runtime (`python -m execution.main`)
-evaluation/     Metric computation, comparisons, paper-figure generators
+profiling/      Pipeline-parallel validation sweep
+scripts/        Offline tuning (p011-p017): classifier training, sampling limits
 configs/        Global config, detector/tracker registry, sync config
-tests/          Pytest suite (Cython, ILP, trackers, evaluation)
+tests/          Pytest suite for the system (Cython, ILP, trackers, pipelines)
+experiments/    Everything that produces the paper's numbers:
+  scripts/          the original per-stage pipeline (p020-p060, run.sh)
+  preprocess/       dataset prep, ground truth, baseline detectors and tracking
+  evaluation/       metric computation, comparisons, paper-figure generators
+  measurements/     one script per revision measurement
+  measurements_gpu/ long-running GPU jobs behind those measurements
+  measurements-results/  committed outputs of the measurements
+  ablation/         the mistrack-rate ablation (Fig. 11)
+  tools/            scripts-vs-pipeline comparisons, benchmarks, paper configs
+  configs/          configs for those tools
+  tests/            tests for the code above, incl. the equivalence tests
 modules/        Vendored third-party code (Detectron2, TrackEval, Darknet)
 demo/           Interactive visualization assets
 paper/          Manuscript source (LaTeX, anonymized for review)

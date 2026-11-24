@@ -70,7 +70,7 @@ Pipeline steps:
    dimensions if the source isn't already tile-aligned. Save downscaled PNGs
    (default `--image-scale 1/6`) to `data/frames/{f}.png`.
 2. **Compute relevance bitmap** per frame from groundtruth tracks via
-   `mark_detections` (same logic as `scripts/p021_exec_classify_correct.py`).
+   `mark_detections` (same logic as `experiments/scripts/p021_exec_classify_correct.py`).
 3. **Group tiles into polyominoes** via `group_tiles_all` from
    `tetris.pack.adapters`. Yields `tile_to_polyomino_id[F,H,W]` plus per-frame
    polyomino lengths.

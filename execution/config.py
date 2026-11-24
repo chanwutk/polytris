@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 from tetris.utilities import TILEPADDING_MODES
 
 # p022's accuracy-threshold axis of max_rate_table.npy; mistrack_tolerance must be one of these.
-# tests/execution/test_config.py checks this stays equal to p022's _ALL_ACCURACY_THRESHOLDS.
+# experiments/tests/execution/test_config_matches_scripts.py checks this stays equal to p022's _ALL_ACCURACY_THRESHOLDS.
 MISTRACK_TOLERANCES = (0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 1.00)
 
 # Stage names in pipeline order; prune runs only when mistrack_tolerance is set.

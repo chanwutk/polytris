@@ -1,4 +1,4 @@
-"""Tile relevance classification shared by scripts/p020_exec_classify.py and execution."""
+"""Tile relevance classification shared by experiments/scripts/p020_exec_classify.py and execution."""
 
 import pickle
 import time

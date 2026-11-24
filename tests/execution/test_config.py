@@ -207,9 +207,3 @@ def test_invalid_yaml_is_a_config_error(tmp_path):
     path.write_text('params: [unclosed\n')
     with pytest.raises(ConfigError, match='invalid YAML'):
         load_config(str(path))
-
-
-def test_mistrack_tolerances_match_p022():
-    # The config's list must stay the max_rate_table axis p022 indexes into.
-    from scripts.p022_exec_prune_polyominoes import _ALL_ACCURACY_THRESHOLDS
-    assert list(MISTRACK_TOLERANCES) == _ALL_ACCURACY_THRESHOLDS

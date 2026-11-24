@@ -10,7 +10,7 @@ from pathlib import Path
 
 import yaml
 
-from execution.tools.make_paper_configs import detector_spec
+from experiments.tools.execution.make_paper_configs import detector_spec
 from profiling.config import load_sweep_config
 
 ROOT = Path(__file__).resolve().parents[2]

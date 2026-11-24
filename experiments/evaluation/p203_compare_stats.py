@@ -1,0 +1,1040 @@
+#!/usr/local/bin/python
+
+import argparse
+import os
+from typing import Mapping
+
+import pandas as pd
+
+from experiments.evaluation.p200_compare_compute import load_sota_tradeoff_data
+from tetris.pareto import compute_pareto_front
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+
+
+CONFIG = get_config()
+DATASETS = CONFIG['EXEC']['DATASETS']
+ACCURACY_COL = 'HOTA_HOTA'
+THROUGHPUT_COL = 'throughput_fps'
+DEFAULT_THRESHOLDS = [threshold / 100.0 for threshold in range(1, 11)]
+DETAIL_THRESHOLDS = DEFAULT_THRESHOLDS
+PRIOR_SYSTEMS = ['otif', 'leap']
+OUTPUT_DIR = os.path.join('paper', 'figures', 'generated')
+OUTPUT_TEX_PATH = os.path.join(OUTPUT_DIR, 'p203_compare_stats.tex')
+THRESHOLD_SUFFIX_BY_PERCENT = {
+    1: 'OnePct',
+    2: 'TwoPct',
+    3: 'ThreePct',
+    4: 'FourPct',
+    5: 'FivePct',
+    6: 'SixPct',
+    7: 'SevenPct',
+    8: 'EightPct',
+    9: 'NinePct',
+    10: 'TenPct',
+}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--valid', action='store_true')
+    group.add_argument('--test', action='store_true')
+    return parser.parse_args()
+
+
+def _empty_like(df: pd.DataFrame) -> pd.DataFrame:
+    """Return an empty DataFrame with the same columns as the input."""
+    # Return an empty slice so the caller keeps the exact same schema.
+    return df.iloc[0:0].copy()
+
+
+def _threshold_label(threshold: float) -> str:
+    """Format a threshold ratio like 0.05 as a human-readable percent label."""
+    # Convert the fractional threshold into an integer percent string.
+    return f'{int(round(threshold * 100))}%'
+
+
+def _threshold_macro_suffix(threshold: float) -> str:
+    """Return the stable TeX macro suffix for an integer percentage threshold."""
+    # Convert the fractional threshold into the integer percent used by the suffix lookup.
+    threshold_percent = int(round(threshold * 100))
+
+    # Reject unsupported thresholds so macro names do not silently become inconsistent.
+    assert threshold_percent in THRESHOLD_SUFFIX_BY_PERCENT, (
+        f'Unsupported threshold for TeX macro suffix: {threshold}'
+    )
+
+    # Return the human-readable suffix used by the paper macros.
+    return THRESHOLD_SUFFIX_BY_PERCENT[threshold_percent]
+
+
+def _format_optional_float(value: object, digits: int = 3) -> str:
+    """Format an optional numeric value for CLI tables."""
+    # Render missing values as a stable placeholder.
+    if pd.isna(value):
+        return 'NA'
+
+    # Format present values with the requested precision.
+    return f'{float(value):.{digits}f}'
+
+
+def _format_optional_percent(value: object, digits: int = 2) -> str:
+    """Format an optional fractional value as a percentage string."""
+    # Render missing values as a stable placeholder.
+    if pd.isna(value):
+        return 'NA'
+
+    # Scale the fractional value to human-readable percent units.
+    return f'{float(value) * 100:.{digits}f}%'
+
+
+def filter_pareto_by_dataset(
+    df: pd.DataFrame,
+    throughput_col: str = THROUGHPUT_COL,
+    accuracy_col: str = ACCURACY_COL,
+) -> pd.DataFrame:
+    """Keep only Pareto-optimal rows for each dataset on throughput vs accuracy."""
+    # Short-circuit empty inputs so downstream code can keep the same schema.
+    if df.empty:
+        return _empty_like(df)
+
+    # Collect one Pareto-filtered DataFrame per dataset.
+    pareto_frames: list[pd.DataFrame] = []
+
+    # Process each dataset independently so fronts never mix across datasets.
+    for dataset in sorted(df['dataset'].dropna().unique()):
+        # Keep only the current dataset rows with both required metrics present.
+        dataset_df = df[df['dataset'] == dataset].dropna(
+            subset=[throughput_col, accuracy_col],
+        ).copy()
+
+        # Skip datasets with no usable points.
+        if dataset_df.empty:
+            continue
+
+        # Compute the Pareto front while maximizing both throughput and accuracy.
+        pareto_df = compute_pareto_front(
+            dataset_df,
+            throughput_col,
+            accuracy_col,
+            minx=False,
+            miny=False,
+        )
+
+        # Append the dataset-local front when it contains at least one row.
+        if not pareto_df.empty:
+            pareto_frames.append(pareto_df)
+
+    # Return an empty frame with the original schema when no Pareto rows exist.
+    if not pareto_frames:
+        return _empty_like(df)
+
+    # Combine the dataset-local fronts into one shared DataFrame.
+    return pd.concat(pareto_frames, ignore_index=True)
+
+
+def add_loss_pct(
+    df: pd.DataFrame,
+    oracle_hota: float,
+    accuracy_col: str = ACCURACY_COL,
+) -> pd.DataFrame:
+    """Attach a clamped relative HOTA-loss column to a system DataFrame."""
+    # Fail fast when the oracle score is invalid for percentage scaling.
+    assert oracle_hota > 0, f"oracle_hota must be positive, got {oracle_hota}"
+
+    # Work on a copy so callers can safely reuse the original DataFrame.
+    result = df.copy()
+
+    # Compute the relative loss and clamp negative values to zero.
+    loss_pct = (oracle_hota - result[accuracy_col]).clip(lower=0) / oracle_hota
+    # Round the ratio so threshold-boundary rows stay stable under floating-point noise.
+    result['loss_pct'] = loss_pct.round(12)
+
+    return result
+
+
+def select_best_feasible_row(
+    df: pd.DataFrame,
+    threshold: float,
+    throughput_col: str = THROUGHPUT_COL,
+) -> pd.Series | None:
+    """Return the fastest row whose loss stays within the requested threshold."""
+    # Keep only rows that satisfy the threshold bound.
+    feasible_df = df[df['loss_pct'] <= threshold].copy()
+
+    # Return no selection when the threshold admits no rows.
+    if feasible_df.empty:
+        return None
+
+    # Resolve the row with the highest throughput among feasible points.
+    best_idx = feasible_df[throughput_col].idxmax()
+
+    # Return a detached copy so later edits do not alias the original frame.
+    return feasible_df.loc[best_idx].copy()
+
+
+def select_best_prior_row(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    threshold: float,
+) -> pd.Series | None:
+    """Return the fastest feasible prior-system row across all available systems."""
+    # Track the current best prior-system row across all systems.
+    best_row: pd.Series | None = None
+
+    # Evaluate each prior system independently before comparing them.
+    for system_name, prior_df in prior_dfs_by_system.items():
+        # Select the fastest feasible point for the current prior system.
+        system_row = select_best_feasible_row(prior_df, threshold)
+
+        # Skip systems that have no feasible point under the requested threshold.
+        if system_row is None:
+            continue
+
+        # Annotate the selected row with the display name of the prior system.
+        system_row = system_row.copy()
+        system_row['system'] = system_name
+
+        # Keep the first feasible system or any strictly faster feasible system.
+        if best_row is None or float(system_row[THROUGHPUT_COL]) > float(best_row[THROUGHPUT_COL]):
+            best_row = system_row
+
+    return best_row
+
+
+def select_most_accurate_not_more_accurate_prior_row(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    tetris_hota: float,
+) -> pd.Series | None:
+    """Return the most accurate prior-system row whose HOTA is not above Tetris."""
+    # Track the current best prior row across all systems.
+    best_row: pd.Series | None = None
+
+    # Evaluate each prior system independently before comparing their candidates.
+    for system_name, prior_df in prior_dfs_by_system.items():
+        # Keep only prior rows that are no more accurate than the selected Tetris row.
+        comparable_df = prior_df[prior_df[ACCURACY_COL] <= tetris_hota].copy()
+
+        # Skip systems that never drop to the selected Tetris accuracy.
+        if comparable_df.empty:
+            continue
+
+        # Find the closest lower-accuracy HOTA level for the current system.
+        best_hota = comparable_df[ACCURACY_COL].max()
+        best_accuracy_df = comparable_df[comparable_df[ACCURACY_COL] == best_hota]
+
+        # Use throughput only to break ties at the same HOTA level.
+        best_idx = best_accuracy_df[THROUGHPUT_COL].idxmax()
+        system_row = best_accuracy_df.loc[best_idx].copy()
+
+        # Annotate the selected row with the display name of the prior system.
+        system_row['system'] = system_name
+
+        # Keep the most accurate comparable row, breaking equal-HOTA ties by throughput.
+        if best_row is None:
+            best_row = system_row
+            continue
+
+        # Compare HOTA first so the match is accuracy-aligned before speed-aligned.
+        if float(system_row[ACCURACY_COL]) > float(best_row[ACCURACY_COL]):
+            best_row = system_row
+            continue
+
+        # Break exact HOTA ties by choosing the faster prior row.
+        if (
+            float(system_row[ACCURACY_COL]) == float(best_row[ACCURACY_COL])
+            and float(system_row[THROUGHPUT_COL]) > float(best_row[THROUGHPUT_COL])
+        ):
+            best_row = system_row
+
+    return best_row
+
+
+def select_accuracy_matched_prior_row(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    threshold: float,
+    tetris_row: pd.Series | None,
+) -> pd.Series | None:
+    """Return a prior-system row for an accuracy-matched speedup comparison."""
+    # Without a feasible Tetris row, there is no accuracy anchor for matching.
+    if tetris_row is None:
+        return None
+
+    # Resolve the fastest prior row that satisfies the same threshold bound.
+    threshold_row = select_best_prior_row(prior_dfs_by_system, threshold)
+    tetris_hota = float(tetris_row[ACCURACY_COL])
+
+    # Reuse the threshold-feasible prior row when it is already no more accurate than Tetris.
+    if threshold_row is not None and float(threshold_row[ACCURACY_COL]) <= tetris_hota:
+        threshold_row = threshold_row.copy()
+        threshold_row['accuracy_match_rule'] = 'threshold_feasible_not_more_accurate'
+        return threshold_row
+
+    # Otherwise, fall back to the closest lower-accuracy prior point even if it misses the threshold.
+    matched_row = select_most_accurate_not_more_accurate_prior_row(
+        prior_dfs_by_system,
+        tetris_hota,
+    )
+
+    # Return no match when every prior-system row is more accurate than Tetris.
+    if matched_row is None:
+        return None
+
+    # Annotate the fallback row so the CLI table exposes which rule was used.
+    matched_row = matched_row.copy()
+    matched_row['accuracy_match_rule'] = 'nearest_not_more_accurate'
+    return matched_row
+
+
+def load_tetris_and_naive_test_data(datasets: list[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load canonical test-split Tetris and naive tradeoff rows for all datasets."""
+    # Collect one Tetris tradeoff DataFrame per dataset.
+    tetris_frames: list[pd.DataFrame] = []
+    # Collect one naive tradeoff DataFrame per dataset.
+    naive_frames: list[pd.DataFrame] = []
+
+    # Load each dataset through the shared tradeoff loader.
+    for dataset in datasets:
+        # Load the canonical split-level tradeoff table.
+        tradeoff_df = load_tradeoff_data(dataset)
+
+        # Backfill the dataset column when older cache rows omitted it.
+        if 'dataset' not in tradeoff_df.columns:
+            tradeoff_df = tradeoff_df.copy()
+            tradeoff_df['dataset'] = dataset
+
+        # Restrict the summary to the test split only.
+        tradeoff_df = tradeoff_df[tradeoff_df['videoset'] == 'test'].copy()
+
+        # Split the canonical table into Tetris rows and the naive baseline row.
+        tetris_df, naive_df = split_tradeoff_variants(tradeoff_df)
+
+        # Exclude the Perfect classifier so only deployable Tetris rows remain.
+        if 'classifier' in tetris_df.columns:
+            tetris_df = tetris_df[tetris_df['classifier'] != 'Perfect'].copy()
+
+        # Append the dataset-local rows to the shared collections.
+        tetris_frames.append(tetris_df)
+        naive_frames.append(naive_df)
+
+    # Combine all Tetris rows into one shared DataFrame.
+    tetris_all_df = pd.concat(tetris_frames, ignore_index=True) if tetris_frames else pd.DataFrame()
+    # Combine all naive rows into one shared DataFrame.
+    naive_all_df = pd.concat(naive_frames, ignore_index=True) if naive_frames else pd.DataFrame()
+
+    return tetris_all_df, naive_all_df
+
+
+def build_frame_count_lookup(tetris_df: pd.DataFrame, naive_df: pd.DataFrame) -> dict[str, float]:
+    """Resolve one frame-count value per dataset for throughput normalization."""
+    # Combine Tetris and naive rows so the lookup works even if one side is sparse.
+    combined_df = pd.concat([tetris_df, naive_df], ignore_index=True)
+
+    # Keep the first non-null frame count for each dataset.
+    frame_count_lookup = (
+        combined_df
+        .dropna(subset=['frame_count'])
+        .groupby('dataset')['frame_count']
+        .first()
+        .to_dict()
+    )
+
+    return frame_count_lookup
+
+
+def load_prior_test_data(
+    datasets: list[str],
+    frame_count_lookup: Mapping[str, float],
+) -> dict[str, pd.DataFrame]:
+    """Load prior-system tradeoff rows and derive throughput from dataset frame counts."""
+    # Collect one tradeoff DataFrame per configured prior system.
+    prior_dfs: dict[str, pd.DataFrame] = {}
+
+    # Load each prior system through the shared SOTA tradeoff loader.
+    for system_name in PRIOR_SYSTEMS:
+        # Load the system-local tradeoff data across all datasets.
+        prior_df = load_sota_tradeoff_data(datasets, system_name)
+
+        # Skip systems that have no cached tradeoff rows.
+        if prior_df.empty:
+            continue
+
+        # Restrict the summary to the test split only.
+        prior_df = prior_df[prior_df['videoset'] == 'test'].copy()
+
+        # Map each prior row to the dataset frame count used by Tetris.
+        prior_df['frame_count'] = prior_df['dataset'].map(frame_count_lookup)
+
+        # Derive throughput from the shared frame count and the measured runtime.
+        prior_df[THROUGHPUT_COL] = prior_df['frame_count'] / prior_df['time']
+
+        # Store the normalized prior-system rows under the display name.
+        prior_dfs[system_name.upper()] = prior_df
+
+    return prior_dfs
+
+
+def build_threshold_detail_table(
+    datasets: list[str],
+    tetris_df: pd.DataFrame,
+    naive_df: pd.DataFrame,
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    threshold: float,
+) -> pd.DataFrame:
+    """Build one per-dataset detail table for a single HOTA-loss threshold."""
+    # Collect one detail row per dataset.
+    rows: list[dict[str, object]] = []
+
+    # Process datasets in the configured order so CLI tables stay stable.
+    for dataset in datasets:
+        # Resolve the dedicated naive baseline row used as the oracle reference.
+        oracle_df = naive_df[naive_df['dataset'] == dataset].copy()
+        assert not oracle_df.empty, f"Missing naive oracle row for dataset {dataset}"
+        oracle_row = oracle_df.iloc[0]
+        oracle_hota = float(oracle_row[ACCURACY_COL])
+
+        # Keep only Pareto-filtered Tetris rows for the current dataset.
+        dataset_tetris_df = tetris_df[tetris_df['dataset'] == dataset].copy()
+        dataset_tetris_df = add_loss_pct(dataset_tetris_df, oracle_hota)
+
+        # Select the fastest feasible Tetris point under the current threshold.
+        tetris_row = select_best_feasible_row(dataset_tetris_df, threshold)
+
+        # Build one loss-annotated candidate table per prior system for this dataset.
+        dataset_prior_dfs: dict[str, pd.DataFrame] = {}
+        for system_name, prior_df in prior_dfs_by_system.items():
+            # Keep only rows for the current dataset.
+            dataset_prior_df = prior_df[prior_df['dataset'] == dataset].copy()
+
+            # Skip systems that do not cover the current dataset.
+            if dataset_prior_df.empty:
+                continue
+
+            # Attach loss percentages relative to the dataset-local oracle.
+            dataset_prior_dfs[system_name] = add_loss_pct(dataset_prior_df, oracle_hota)
+
+        # Select the fastest feasible prior-system point under the current threshold.
+        prior_row = select_best_prior_row(dataset_prior_dfs, threshold)
+
+        # Select the accuracy-matched prior-system point for the same Tetris row.
+        accuracy_matched_prior_row = select_accuracy_matched_prior_row(
+            dataset_prior_dfs,
+            threshold,
+            tetris_row,
+        )
+
+        # Compute the Tetris-over-prior speedup when both sides are available.
+        if (
+            tetris_row is not None
+            and prior_row is not None
+            and float(prior_row[THROUGHPUT_COL]) > 0
+        ):
+            speedup_x = float(tetris_row[THROUGHPUT_COL]) / float(prior_row[THROUGHPUT_COL])
+        else:
+            speedup_x = pd.NA
+
+        # Compute the accuracy-matched Tetris-over-prior speedup when both sides are available.
+        if (
+            tetris_row is not None
+            and accuracy_matched_prior_row is not None
+            and float(accuracy_matched_prior_row[THROUGHPUT_COL]) > 0
+        ):
+            accuracy_matched_speedup_x = (
+                float(tetris_row[THROUGHPUT_COL])
+                / float(accuracy_matched_prior_row[THROUGHPUT_COL])
+            )
+        else:
+            accuracy_matched_speedup_x = pd.NA
+
+        # Compute the Tetris-over-naive speedup when a feasible Tetris point exists.
+        if tetris_row is not None and float(oracle_row[THROUGHPUT_COL]) > 0:
+            naive_speedup_x = float(tetris_row[THROUGHPUT_COL]) / float(oracle_row[THROUGHPUT_COL])
+        else:
+            naive_speedup_x = pd.NA
+
+        # Materialize the dataset-local detail row with explicit missing markers.
+        rows.append({
+            'threshold': threshold,
+            'dataset': dataset,
+            'oracle_hota': oracle_hota,
+            'naive_throughput_fps': oracle_row[THROUGHPUT_COL],
+            'polytris_variant_id': tetris_row['variant_id'] if tetris_row is not None else pd.NA,
+            'polytris_hota': tetris_row[ACCURACY_COL] if tetris_row is not None else pd.NA,
+            'polytris_loss_pct': tetris_row['loss_pct'] if tetris_row is not None else pd.NA,
+            'polytris_throughput_fps': tetris_row[THROUGHPUT_COL] if tetris_row is not None else pd.NA,
+            'prior_system': prior_row['system'] if prior_row is not None else pd.NA,
+            'prior_hota': prior_row[ACCURACY_COL] if prior_row is not None else pd.NA,
+            'prior_loss_pct': prior_row['loss_pct'] if prior_row is not None else pd.NA,
+            'prior_throughput_fps': prior_row[THROUGHPUT_COL] if prior_row is not None else pd.NA,
+            'speedup_x': speedup_x,
+            'accuracy_matched_prior_system': (
+                accuracy_matched_prior_row['system']
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_hota': (
+                accuracy_matched_prior_row[ACCURACY_COL]
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_loss_pct': (
+                accuracy_matched_prior_row['loss_pct']
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_throughput_fps': (
+                accuracy_matched_prior_row[THROUGHPUT_COL]
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_prior_rule': (
+                accuracy_matched_prior_row['accuracy_match_rule']
+                if accuracy_matched_prior_row is not None else pd.NA
+            ),
+            'accuracy_matched_speedup_x': accuracy_matched_speedup_x,
+            'naive_speedup_x': naive_speedup_x,
+        })
+
+    # Return the detail table in one shared DataFrame.
+    return pd.DataFrame.from_records(rows)
+
+
+def build_threshold_summary_table(
+    detail_df: pd.DataFrame,
+    thresholds: list[float],
+    dataset_count: int,
+) -> pd.DataFrame:
+    """Aggregate per-dataset detail rows into one threshold-level summary table."""
+    # Collect one summary row per threshold.
+    rows: list[dict[str, object]] = []
+
+    # Aggregate the detail table independently for each threshold.
+    for threshold in thresholds:
+        # Keep only the rows for the current threshold.
+        threshold_df = detail_df[detail_df['threshold'] == threshold].copy()
+
+        # Count datasets where Tetris has at least one feasible point.
+        tetris_meet_count = int(threshold_df['polytris_variant_id'].notna().sum())
+        # Count datasets where at least one prior system has a feasible point.
+        prior_meet_count = int(threshold_df['prior_system'].notna().sum())
+        # Count datasets where no prior system meets the requested threshold.
+        prior_fail_count = dataset_count - prior_meet_count
+
+        # Keep only datasets where both Tetris and a prior system are comparable.
+        speedup_values = threshold_df['speedup_x'].dropna()
+        # Count datasets where an accuracy-matched prior-system row is available.
+        accuracy_matched_prior_count = int(
+            threshold_df['accuracy_matched_prior_system'].notna().sum()
+        )
+        # Keep only datasets where the accuracy-matched comparison is available.
+        accuracy_matched_speedup_values = threshold_df['accuracy_matched_speedup_x'].dropna()
+        # Keep only datasets where Tetris can be compared to the naive pipeline.
+        naive_speedup_values = threshold_df['naive_speedup_x'].dropna()
+
+        # Record the threshold-level summary metrics.
+        rows.append({
+            'threshold': threshold,
+            'polytris_meet_count': tetris_meet_count,
+            'prior_meet_count': prior_meet_count,
+            'prior_fail_count': prior_fail_count,
+            'speedup_min_x': speedup_values.min() if not speedup_values.empty else pd.NA,
+            'speedup_max_x': speedup_values.max() if not speedup_values.empty else pd.NA,
+            'accuracy_matched_prior_count': accuracy_matched_prior_count,
+            'accuracy_matched_speedup_min_x': (
+                accuracy_matched_speedup_values.min()
+                if not accuracy_matched_speedup_values.empty else pd.NA
+            ),
+            'accuracy_matched_speedup_max_x': (
+                accuracy_matched_speedup_values.max()
+                if not accuracy_matched_speedup_values.empty else pd.NA
+            ),
+            'naive_speedup_min_x': (
+                naive_speedup_values.min() if not naive_speedup_values.empty else pd.NA
+            ),
+            'naive_speedup_max_x': (
+                naive_speedup_values.max() if not naive_speedup_values.empty else pd.NA
+            ),
+        })
+
+    # Return the threshold summary table in one shared DataFrame.
+    return pd.DataFrame.from_records(rows)
+
+
+def build_threshold_reports(
+    datasets: list[str],
+    tetris_df: pd.DataFrame,
+    naive_df: pd.DataFrame,
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+    thresholds: list[float] = DEFAULT_THRESHOLDS,
+) -> tuple[pd.DataFrame, dict[float, pd.DataFrame]]:
+    """Build the full threshold summary table plus per-threshold detail tables."""
+    # Restrict prior-system comparisons to each system's Pareto front.
+    prior_pareto_dfs_by_system = {
+        system_name: filter_pareto_by_dataset(prior_df)
+        for system_name, prior_df in prior_dfs_by_system.items()
+    }
+
+    # Collect the detail table for each requested threshold.
+    detail_tables: dict[float, pd.DataFrame] = {}
+
+    # Build each threshold-specific detail table independently.
+    for threshold in thresholds:
+        detail_tables[threshold] = build_threshold_detail_table(
+            datasets,
+            tetris_df,
+            naive_df,
+            prior_pareto_dfs_by_system,
+            threshold,
+        )
+
+    # Combine all threshold detail tables into one summary input frame.
+    combined_detail_df = pd.concat(detail_tables.values(), ignore_index=True)
+
+    # Aggregate the combined detail rows into the threshold-level summary.
+    summary_df = build_threshold_summary_table(
+        combined_detail_df,
+        thresholds,
+        len(datasets),
+    )
+
+    return summary_df, detail_tables
+
+
+def _format_prior_label(row: pd.Series) -> str:
+    """Format a prior-system row as a short human-readable label."""
+    # Resolve each component defensively so missing fields do not crash the renderer.
+    system = str(row.get('system', 'PRIOR'))
+    param_id = row.get('param_id', pd.NA)
+    sample_rate = row.get('sample_rate', pd.NA)
+
+    # Render param_id with a '?' fallback when absent (older caches).
+    if pd.isna(param_id):
+        param_segment = '#?'
+    else:
+        param_segment = f'#{int(param_id)}'
+
+    # Render sample_rate with an empty suffix when absent.
+    if pd.isna(sample_rate):
+        sr_segment = ''
+    else:
+        sr_segment = f' (sr={int(sample_rate)})'
+
+    return f'{system}{param_segment}{sr_segment}'
+
+
+def build_combined_prior_pareto(
+    prior_dfs_by_system: Mapping[str, pd.DataFrame],
+) -> pd.DataFrame:
+    """Combine all prior-system rows into one per-dataset Pareto front with labels."""
+    # Skip the combine step when no prior systems are available.
+    if not prior_dfs_by_system:
+        return pd.DataFrame()
+
+    # Concatenate all prior rows; each row already carries its 'system' name.
+    combined_df = pd.concat(list(prior_dfs_by_system.values()), ignore_index=True)
+
+    # Pareto-filter the combined frame per dataset on throughput vs HOTA.
+    pareto_df = filter_pareto_by_dataset(combined_df)
+
+    # Short-circuit when the combined front has no rows so downstream code gets a stable schema.
+    if pareto_df.empty:
+        return pareto_df
+
+    # Build a readable per-row label combining system, param_id, and sample rate.
+    pareto_df = pareto_df.copy()
+    pareto_df['prior_label'] = pareto_df.apply(_format_prior_label, axis=1)
+
+    return pareto_df
+
+
+def select_best_tetris_for_prior_point(
+    tetris_pareto_df: pd.DataFrame,
+    prior_row: pd.Series,
+    throughput_col: str = THROUGHPUT_COL,
+    accuracy_col: str = ACCURACY_COL,
+) -> pd.Series | None:
+    """Return the highest-HOTA Tetris Pareto point that is at least as fast as a prior row."""
+    # Restrict the candidate pool to the prior row's dataset.
+    dataset = prior_row['dataset']
+    dataset_df = tetris_pareto_df[tetris_pareto_df['dataset'] == dataset]
+
+    # Keep only Tetris points that match or beat the prior row's throughput.
+    feasible_df = dataset_df[dataset_df[throughput_col] >= float(prior_row[throughput_col])]
+
+    # Return no selection when no Tetris point is at least as fast.
+    if feasible_df.empty:
+        return None
+
+    # Resolve the row with the highest HOTA among the at-least-as-fast points.
+    best_idx = feasible_df[accuracy_col].idxmax()
+
+    # Return a detached copy so later edits do not alias the shared frame.
+    return feasible_df.loc[best_idx].copy()
+
+
+def build_dominance_detail_table(
+    datasets: list[str],
+    tetris_pareto_df: pd.DataFrame,
+    combined_prior_pareto_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Build one per-(dataset, prior Pareto point) dominance table against Tetris."""
+    # Collect one row per (dataset, prior point).
+    rows: list[dict[str, object]] = []
+
+    # Process datasets in the configured order so CLI tables stay stable.
+    for dataset in datasets:
+        # Keep only the combined-front rows for the current dataset.
+        dataset_prior_df = combined_prior_pareto_df[
+            combined_prior_pareto_df['dataset'] == dataset
+        ].copy()
+
+        # Skip datasets that have no prior-system Pareto points.
+        if dataset_prior_df.empty:
+            continue
+
+        # Sort by prior throughput to traverse the combined front slowest → fastest.
+        dataset_prior_df = dataset_prior_df.sort_values(THROUGHPUT_COL).reset_index(drop=True)
+
+        # Emit one detail row per prior Pareto point.
+        for _, prior_row in dataset_prior_df.iterrows():
+            # Pick the fastest-feasible-and-most-accurate Tetris point for this prior row.
+            tetris_row = select_best_tetris_for_prior_point(tetris_pareto_df, prior_row)
+
+            # Extract the Tetris-side fields, using NA when no point is at least as fast.
+            if tetris_row is not None:
+                tetris_variant_id = tetris_row['variant_id']
+                tetris_hota: object = float(tetris_row[ACCURACY_COL])
+                tetris_throughput: object = float(tetris_row[THROUGHPUT_COL])
+                hota_delta: object = float(tetris_row[ACCURACY_COL]) - float(prior_row[ACCURACY_COL])
+            else:
+                tetris_variant_id = pd.NA
+                tetris_hota = pd.NA
+                tetris_throughput = pd.NA
+                hota_delta = pd.NA
+
+            # Materialize the per-prior-point detail row.
+            rows.append({
+                'dataset': dataset,
+                'prior_label': prior_row['prior_label'],
+                'prior_system': prior_row['system'],
+                'prior_hota': float(prior_row[ACCURACY_COL]),
+                'prior_throughput_fps': float(prior_row[THROUGHPUT_COL]),
+                'polytris_variant_id': tetris_variant_id,
+                'polytris_hota': tetris_hota,
+                'polytris_throughput_fps': tetris_throughput,
+                'hota_delta': hota_delta,
+            })
+
+    return pd.DataFrame.from_records(rows)
+
+
+def _compute_dominance_summary_row(
+    detail_df: pd.DataFrame,
+    dataset: str | None = None,
+) -> dict[str, object]:
+    """Compute a dominance summary row over a slice of the detail table."""
+    # Count all prior Pareto points in the slice (reachable or not).
+    num_prior_points = int(len(detail_df))
+
+    # Drop NA deltas so the summary stats reflect only reachable prior points.
+    deltas = detail_df['hota_delta'].dropna() if 'hota_delta' in detail_df.columns else pd.Series(dtype=float)
+    num_reachable = int(len(deltas))
+
+    # Assemble the output dict, tagging with the dataset key when present.
+    row: dict[str, object] = {}
+    if dataset is not None:
+        row['dataset'] = dataset
+    row['num_prior_points'] = num_prior_points
+    row['num_reachable'] = num_reachable
+    row['hota_delta_min'] = float(deltas.min()) if not deltas.empty else pd.NA
+    row['hota_delta_median'] = float(deltas.median()) if not deltas.empty else pd.NA
+    row['hota_delta_max'] = float(deltas.max()) if not deltas.empty else pd.NA
+    return row
+
+
+def build_dominance_dataset_summary(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate the dominance detail table into one summary row per dataset."""
+    # Return an empty frame with the expected columns when there is nothing to aggregate.
+    if detail_df.empty:
+        return pd.DataFrame(columns=[
+            'dataset', 'num_prior_points', 'num_reachable',
+            'hota_delta_min', 'hota_delta_median', 'hota_delta_max',
+        ])
+
+    # Preserve the dataset order already present in the detail table.
+    rows = [
+        _compute_dominance_summary_row(detail_df[detail_df['dataset'] == dataset], dataset=dataset)
+        for dataset in detail_df['dataset'].drop_duplicates().tolist()
+    ]
+
+    return pd.DataFrame.from_records(rows)
+
+
+def build_dominance_global_summary(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate the dominance detail table into one global summary row."""
+    # Return an empty frame with the expected columns when there is nothing to aggregate.
+    if detail_df.empty:
+        return pd.DataFrame(columns=[
+            'num_prior_points', 'num_reachable',
+            'hota_delta_min', 'hota_delta_median', 'hota_delta_max',
+        ])
+
+    return pd.DataFrame.from_records([_compute_dominance_summary_row(detail_df)])
+
+
+def format_summary_for_cli(summary_df: pd.DataFrame) -> pd.DataFrame:
+    """Format the threshold summary table for human-readable CLI output."""
+    # Work on a copy so callers can still access the numeric summary frame.
+    formatted_df = summary_df.copy()
+
+    # Render the threshold as a percent label.
+    formatted_df['threshold'] = formatted_df['threshold'].map(_threshold_label)
+    # Render the speedup columns with a consistent fixed precision.
+    formatted_df['speedup_min_x'] = formatted_df['speedup_min_x'].map(_format_optional_float)
+    formatted_df['speedup_max_x'] = formatted_df['speedup_max_x'].map(_format_optional_float)
+    formatted_df['accuracy_matched_speedup_min_x'] = (
+        formatted_df['accuracy_matched_speedup_min_x'].map(_format_optional_float)
+    )
+    formatted_df['accuracy_matched_speedup_max_x'] = (
+        formatted_df['accuracy_matched_speedup_max_x'].map(_format_optional_float)
+    )
+    formatted_df['naive_speedup_min_x'] = formatted_df['naive_speedup_min_x'].map(_format_optional_float)
+    formatted_df['naive_speedup_max_x'] = formatted_df['naive_speedup_max_x'].map(_format_optional_float)
+
+    return formatted_df
+
+
+def format_detail_for_cli(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Format one per-threshold detail table for human-readable CLI output."""
+    # Work on a copy so callers can still access the numeric detail frame.
+    formatted_df = detail_df.copy()
+
+    # Render the threshold as a percent label.
+    formatted_df['threshold'] = formatted_df['threshold'].map(_threshold_label)
+    # Render HOTA columns with a consistent fixed precision.
+    formatted_df['oracle_hota'] = formatted_df['oracle_hota'].map(_format_optional_float)
+    formatted_df['polytris_hota'] = formatted_df['polytris_hota'].map(_format_optional_float)
+    formatted_df['prior_hota'] = formatted_df['prior_hota'].map(_format_optional_float)
+    formatted_df['accuracy_matched_prior_hota'] = (
+        formatted_df['accuracy_matched_prior_hota'].map(_format_optional_float)
+    )
+    # Render loss columns as human-readable percentages.
+    formatted_df['polytris_loss_pct'] = formatted_df['polytris_loss_pct'].map(_format_optional_percent)
+    formatted_df['prior_loss_pct'] = formatted_df['prior_loss_pct'].map(_format_optional_percent)
+    formatted_df['accuracy_matched_prior_loss_pct'] = (
+        formatted_df['accuracy_matched_prior_loss_pct'].map(_format_optional_percent)
+    )
+    # Render throughput and speedup columns with a consistent fixed precision.
+    formatted_df['naive_throughput_fps'] = formatted_df['naive_throughput_fps'].map(_format_optional_float)
+    formatted_df['polytris_throughput_fps'] = formatted_df['polytris_throughput_fps'].map(_format_optional_float)
+    formatted_df['prior_throughput_fps'] = formatted_df['prior_throughput_fps'].map(_format_optional_float)
+    formatted_df['speedup_x'] = formatted_df['speedup_x'].map(_format_optional_float)
+    formatted_df['accuracy_matched_prior_throughput_fps'] = (
+        formatted_df['accuracy_matched_prior_throughput_fps'].map(_format_optional_float)
+    )
+    formatted_df['accuracy_matched_speedup_x'] = (
+        formatted_df['accuracy_matched_speedup_x'].map(_format_optional_float)
+    )
+    formatted_df['naive_speedup_x'] = formatted_df['naive_speedup_x'].map(_format_optional_float)
+
+    return formatted_df
+
+
+def format_dominance_detail_for_cli(detail_df: pd.DataFrame) -> pd.DataFrame:
+    """Format the dominance detail table for human-readable CLI output."""
+    # Work on a copy so callers can still access the numeric detail frame.
+    formatted_df = detail_df.copy()
+
+    # Render HOTA, throughput, and delta columns with a consistent fixed precision.
+    formatted_df['prior_hota'] = formatted_df['prior_hota'].map(_format_optional_float)
+    formatted_df['prior_throughput_fps'] = formatted_df['prior_throughput_fps'].map(_format_optional_float)
+    formatted_df['polytris_hota'] = formatted_df['polytris_hota'].map(_format_optional_float)
+    formatted_df['polytris_throughput_fps'] = formatted_df['polytris_throughput_fps'].map(_format_optional_float)
+    formatted_df['hota_delta'] = formatted_df['hota_delta'].map(_format_optional_float)
+
+    return formatted_df
+
+
+def format_dominance_summary_for_cli(summary_df: pd.DataFrame) -> pd.DataFrame:
+    """Format a dominance summary table for human-readable CLI output."""
+    # Work on a copy so callers can still access the numeric summary frame.
+    formatted_df = summary_df.copy()
+
+    # Render the aggregate delta columns with a consistent fixed precision.
+    for column in ('hota_delta_min', 'hota_delta_median', 'hota_delta_max'):
+        if column in formatted_df.columns:
+            formatted_df[column] = formatted_df[column].map(_format_optional_float)
+
+    return formatted_df
+
+
+def save_tex_macros(
+    summary_df: pd.DataFrame,
+    dominance_detail_df: pd.DataFrame,
+    output_path: str,
+) -> None:
+    """Save threshold summary values plus the max-HOTA-delta dominance macros as TeX macros."""
+    # Map each reported threshold to the suffix used in macro names.
+    threshold_suffixes = [
+        (threshold, _threshold_macro_suffix(threshold))
+        for threshold in DEFAULT_THRESHOLDS
+    ]
+
+    # Map each integer-valued summary column to its macro-name prefix.
+    int_fields = [
+        ('polytris_meet_count', 'comparePolytrisMeet'),
+        ('prior_meet_count', 'comparePriorMeet'),
+        ('prior_fail_count', 'comparePriorFailDatasets'),
+        ('accuracy_matched_prior_count', 'compareAccuracyMatchedPriorCount'),
+    ]
+
+    # Map each float-valued summary column to its macro-name prefix.
+    float_fields = [
+        ('speedup_min_x', 'compareSpeedupMin'),
+        ('speedup_max_x', 'compareSpeedupMax'),
+        ('accuracy_matched_speedup_min_x', 'compareAccuracyMatchedSpeedupMin'),
+        ('accuracy_matched_speedup_max_x', 'compareAccuracyMatchedSpeedupMax'),
+        ('naive_speedup_min_x', 'compareNaiveSpeedupMin'),
+        ('naive_speedup_max_x', 'compareNaiveSpeedupMax'),
+    ]
+
+    # Ensure the output directory exists before writing the macro file.
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Write the auto-generated macro file in the same style as other paper helpers.
+    with open(output_path, 'w') as f:
+        # Identify the generating script for future debugging.
+        f.write('% Auto-generated by experiments/evaluation/p203_compare_stats.py\n')
+
+        # Emit one macro block per reported threshold.
+        for threshold, suffix in threshold_suffixes:
+            # Resolve the summary row for the current threshold.
+            row = summary_df.loc[summary_df['threshold'] == threshold].iloc[0]
+
+            # Write each integer-valued macro for the current threshold.
+            for column, prefix in int_fields:
+                f.write(
+                    f'\\newcommand{{\\{prefix}{suffix}}}{{'
+                    f'\\autogen{{{int(row[column])}}}}}\n'
+                )
+
+            # Write each float-valued macro for the current threshold.
+            for column, prefix in float_fields:
+                f.write(
+                    f'\\newcommand{{\\{prefix}{suffix}}}{{'
+                    f'\\autogen{{{float(row[column]):.1f}}}}}\n'
+                )
+
+        # Resolve the row with the highest HOTA delta in the dominance detail table.
+        reachable_df = dominance_detail_df.dropna(subset=['hota_delta'])
+        assert not reachable_df.empty, (
+            'Dominance detail has no reachable rows; cannot emit max-HOTA-delta macros.'
+        )
+        best_row = reachable_df.loc[reachable_df['hota_delta'].idxmax()]
+
+        # Emit the max-HOTA-delta macro rounded to 2 decimal digits for paper prose.
+        f.write(
+            f'\\newcommand{{\\compareMaxHotaImprovement}}{{'
+            f'\\autogen{{{float(best_row["hota_delta"]):.2f}}}}}\n'
+        )
+
+        # Floor the matched prior-system throughput to the nearest 100 fps for the paper prose.
+        prior_fps_floor = int(float(best_row['prior_throughput_fps']) // 100) * 100
+        f.write(
+            f'\\newcommand{{\\compareMaxHotaImprovementFps}}{{'
+            f'\\autogen{{{prior_fps_floor}}}}}\n'
+        )
+
+
+def print_reports(
+    summary_df: pd.DataFrame,
+    detail_tables: Mapping[float, pd.DataFrame],
+    dominance_global_summary_df: pd.DataFrame,
+    dominance_dataset_summary_df: pd.DataFrame,
+    dominance_detail_df: pd.DataFrame,
+) -> None:
+    """Print the threshold summary, the selected detail tables, and the dominance tables."""
+    # Print the threshold-level summary first so the headline numbers are easy to scan.
+    print('\n=== Threshold Summary ===')
+    print(format_summary_for_cli(summary_df).to_string(index=False))
+
+    # Print the detail tables in the requested order for abstract verification.
+    for threshold in DETAIL_THRESHOLDS:
+        print(f'\n=== {_threshold_label(threshold)} Detail ===')
+        print(format_detail_for_cli(detail_tables[threshold]).to_string(index=False))
+
+    # Print the dominance global summary so the headline dominance numbers come first.
+    print('\n=== Dominance Global Summary ===')
+    print(format_dominance_summary_for_cli(dominance_global_summary_df).to_string(index=False))
+
+    # Print the dominance per-dataset summary for asymmetry across datasets.
+    print('\n=== Dominance Per-Dataset Summary ===')
+    print(format_dominance_summary_for_cli(dominance_dataset_summary_df).to_string(index=False))
+
+    # Print the full per-point dominance table last for detailed inspection.
+    print('\n=== Dominance Detail (per prior Pareto point) ===')
+    print(format_dominance_detail_for_cli(dominance_detail_df).to_string(index=False))
+
+
+def main() -> None:
+    # Parse the CLI arguments before resolving the supported split.
+    args = parse_args()
+
+    # Skip unsupported validation requests because this summary is test-only.
+    if args.valid:
+        print('Skipping: abstract comparison stats only support the test split.')
+        return
+
+    # Log the datasets covered by the summary run.
+    print(f'Processing datasets: {DATASETS}')
+
+    # Load the canonical test-split Tetris and naive tradeoff data.
+    tetris_df, naive_df = load_tetris_and_naive_test_data(DATASETS)
+
+    # Fail fast when the expected Tetris or naive data is missing.
+    assert not tetris_df.empty, 'No Tetris tradeoff rows found for the test split.'
+    assert not naive_df.empty, 'No naive oracle rows found for the test split.'
+
+    # Build the dataset-local frame-count lookup for prior-system throughput.
+    frame_count_lookup = build_frame_count_lookup(tetris_df, naive_df)
+
+    # Load and normalize the prior-system tradeoff data.
+    prior_raw_dfs = load_prior_test_data(DATASETS, frame_count_lookup)
+
+    # Pareto-filter the Tetris tradeoff rows by dataset.
+    tetris_pareto_df = filter_pareto_by_dataset(tetris_df)
+
+    # Build the threshold summary plus the per-threshold detail tables.
+    summary_df, detail_tables = build_threshold_reports(
+        DATASETS,
+        tetris_pareto_df,
+        naive_df,
+        prior_raw_dfs,
+        DEFAULT_THRESHOLDS,
+    )
+
+    # Build the combined OTIF ∪ LEAP Pareto front per dataset for the dominance analysis.
+    combined_prior_pareto_df = build_combined_prior_pareto(prior_raw_dfs)
+
+    # Build the per-(dataset, prior Pareto point) dominance detail table against Tetris.
+    dominance_detail_df = build_dominance_detail_table(
+        DATASETS,
+        tetris_pareto_df,
+        combined_prior_pareto_df,
+    )
+
+    # Aggregate the dominance detail into per-dataset and global summaries.
+    dominance_dataset_summary_df = build_dominance_dataset_summary(dominance_detail_df)
+    dominance_global_summary_df = build_dominance_global_summary(dominance_detail_df)
+
+    # Print the computed tables so the results are visible directly in the CLI.
+    print_reports(
+        summary_df,
+        detail_tables,
+        dominance_global_summary_df,
+        dominance_dataset_summary_df,
+        dominance_detail_df,
+    )
+
+    # Save the abstract-ready macros for the paper draft.
+    save_tex_macros(summary_df, dominance_detail_df, OUTPUT_TEX_PATH)
+    print(f'\nSaved {OUTPUT_TEX_PATH}')
+
+
+if __name__ == '__main__':
+    main()

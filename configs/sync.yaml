@@ -26,7 +26,7 @@ includes:
     - "dock"
     - "build.sh"
     - "AGENTS.md"
-    - "REVISION.md"
+    - "experiments/REVISION.md"
     - ".gitignore"
     - ".gitmodules"
 
@@ -38,19 +38,14 @@ includes:
     - ".vscode"
     - "assets"
     - "configs"
-    - "copy"
-    - "evaluation"
     - "execution"
-    - "ablation"
-    - "gcp"
+    - "profiling"
     - "lib"
     - "tetris"
-    - "preprocess"
     - "scripts"
     - "tests"
     - "demo"
-    - "measurements"
-    - "measurements-gpu"
+    - "experiments"
     - "baselines"
 
   # File extensions to include within each directory
@@ -95,6 +90,10 @@ excludes:
   - ".git"
   - ".claude/worktrees/"
   - ".claude/worktrees/**"
+
+  # Results are written on the servers and pulled back; never push local copies over them.
+  - "experiments/measurements-results/"
+  - "experiments/measurements-results/**"
 
 # Rsync options
 # Common options:

@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from evaluation.ablation import (
+from tetris.ablation import (
     ABLATION_CONDITIONS,
     AblationCondition,
     filter_by_ablation_condition,
