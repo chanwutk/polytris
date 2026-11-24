@@ -12,8 +12,8 @@ import pytest
 
 from execution import main as m
 from execution.config import Config, StageSystem, System
-from tests.execution2 import fake_stages as fs
-from tests.execution2.test_stages import make_cfg
+from tests.execution import fake_stages as fs
+from tests.execution.test_stages import make_cfg
 
 
 def write_video(path: Path, n_frames: int, size=(32, 24)) -> str:

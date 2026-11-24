@@ -40,5 +40,5 @@ def fake_sweep_build(cfg, prefix, completion):
     from functools import partial
     from execution.pipeline import Stage
     from profiling.stages import expected_results
-    from tests.execution2.fake_stages import worker_setup
+    from tests.execution.fake_stages import worker_setup
     return [Stage('emit', worker_setup, partial(emit_results, expected_results(cfg)), 2, fan_out=True)]

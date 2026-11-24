@@ -10,7 +10,7 @@ import pytest
 
 from execution import frames
 from execution.pipeline import PipelineError, Stage, run
-from tests.execution2 import fake_stages as fs
+from tests.execution import fake_stages as fs
 
 
 def inputs(n):
