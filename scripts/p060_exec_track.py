@@ -13,9 +13,9 @@ from typing import Callable
 
 import torch
 
-from polyis.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str, TilePadding
-from polyis.io import cache, store
-from polyis.pareto import build_pareto_combo_filter
+from tetris.utilities import create_tracker, format_time, ProgressBar, register_tracked_detections, get_config, save_tracking_results, get_video_resolution, build_param_str, TilePadding
+from tetris.io import cache, store
+from tetris.pareto import build_pareto_combo_filter
 
 
 CONFIG = get_config()

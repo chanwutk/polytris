@@ -38,7 +38,7 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from polyis.io import cache
+from tetris.io import cache
 from evaluation.p201_compare_pareto import (
     _add_dataset_display_names,
     _get_dataset_display_sort,

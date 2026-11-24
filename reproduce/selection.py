@@ -44,8 +44,8 @@ def select_ids(report, dataset, variant_id, grid):
 
 def export_results(dataset, output):
     from evaluation.manifests import build_polytris_variant_manifest
-    from polyis.pareto import PARETO_PARAM_COLS, load_pareto_params
-    from polyis.utilities import load_tradeoff_data
+    from tetris.pareto import PARETO_PARAM_COLS, load_pareto_params
+    from tetris.utilities import load_tradeoff_data
 
     tradeoffs = load_tradeoff_data(dataset)
     valid = tradeoffs.loc[(tradeoffs['videoset'] == 'valid') & (tradeoffs['variant'] == 'polytris')]
@@ -85,7 +85,7 @@ def main(args):
         return
 
     from evaluation.manifests import build_polytris_variant_manifest
-    from polyis.pareto import PARETO_PARAM_COLS
+    from tetris.pareto import PARETO_PARAM_COLS
 
     report = json.loads(args.input.read_text())
     manifest = build_polytris_variant_manifest().set_index('variant_id')

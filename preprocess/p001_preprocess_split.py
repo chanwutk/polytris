@@ -5,8 +5,8 @@ import os
 import shutil
 import random
 
-from polyis.io import store
-from polyis.utilities import dedupe_datasets_by_root, get_config  # Import config loader
+from tetris.io import store
+from tetris.utilities import dedupe_datasets_by_root, get_config  # Import config loader
 
 CONFIG = get_config()  # Load global configuration
 DATASETS = CONFIG['EXEC']['DATASETS']  # Resolve datasets to process

@@ -23,7 +23,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from mistrack_rate.analysis import combine_visualize, plot_results
-from polyis.utilities import get_config
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()

@@ -10,9 +10,9 @@ from typing import Callable
 import cv2
 import torch
 
-from polyis.utilities import get_config
-from polyis.train.benchmark_model_optimization import benchmark_model_optimization
-from polyis.io import cache, store
+from tetris.utilities import get_config
+from tetris.train.benchmark_model_optimization import benchmark_model_optimization
+from tetris.io import cache, store
 
 
 config = get_config()

@@ -5,7 +5,7 @@ Pytest tests for the pack_append Cython implementation.
 import pytest
 import numpy as np
 import time
-from polyis.pack.cython.adapters import pack_append
+from tetris.pack.cython.adapters import pack_append
 
 
 class TestPackAppend:

@@ -7,8 +7,8 @@ import os
 import pandas as pd
 
 from evaluation.manifests import load_sota_stat_manifest
-from polyis.io import cache
-from polyis.utilities import get_config
+from tetris.io import cache
+from tetris.utilities import get_config
 
 
 CONFIG = get_config()

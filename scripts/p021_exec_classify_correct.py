@@ -13,8 +13,8 @@ from functools import partial
 
 import torch
 
-from polyis.utilities import format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, get_config
-from polyis.io import cache, store
+from tetris.utilities import format_time, load_tracking_results, mark_detections, progress_bars, ProgressBar, get_config
+from tetris.io import cache, store
 
 
 config = get_config()

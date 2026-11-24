@@ -19,7 +19,7 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from polyis.io import cache, store
+from tetris.io import cache, store
 from evaluation.p201_compare_pareto import (
     FACET_SUBPLOT_HEIGHT,
     FACET_SUBPLOT_WIDTH,
@@ -28,7 +28,7 @@ from evaluation.p201_compare_pareto import (
 )
 from evaluation.colors import categorical_color_scale
 from evaluation.p121_throughput_compute import excluded_runtime_ops
-from polyis.utilities import (
+from tetris.utilities import (
     dataset_root_name,
     get_accuracy,
     get_config,

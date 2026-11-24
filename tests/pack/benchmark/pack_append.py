@@ -7,7 +7,7 @@ import time
 import numpy as np
 
 from . import generate_test_polyominoes
-from polyis.pack.cython.adapters import get_polyominoes
+from tetris.pack.cython.adapters import get_polyominoes
 
 
 def benchmark_pack_append():
@@ -15,8 +15,8 @@ def benchmark_pack_append():
     print("\n=== Pack Append Benchmark ===")
     
     try:
-        from polyis.pack.cython.pack_append import pack_append as cython_pack_append
-        from polyis.pack.python.pack_append import pack_append as python_pack_append
+        from tetris.pack.cython.pack_append import pack_append as cython_pack_append
+        from tetris.pack.python.pack_append import pack_append as python_pack_append
     except ImportError as e:
         print(f"Error importing modules: {e}")
         return

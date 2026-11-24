@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from polyis.pareto import (
+from tetris.pareto import (
     _prune_pareto_points,
     compute_pareto_front,
     compute_pareto_fronts_by_group,

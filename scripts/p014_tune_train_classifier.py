@@ -17,11 +17,11 @@ from torchvision.transforms import ToTensor, Normalize, Compose
 from torchvision.datasets import ImageFolder
 from torch.optim import AdamW
 
-from polyis.models.classifier.classify_image_with_position import ClassifyImageWithPosition
-from polyis.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
-from polyis.train.training_loop import train
-from polyis.utilities import ProgressBar, get_config
-from polyis.io import cache
+from tetris.models.classifier.classify_image_with_position import ClassifyImageWithPosition
+from tetris.models.classifier.yolo import YoloN, YoloS, YoloM, YoloL, YoloX
+from tetris.train.training_loop import train
+from tetris.utilities import ProgressBar, get_config
+from tetris.io import cache
 
 
 config = get_config()
@@ -40,47 +40,47 @@ def parse_args():
 
 
 def ShuffleNet05_factory(_tile_size: int):
-    from polyis.models.classifier.shufflenet import ShuffleNet05
+    from tetris.models.classifier.shufflenet import ShuffleNet05
     return ShuffleNet05()
 
 def ShuffleNet20_factory(_tile_size: int):
-    from polyis.models.classifier.shufflenet import ShuffleNet20
+    from tetris.models.classifier.shufflenet import ShuffleNet20
     return ShuffleNet20()
 
 def MobileNetL_factory(_tile_size: int):
-    from polyis.models.classifier.mobilenet import MobileNetL
+    from tetris.models.classifier.mobilenet import MobileNetL
     return MobileNetL()
 
 def MobileNetS_factory(_tile_size: int):
-    from polyis.models.classifier.mobilenet import MobileNetS
+    from tetris.models.classifier.mobilenet import MobileNetS
     return MobileNetS()
 
 def WideResNet50_factory(_tile_size: int):
-    from polyis.models.classifier.wide_resnet import WideResNet50
+    from tetris.models.classifier.wide_resnet import WideResNet50
     return WideResNet50()
 
 def WideResNet101_factory(_tile_size: int):
-    from polyis.models.classifier.wide_resnet import WideResNet101
+    from tetris.models.classifier.wide_resnet import WideResNet101
     return WideResNet101()
 
 def ResNet152_factory(_tile_size: int):
-    from polyis.models.classifier.resnet import ResNet152
+    from tetris.models.classifier.resnet import ResNet152
     return ResNet152()
 
 def ResNet101_factory(_tile_size: int):
-    from polyis.models.classifier.resnet import ResNet101
+    from tetris.models.classifier.resnet import ResNet101
     return ResNet101()
 
 def ResNet18_factory(_tile_size: int):
-    from polyis.models.classifier.resnet import ResNet18
+    from tetris.models.classifier.resnet import ResNet18
     return ResNet18()
 
 def EfficientNetS_factory(_tile_size: int):
-    from polyis.models.classifier.efficientnet import EfficientNetS
+    from tetris.models.classifier.efficientnet import EfficientNetS
     return EfficientNetS()
 
 def EfficientNetL_factory(_tile_size: int):
-    from polyis.models.classifier.efficientnet import EfficientNetL
+    from tetris.models.classifier.efficientnet import EfficientNetL
     return EfficientNetL()
 
 

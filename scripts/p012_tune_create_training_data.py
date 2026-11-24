@@ -11,10 +11,10 @@ import cv2
 import torch
 import numpy as np
 
-import polyis.images
+import tetris.images
 
-from polyis.io import cache, store
-from polyis.utilities import ProgressBar, mark_detections, get_config
+from tetris.io import cache, store
+from tetris.utilities import ProgressBar, mark_detections, get_config
 
 config = get_config()
 DATASETS_TO_TEST = config['EXEC']['DATASETS']
@@ -30,11 +30,11 @@ def parse_args():
 
 def get_patched(frame: np.ndarray, tile_size: int) -> np.ndarray:
     padded_frame = torch.from_numpy(frame).to('cuda')
-    assert polyis.images.isHWC(padded_frame), padded_frame.shape
+    assert tetris.images.isHWC(padded_frame), padded_frame.shape
 
-    patched = polyis.images.splitHWC(padded_frame, tile_size, tile_size)
+    patched = tetris.images.splitHWC(padded_frame, tile_size, tile_size)
     patched = patched.cpu()
-    assert polyis.images.isGHWC(patched), patched.shape
+    assert tetris.images.isGHWC(patched), patched.shape
     return patched.contiguous().numpy()
 
 

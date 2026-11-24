@@ -42,7 +42,7 @@ for item in "$@"; do
 from pathlib import Path
 from shutil import copyfile
 
-from polyis.io import cache
+from tetris.io import cache
 
 source = cache.eval('jnc7', 'track-rate-vis', 'bytetrackcython_60', 'jnc7_mistrack_rate_004.png')
 copyfile(source, Path('paper/figures/generated') / source.name)

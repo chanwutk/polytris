@@ -18,9 +18,9 @@ import trackeval
 from trackeval.metrics import Count, HOTA
 
 from evaluation.manifests import build_split_video_manifest, load_sota_stat_manifest
-from polyis.io import cache
-from polyis.trackeval.dataset import Dataset
-from polyis.utilities import dataset_root_name, get_config
+from tetris.io import cache
+from tetris.trackeval.dataset import Dataset
+from tetris.utilities import dataset_root_name, get_config
 
 
 CONFIG = get_config()

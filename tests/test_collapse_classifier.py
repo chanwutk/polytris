@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 
-from polyis.models.classifier.utils import collapse_classifier
+from tetris.models.classifier.utils import collapse_classifier
 
 
 def test_collapse_classifier_weight_fold():

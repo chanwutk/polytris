@@ -25,8 +25,8 @@ import pandas as pd
 import altair as alt
 from rich.progress import Progress, BarColumn, TextColumn
 
-from polyis.io import cache
-from polyis.utilities import get_config, load_classification_results, scale_to_percent
+from tetris.io import cache
+from tetris.utilities import get_config, load_classification_results, scale_to_percent
 
 
 # Compression stage directory to analyze

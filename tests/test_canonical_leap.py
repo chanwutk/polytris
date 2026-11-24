@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import pytest
 
-from polyis import leap_results
+from tetris import leap_results
 from evaluation import p200_compare_compute as compare
 
 

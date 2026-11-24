@@ -17,9 +17,9 @@ import os
 from pathlib import Path
 import shutil
 
-from polyis.groundtruth import MARKER, backup_dir, groundtruth_dir, is_installed
-from polyis.io import store
-from polyis.utilities import get_video_frame_count
+from tetris.groundtruth import MARKER, backup_dir, groundtruth_dir, is_installed
+from tetris.io import store
+from tetris.utilities import get_video_frame_count
 
 
 # Name of the staging directory a video's new ground truth is written into before it is swapped in.

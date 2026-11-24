@@ -23,7 +23,7 @@ in `.env` in the repository root. Docker mounts
 `$DATA/polyis-data` at `/polyis-data` and `$DATA/polyis-cache` at
 `/polyis-cache`. The download script creates these directories. Optionally set
 `SHM_SIZE` in `.env` too (default `128gb`); see
-[Run one configuration with execution2](#run-one-configuration-with-execution2).
+[Run one configuration with execution](#run-one-configuration-with-execution).
 
 ```sh
 docker compose up --detach --build
@@ -86,7 +86,7 @@ bash reproduce/test.sh jnc0 validation.json
   variant. The Pareto set includes the configurations needed for the paper's
   ablations.
 - `test.sh` takes that JSON and runs the marked Pareto configurations on test
-  clips with `execution2`, the pipeline-parallel extraction engine, one
+  clips with `execution`, the pipeline-parallel extraction engine, one
   configuration at a time on one GPU. Pass a third argument, a `variant_id`
   from the JSON, to test just that configuration. The script writes per-clip
   tracking JSONL and the dataset's evaluation `090_tradeoff/tradeoff.csv`
@@ -96,7 +96,7 @@ The test results are the paper's end-to-end numbers: HOTA and throughput
 (§7.1, Figure 8), the extraction throughput behind the amortization analysis
 (§7.2, Figure 9), and the speedups of the operator ablation (§7.4.4). Each
 configuration's throughput is the test clips' frame count divided by
-`execution2`'s runtime, measured from the first finished clip to the last
+`execution`'s runtime, measured from the first finished clip to the last
 after a warm-up clip, so process start-up and model loading are excluded.
 The reference pipeline that HOTA and speedups are measured against is the
 full-frame detector and tracker (`preprocess/p002_*`).
@@ -112,27 +112,27 @@ configurations that are not in the current sweep grid. Run one command at a
 time per dataset, since each one rewrites that dataset's folders under
 `/polyis-cache`; different datasets can run in parallel.
 
-### Run one configuration with execution2
+### Run one configuration with execution
 
-`execution2` runs one configuration over a directory of clips and writes one
+`execution` runs one configuration over a directory of clips and writes one
 tracking JSONL per clip. After `train.sh` has trained the dataset's artifacts,
 write the config for any `variant_id` of the sweep grid and run it from
 `/polyis` inside the container:
 
 ```sh
-python -m execution2.tools.run_variants config jnc0 \
+python -m execution.tools.run_variants config jnc0 \
     ShuffleNet05_60_4_r025_none_s100_sortcython > jnc0.yaml
-python -m execution2.main --config jnc0.yaml \
+python -m execution.main --config jnc0.yaml \
     --videos /polyis-data/datasets/jnc0/test --out tracks-jnc0
 ```
 
-`execution2.main` prints one JSON line with the number of clips, their total
+`execution.main` prints one JSON line with the number of clips, their total
 frame count, and the runtime in seconds. The YAML that `run_variants config`
 writes lists the dataset's trained classifier, sampling limits, and detector,
 the configuration's parameters, and how many processes each pipeline stage
 runs on which GPU.
 
-`execution2` passes decoded frames and packed canvases between its processes
+`execution` passes decoded frames and packed canvases between its processes
 through shared memory (`/dev/shm`). Before it runs, it estimates the most it
 can need and stops if that does not fit. The worst case for the test clips is
 about 15 GB for CalDoT1 and CalDoT2 and about 40 GB for Amsterdam and B3D
@@ -310,7 +310,7 @@ the exported figures and table rows to `paper/figures/generated/`.
 results of the implementation published in the paper, the extraction scripts
 (`scripts/p020`–`p060`). `reproduce/test.sh` runs the same configurations with
 the new
-`execution2`, which produces the same tracks as the scripts but runs faster.
+`execution`, which produces the same tracks as the scripts but runs faster.
 The `tradeoff.csv` it writes therefore shows the same HOTA as these figures
 and higher throughput. The pruning solver stops at 0.1 s, so a configuration
 whose solve reaches that limit can select different polyominoes from run to

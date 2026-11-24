@@ -7,8 +7,8 @@ import subprocess
 import numpy as np
 from functools import partial
 
-from polyis.io import cache
-from polyis.utilities import ProgressBar, get_config
+from tetris.io import cache
+from tetris.utilities import ProgressBar, get_config
 
 config = get_config()
 DATASETS_TO_TEST = config['EXEC']['DATASETS']

@@ -7,8 +7,8 @@ from typing import Mapping
 import pandas as pd
 
 from evaluation.p200_compare_compute import load_sota_tradeoff_data
-from polyis.pareto import compute_pareto_front
-from polyis.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
+from tetris.pareto import compute_pareto_front
+from tetris.utilities import get_config, load_tradeoff_data, split_tradeoff_variants
 
 
 CONFIG = get_config()
