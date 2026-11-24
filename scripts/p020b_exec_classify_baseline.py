@@ -13,6 +13,7 @@ import shutil
 import multiprocessing as mp
 from functools import partial
 
+from tetris.classify import load_checkpoint
 from tetris.images import ImgNHWC, splitNHWC
 
 from tetris.io import cache, store
@@ -47,7 +48,7 @@ def load_model(dataset_name: str, tile_size: int, classifier_name: str, device: 
     model_path = results_path / 'model_best.pth'
 
     if os.path.exists(model_path):
-        model = torch.load(model_path, map_location='cpu', weights_only=False)
+        model = load_checkpoint(model_path, map_location='cpu')
         model.eval()
         model.half()
         return model

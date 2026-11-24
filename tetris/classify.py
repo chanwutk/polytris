@@ -1,5 +1,6 @@
 """Tile relevance classification shared by scripts/p020_exec_classify.py and execution."""
 
+import pickle
 import time
 from typing import cast
 
@@ -10,11 +11,35 @@ from tetris.images import ImgNHWC, splitNHWC
 from tetris.utilities import format_time
 
 
+class _RenamedPackageUnpickler(pickle.Unpickler):
+    """Unpickler that resolves classes pickled under the package's old name, polyis, from tetris."""
+
+    def find_class(self, module, name):
+        # Checkpoints saved before the rename store class paths like polyis.models.classifier.shufflenet.
+        if module == 'polyis' or module.startswith('polyis.'):
+            module = 'tetris' + module[len('polyis'):]
+        return super().find_class(module, name)
+
+
+class _RenamedPackagePickle:
+    """The pickle_module torch.load uses: torch subclasses its Unpickler, so the renaming above applies."""
+    Unpickler = _RenamedPackageUnpickler
+    # torch calls load directly only for its legacy (non-zip) checkpoint format.
+    load = staticmethod(lambda f, **kwargs: _RenamedPackageUnpickler(f, **kwargs).load())
+
+
+def load_checkpoint(model_path, map_location) -> torch.nn.Module:
+    """torch.load a whole pickled model, saved before or after the polyis -> tetris rename."""
+    # weights_only=False because the checkpoints pickle the whole model (training_loop.save_model).
+    return torch.load(model_path, map_location=map_location, weights_only=False,
+                      pickle_module=_RenamedPackagePickle)
+
+
 def load_classifier(model_path) -> torch.nn.Module:
     """Load a trained classifier checkpoint in eval mode and fp16, on CPU."""
     # Load to CPU first to avoid CUDA init errors in spawned subprocesses;
     # caller moves the model to the target GPU device afterward.
-    model = torch.load(model_path, map_location='cpu', weights_only=False)
+    model = load_checkpoint(model_path, map_location='cpu')
     model.eval()
     model.half()
     return model
