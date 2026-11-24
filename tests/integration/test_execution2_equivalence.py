@@ -125,7 +125,7 @@ def test_execution2_matches_the_scripts(dataset, tmp_path):
     for c in CONFIGS:
         path = tmp_path / f'{param_str(c)}.yaml'
         path.write_text(yaml.safe_dump(execution2_config(tree, c), sort_keys=False))
-        tree.run('-m', 'execution2.main', '--config', str(path), '--videos', str(tree.clips),
+        tree.run('-m', 'execution.main', '--config', str(path), '--videos', str(tree.clips),
                  '--out', str(out / param_str(c)))
     # Its ILPs must finish well inside the limit, or a stopped solve could make the outputs differ.
     ours = solve_times(tree, [c for c in CONFIGS if c['mistrack_tolerance'] is not None])

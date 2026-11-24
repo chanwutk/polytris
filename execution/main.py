@@ -2,7 +2,7 @@
 """
 Run the execution2 pipeline over a directory of videos (PLAN.md "Interface", "Timing").
 
-    python -m execution2.main --config <yaml> --videos <dir> --out <dir>
+    python -m execution.main --config <yaml> --videos <dir> --out <dir>
 
 Writes one <out>/<video stem>.jsonl per video (p060's tracking format) and prints one JSON line
 with the run's runtime.  Timing lives here, not in the pipeline: a copy of the last video is fed

@@ -25,13 +25,13 @@ gurobi_status() {
 
 for pass in $(seq 1 "$PASSES"); do
   remaining=0
-  for cfg in $(ls "$REPO"/execution2/configs/figure8/*/*.yaml | sort); do
+  for cfg in $(ls "$REPO"/execution/configs/figure8/*/*.yaml | sort); do
     [ -f "$OUT/$(basename "$(dirname "$cfg")")/$(basename "$cfg" .yaml)/result.json" ] || remaining=$((remaining + 1))
   done
   echo "$(date -Is) pass $pass/$PASSES: $remaining configs without a result; gurobi: $(gurobi_status)"
   [ "$remaining" -eq 0 ] && break
 
-  for cfg in $(ls "$REPO"/execution2/configs/figure8/*/*.yaml | sort); do
+  for cfg in $(ls "$REPO"/execution/configs/figure8/*/*.yaml | sort); do
     ds=$(basename "$(dirname "$cfg")")
     name=$(basename "$cfg" .yaml)
     run=$OUT/$ds/$name
@@ -43,7 +43,7 @@ for pass in $(seq 1 "$PASSES"); do
       -v "$REPO":/polyis -v /data/cwkt/data/polyis-data:/polyis-data:ro \
       -v /work/cwkt/data/otif-dataset:/otif-dataset:ro -v "$HOME"/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro \
       -v /data/cwkt/data/polyis-cache:/polyis-cache-ro:ro -v "$run/cache":/polyis-cache -v "$run":/bench \
-      "$IMAGE" python -m execution2.tools.benchmark --dataset "$ds" --config "execution2/configs/figure8/$ds/$name.yaml" \
+      "$IMAGE" python -m execution.tools.benchmark --dataset "$ds" --config "execution/configs/figure8/$ds/$name.yaml" \
       --bench /bench --skip-scripts > "$run/benchmark.log" 2>&1
     status=$?
     reason=$(grep -hoE 'Too many sessions[^"]*|GRBstartenv failed[^"]*' "$run"/*.log 2>/dev/null | head -1)

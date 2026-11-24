@@ -3,9 +3,9 @@ Write one execution2 config per operating point the paper reports (the fastest T
 within 5% and within 10% HOTA loss of the reference, per dataset), as chosen by R1.O3's clean timing job.
 
 Reads measurements-results/r1o3_clean_extraction_timing/{throughput.json, raw/plan.json} and
-configs/detectors.yaml; writes execution2/configs/paper/<dataset>-<loss>.yaml.  Run in the polyis container:
+configs/detectors.yaml; writes execution/configs/paper/<dataset>-<loss>.yaml.  Run in the polyis container:
 
-  python -m execution2.tools.make_paper_configs
+  python -m execution.tools.make_paper_configs
 """
 
 import json
@@ -18,7 +18,7 @@ from execution.config import DETECTOR_FIELDS
 
 ROOT = Path(__file__).resolve().parents[2]
 R1O3 = ROOT / 'measurements-results' / 'r1o3_clean_extraction_timing'
-OUT = ROOT / 'execution2' / 'configs' / 'paper'
+OUT = ROOT / 'execution' / 'configs' / 'paper'
 CACHE = '/polyis-cache'
 RETINANET_CONFIG = '/polyis/configs/retinanet.json'
 

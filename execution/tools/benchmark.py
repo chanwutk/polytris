@@ -12,14 +12,14 @@ directories) nor ProgressBar's logs can overwrite old results.  Launch from the 
     -v /work/cwkt/projects/tetris:/polyis -v /data/cwkt/data/polyis-data:/polyis-data:ro \
     -v /work/cwkt/data/otif-dataset:/otif-dataset:ro -v ~/.gurobi/gurobi.lic:/opt/gurobi/gurobi.lic:ro \
     -v /data/cwkt/data/polyis-cache:/polyis-cache-ro:ro -v $RUN/cache:/polyis-cache -v $RUN:/bench \
-    polyis-polyis bash -c 'pip install -q duckdb && python -m execution2.tools.benchmark \
-      --dataset caldot1-y05 --config execution2/configs/caldot1-y05-s4.yaml --bench /bench'
+    polyis-polyis bash -c 'pip install -q duckdb && python -m execution.tools.benchmark \
+      --dataset caldot1-y05 --config execution/configs/caldot1-y05-s4.yaml --bench /bench'
 
 What it measures (wall clock with perf_counter, after reading every video once to warm the page cache):
   scripts      each of p020, (p022), p030, p040, p050, p060 run as `python <script> --test`, one after another,
                narrowed to this dataset and configuration (a one-row pareto_params.csv); the sum of their
                wall clocks is the scripts' end-to-end time, including each stage's process start and model load.
-  execution2   `python -m execution2.main` as configured (classify and detect on separate GPUs), and again with
+  execution2   `python -m execution.main` as configured (classify and detect on separate GPUs), and again with
                detect moved onto classify's GPU (one GPU, like the scripts use): the process's wall clock, and
                main's own runtime_s (first to last result, so startup and model load are excluded).
   outputs      every execution2 output compared with the scripts' fresh tracking.jsonl from this same run.
@@ -183,7 +183,7 @@ def main() -> None:
         variants.append(('single_gpu', single_gpu_config(args.config, bench)))
     for name, cfg_path in variants:
         out = bench / f'execution2-out-{name}'
-        rec = timed([sys.executable, '-m', 'execution2.main', '--config', str(cfg_path), '--videos', str(videos_dir),
+        rec = timed([sys.executable, '-m', 'execution.main', '--config', str(cfg_path), '--videos', str(videos_dir),
                      '--out', str(out)], env, bench / f'execution2-{name}.log')
         summary = json.loads(rec['last_line'])
         checks = {v: compare_track_lines(

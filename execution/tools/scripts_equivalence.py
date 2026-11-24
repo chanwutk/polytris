@@ -11,9 +11,9 @@ is not unique).  The ILP itself is compared once per (config, video) in executio
 
 Run inside the polyis container, with /polyis-cache a scratch cache (never the real one):
 
-    python -m execution2.tools.scripts_equivalence scripts --dataset caldot1-y05 --videos va00.mp4 va01.mp4 va02.mp4
-    python -m execution2.tools.scripts_equivalence execution2 --dataset caldot1-y05 --videos ... --out-dir OUT --gpus 0 1
-    python -m execution2.tools.scripts_equivalence summary --out-dir OUT
+    python -m execution.tools.scripts_equivalence scripts --dataset caldot1-y05 --videos va00.mp4 va01.mp4 va02.mp4
+    python -m execution.tools.scripts_equivalence execution2 --dataset caldot1-y05 --videos ... --out-dir OUT --gpus 0 1
+    python -m execution.tools.scripts_equivalence summary --out-dir OUT
 """
 
 import argparse
@@ -178,7 +178,7 @@ def run_execution2(dataset: str, videos: list[str], out_dir: str, gpus: list[int
         for stage in ('classify', 'detect'):
             cfg['system']['stages'][stage]['gpu'] = gpu
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
-        cmd = ['python', '-m', 'execution2.tools.compare_scripts', '--config', str(path), '--dataset', dataset,
+        cmd = ['python', '-m', 'execution.tools.compare_scripts', '--config', str(path), '--dataset', dataset,
                '--videoset', 'valid', '--videos', *videos, '--out', str(out / f'{path.stem}.json')]
         with open(out / f'{path.stem}.log', 'w') as f:
             code = subprocess.run(cmd, env={**os.environ, 'CUDA_VISIBLE_DEVICES': str(gpu)},
