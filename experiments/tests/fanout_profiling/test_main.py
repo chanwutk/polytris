@@ -10,8 +10,8 @@ import pytest
 
 from execution.main import StartupError
 from experiments.fanout_profiling import main as m, stages as st
-from tests.profiling import fake_stages as pfs
-from tests.profiling.test_stages import make_cfg
+from experiments.tests.fanout_profiling import fake_stages as pfs
+from experiments.tests.fanout_profiling.test_stages import make_cfg
 
 
 def write_video(path: Path, n: int, size=(80, 60)) -> str:

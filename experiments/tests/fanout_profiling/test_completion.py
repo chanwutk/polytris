@@ -10,7 +10,7 @@ from execution import frames
 from execution.pipeline import PipelineError, Stage, run
 from experiments.fanout_profiling.completion import VideoCompletion
 from tests.execution import fake_stages as efs
-from tests.profiling import fake_stages as pfs
+from experiments.tests.fanout_profiling import fake_stages as pfs
 
 
 def inputs(n):
