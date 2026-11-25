@@ -48,7 +48,7 @@ def test_execute_writes_one_file_per_video_and_drops_the_dummy(tmp_path, videos)
     out = tmp_path / 'out'
     before = set(glob.glob(os.path.join(tempfile.gettempdir(), 'execution-*')))
     summary = m.execute(cfg_with(tmp_path), str(videos), str(out), build=fs.fake_build)
-    assert sorted(os.listdir(out)) == ['a.jsonl', 'b.jsonl', 'c.jsonl']
+    assert sorted(os.listdir(out)) == ['a.jsonl', 'b.jsonl', 'c.jsonl', 'summary.json']
     # Each file holds that video's own result (the fake tags it with the video's frame count).
     for stem, n in [('a', 5), ('b', 8), ('c', 3)]:
         rows = [json.loads(line) for line in (out / f'{stem}.jsonl').read_text().splitlines()]
@@ -56,6 +56,43 @@ def test_execute_writes_one_file_per_video_and_drops_the_dummy(tmp_path, videos)
     assert summary['videos'] == 3 and summary['frames'] == 16 and summary['runtime_s'] >= 0
     # The dummy copy's temp dir is gone.
     assert set(glob.glob(os.path.join(tempfile.gettempdir(), 'execution-*'))) == before
+
+
+def test_summary_json_is_the_returned_summary_and_saving_is_off_by_default(tmp_path, videos):
+    out = tmp_path / 'out'
+    summary = m.execute(cfg_with(tmp_path), str(videos), str(out), build=fs.fake_build_track)
+    # The file is the contract callers read; it equals what execute returns and main prints.
+    assert json.loads((out / 'summary.json').read_text()) == summary
+    assert summary['saved'] is False
+    assert summary['video_frames'] == {'a': 5, 'b': 8, 'c': 3}
+    # Nothing besides the tracks and the summary is written without --save.
+    assert sorted(os.listdir(out)) == ['a.jsonl', 'b.jsonl', 'c.jsonl', 'summary.json']
+    assert sorted(os.listdir(tmp_path)) == sorted(['videos', 'out', 'bench.jsonl', 'never.npy', 'rates.npy'])
+
+
+def test_save_root_saves_every_video_but_the_dummy_and_leaves_the_tracks_unchanged(tmp_path, videos):
+    saved = tmp_path / 'saved'
+    saved.mkdir()
+    plain = m.execute(cfg_with(tmp_path), str(videos), str(tmp_path / 'plain'), build=fs.fake_build_track)
+    with_save = m.execute(cfg_with(tmp_path), str(videos), str(tmp_path / 'with-save'), build=fs.fake_build_track,
+                          save_root=str(saved), savers={'track': fs.record_saved})
+    # One saved result per real video; the timing dummy is never saved.
+    assert sorted(os.listdir(saved)) == ['a.avi.saved', 'b.avi.saved', 'c.avi.saved']
+    assert (saved / 'a.avi.saved').read_text() == 'sortcython'
+    assert with_save['saved'] is True and plain['saved'] is False
+    # Saving changes no output.
+    for stem in ('a', 'b', 'c'):
+        assert (tmp_path / 'with-save' / f'{stem}.jsonl').read_text() == (tmp_path / 'plain' / f'{stem}.jsonl').read_text()
+
+
+def test_a_failing_saver_fails_the_run_before_any_summary(tmp_path, videos):
+    from functools import partial
+    from execution.pipeline import PipelineError
+    out = tmp_path / 'out'
+    with pytest.raises(PipelineError, match='disk full on b.avi'):
+        m.execute(cfg_with(tmp_path), str(videos), str(out), build=fs.fake_build_track,
+                  save_root=str(tmp_path), savers={'track': partial(fs.failing_saver, 'b.avi')})
+    assert not (out / 'summary.json').exists()
 
 
 def test_single_video_still_times_one_interval(tmp_path):

@@ -2,10 +2,12 @@
 """
 Run the execution pipeline over a directory of videos (PLAN.md "Interface", "Timing").
 
-    python -m execution.main --config <yaml> --videos <dir> --out <dir>
+    python -m execution.main --config <yaml> --videos <dir> --out <dir> [--save <dir>]
 
-Writes one <out>/<video stem>.jsonl per video (p060's tracking format) and prints one JSON line
-with the run's runtime.  Timing lives here, not in the pipeline: a copy of the last video is fed
+Writes one <out>/<video stem>.jsonl per video (p060's tracking format) and <out>/summary.json (the run's
+runtime, videos, frames, and whether it saved), and prints the summary as one JSON line.
+With --save, every stage's non-pixel results also go to <dir>/execution/... (execution/save.py); savers share
+the machine with the timed run, so such a run's runtime is marked saved.  Timing lives here, not in the pipeline: a copy of the last video is fed
 first as a dummy (it also warms every model up), each result's arrival time is recorded, and the
 runtime is the last arrival minus the first, so N real videos span N intervals.  The dummy's
 result is discarded and its copy deleted.  Outputs are written only after the last arrival.
@@ -27,6 +29,7 @@ import cv2
 from execution import frames
 from execution.config import Config, ConfigError, load_config
 from execution.pipeline import Stage, run
+from execution.save import SAVERS, with_savers
 from execution.stages import Tracked, build_stages, frame_selection
 from tetris.utilities import save_tracking_results
 
@@ -39,6 +42,7 @@ def parse_args():
     parser.add_argument('--config', required=True)
     parser.add_argument('--videos', required=True)
     parser.add_argument('--out', required=True)
+    parser.add_argument('--save', default=None)
     return parser.parse_args()
 
 
@@ -139,8 +143,12 @@ def check_shm_budget(cfg: Config, infos: list[VideoInfo], shm_dir: str = SHM_DIR
 
 
 def execute(cfg: Config, videos_dir: str, out_dir: str,
-            build: Callable[[Config, str], list[Stage]] = build_stages) -> dict:
-    """Validate, run timed, then write outputs.  Returns the runtime summary."""
+            build: Callable[[Config, str], list[Stage]] = build_stages, save_root: str | None = None,
+            savers: dict | None = None) -> dict:
+    """Validate, run timed, then write outputs.  Returns the runtime summary (also written to summary.json).
+
+    save_root turns on per-stage saving (execution/save.py); savers replaces its saver functions (tests).
+    """
     videos = list_videos(videos_dir)
     infos = [probe(v) for v in videos]
     check_shm_budget(cfg, infos)
@@ -152,9 +160,13 @@ def execute(cfg: Config, videos_dir: str, out_dir: str,
         dummy = os.path.join(tmp, 'timing-dummy' + Path(videos[-1]).suffix)
         shutil.copyfile(videos[-1], dummy)
         prefix = frames.new_prefix()
+        stages = build(cfg, prefix)
+        # Saving is opt-in; the dummy's results are never saved.
+        if save_root is not None:
+            stages = with_savers(stages, cfg, save_root, skip=dummy, savers=savers or SAVERS)
         arrivals: list[float] = []
         results: dict[str, Tracked] = {}
-        for result in run(build(cfg, prefix), [dummy, *videos], cfg.system.queue_maxsize, shm_prefix=prefix):
+        for result in run(stages, [dummy, *videos], cfg.system.queue_maxsize, shm_prefix=prefix):
             arrivals.append(time.perf_counter())
             if result.video != dummy:
                 results[result.video] = result
@@ -168,14 +180,19 @@ def execute(cfg: Config, videos_dir: str, out_dir: str,
     # Writing happens after the last arrival so it cannot slow the timed run.
     for video, result in results.items():
         save_tracking_results(result.frame_tracks, os.path.join(out_dir, Path(video).stem + '.jsonl'))
-    return {'videos': len(videos), 'runtime_s': arrivals[-1] - arrivals[0],
-            'frames': sum(i.frame_count for i in infos)}
+    summary = {'videos': len(videos), 'runtime_s': arrivals[-1] - arrivals[0],
+               'frames': sum(i.frame_count for i in infos), 'saved': save_root is not None,
+               'video_frames': {Path(i.path).stem: i.frame_count for i in infos}}
+    # The file contract for callers such as profiling; written last, after every track file.
+    with open(os.path.join(out_dir, 'summary.json'), 'w') as f:
+        json.dump(summary, f, indent=2)
+    return summary
 
 
 def main() -> int:
     args = parse_args()
     try:
-        summary = execute(load_config(args.config), args.videos, args.out)
+        summary = execute(load_config(args.config), args.videos, args.out, save_root=args.save)
     except (StartupError, ConfigError) as e:
         print(f'error: {e}', file=sys.stderr)
         return 2

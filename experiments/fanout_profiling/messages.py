@@ -13,18 +13,14 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 import numpy as np
 
-from tetris.utilities import build_param_str
+from execution import save as ex_save
 
 if TYPE_CHECKING:
     # Types only: importing operators loads the detector libraries, which need a GPU driver.
     from execution import operators as ops
 
-# Branch keys in the order stages add them, and the build_param_str argument each maps to.
-PARAM_KEYS = {
-    'classifier': 'classifier', 'tile_size': 'tilesize', 'sample_rate': 'sample_rate',
-    'relevance_threshold': 'relevance_threshold', 'mistrack_tolerance': 'tracking_accuracy_threshold',
-    'tile_padding': 'tilepadding', 'canvas_scale': 'canvas_scale', 'tracker': 'tracker',
-}
+# Branch keys and their build_param_str names: execution/save.py's (one copy).
+PARAM_KEYS = ex_save.PARAM_KEYS
 
 
 @dataclass(frozen=True)
@@ -56,11 +52,7 @@ class Branch:
 
         A name whose value is None (the unpruned branch's tolerance) is left out, as build_param_str leaves it out.
         """
-        d = self.as_dict()
-        missing = [n for n in names if n not in d]
-        if missing:
-            raise KeyError(f'branch has no {missing}; it has {list(d)}')
-        return build_param_str(**{PARAM_KEYS[n]: d[n] for n in ('classifier', 'tile_size', *names)})
+        return ex_save.param_str(self.as_dict(), *names)
 
 
 class StageTiming(NamedTuple):

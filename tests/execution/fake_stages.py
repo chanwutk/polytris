@@ -150,3 +150,23 @@ def failing_save(target, msg):
 def none_in_fan_out(state, msg):
     """A fan-out stage that wrongly emits None among its outputs."""
     return [tag(state, msg), None]
+
+
+def fake_build_track(cfg, prefix):
+    """fake_build with the stage named 'track', so execution's track saver attaches to it."""
+    from execution.pipeline import Stage
+    return [Stage('track', worker_setup, fake_tracked, 2)]
+
+
+def record_saved(directory, params, skip, msg):
+    """Saver stand-in with the real savers' signature: one marker file per saved video, skipping `skip`."""
+    if msg.video == skip:
+        return
+    with open(os.path.join(directory, os.path.basename(msg.video) + '.saved'), 'w') as f:
+        f.write(params['tracker'])
+
+
+def failing_saver(target, directory, params, skip, msg):
+    """Saver stand-in that raises on one video."""
+    if os.path.basename(msg.video) == target:
+        raise OSError(f'disk full on {target}')

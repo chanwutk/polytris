@@ -42,6 +42,7 @@ from tetris.utilities import TILEPADDING_MAPS, is_tile_padding
 class Classified(NamedTuple):
     decoded: Decoded
     scores: np.ndarray          # uint8 [len(sampled), grid_h, grid_w]: classifier scores, or 0/255 after prune
+    ilp: dict | None = None     # after prune: the solve's status, solve_ms, and kept tiles (saved with --save)
 
 
 class Detected(NamedTuple):
@@ -100,10 +101,12 @@ def prune_setup(cfg: Config, worker: Worker) -> dict:
 def prune(state: dict, c: Classified) -> Classified:
     """p022: keep only the polyominoes the ILP selects; scores become 0/255 grids."""
     try:
-        pruned, _ = ops.prune_scores(c.scores, state['distance'], state['relevance_threshold'])
+        pruned, result = ops.prune_scores(c.scores, state['distance'], state['relevance_threshold'])
     except ValueError as e:
         raise ValueError(f'{c.decoded.video}: {e}') from e
-    return c._replace(scores=pruned)
+    # The solve's record travels with the grids so --save can write it (ilp.json).
+    ilp = {'status': int(result.status), 'solve_ms': float(result.solve_ms), 'kept_tiles': int(np.count_nonzero(pruned))}
+    return c._replace(scores=pruned, ilp=ilp)
 
 
 # ---------------------------------------------------------------- pack
