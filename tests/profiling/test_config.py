@@ -116,3 +116,34 @@ def test_load_reads_yaml_and_reports_bad_yaml(tmp_path):
     path.write_text('params: [unclosed')
     with pytest.raises(ConfigError, match='invalid YAML'):
         load_sweep_config(str(path))
+
+
+SELECTED = ['C_60_4_080_r050_none_s100_sortcython', 'C_60_1_r050_none_s100_bytetrackcython']
+
+
+def test_a_selection_keeps_only_those_configurations_in_grid_order(tmp_path):
+    doc = sweep_doc(tmp_path)
+    full = [c.id for c in configurations(parse_sweep_config(doc))]
+    cfg = parse_sweep_config({**doc, 'configurations': SELECTED})
+    # The listed order is irrelevant; the grid's order is kept.
+    assert [c.id for c in configurations(cfg)] == [i for i in full if i in SELECTED]
+    assert cfg.selected == frozenset(SELECTED)
+    # Without the key every configuration runs.
+    assert parse_sweep_config(doc).selected is None
+
+
+@pytest.mark.parametrize('value, match', [
+    ([], 'non-empty list'), ('C_60_1_r050_none_s100_sortcython', 'non-empty list'),
+    ([SELECTED[0], SELECTED[0]], 'distinct'), ([1], r'configurations\[0\]'),
+    ([SELECTED[0], 'C_60_2_r050_none_s100_sortcython'], r'1 ids are not configurations of the grid, e\.g\. C_60_2_'),
+])
+def test_a_bad_selection_is_rejected(tmp_path, value, match):
+    with pytest.raises(ConfigError, match=match):
+        parse_sweep_config({**sweep_doc(tmp_path), 'configurations': value})
+
+
+def test_the_hash_changes_with_the_selection(tmp_path):
+    doc = sweep_doc(tmp_path)
+    one = parse_sweep_config({**doc, 'configurations': SELECTED[:1]})
+    assert sweep_hash(one) != sweep_hash(parse_sweep_config(doc))
+    assert sweep_hash(one) != sweep_hash(parse_sweep_config({**doc, 'configurations': SELECTED}))

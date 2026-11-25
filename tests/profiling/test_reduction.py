@@ -61,3 +61,20 @@ def test_a_table_with_the_wrong_grid_is_an_error(tmp_path):
     cfg = parse_sweep_config(doc)
     with pytest.raises(ValueError, match='grid'):
         duplicates(cfg, configurations(cfg))
+
+
+def test_a_selection_without_the_representative_runs_its_first_selected_member(tmp_path):
+    # At s=1 every bytetrack tolerance is one group; its representative (0.4) is not selected.
+    tables = {'sortcython': rate_table({0.4: 8, 0.6: 6, 0.8: 2}), 'bytetrackcython': rate_table({0.4: 3, 0.6: 3, 0.8: 3})}
+    doc = sweep_doc(tmp_path, tables=tables, sample_rates=[1])
+    cfg = parse_sweep_config({**doc, 'configurations': ['C_60_1_080_r050_none_s100_bytetrackcython',
+                                                        'C_60_1_060_r050_none_s100_bytetrackcython',
+                                                        'C_60_1_080_r050_none_s100_sortcython']})
+    # 0.6 runs (first in grid order) and 0.8 follows it; sort's 0.8 is alone in its group.
+    assert duplicates(cfg, configurations(cfg)) == {
+        'C_60_1_080_r050_none_s100_bytetrackcython': 'C_60_1_060_r050_none_s100_bytetrackcython'}
+
+
+def test_a_selected_duplicate_without_its_representative_runs_itself(tmp_path):
+    cfg = parse_sweep_config({**sweep_doc(tmp_path), 'configurations': ['C_60_4_080_r050_none_s100_sortcython']})
+    assert duplicates(cfg, configurations(cfg)) == {}

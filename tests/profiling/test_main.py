@@ -68,6 +68,18 @@ def test_without_dedup_every_configuration_runs(tmp_path):
     assert summary['ran'] == 16 and summary['duplicates'] == 0
 
 
+def test_a_selection_runs_only_its_configurations_with_dedup_among_them(tmp_path):
+    selected = ['C_60_1_r050_none_s100_sortcython', *DUPLICATES, *DUPLICATES.values()]
+    cfg = parse_sweep_config({**sweep_doc(tmp_path), 'configurations': selected})
+    runner = FakeRunner()
+    summary = pm.sweep(cfg, runner=runner, videos=videos_with_references(tmp_path))
+    assert summary == {'configurations': 5, 'duplicates': 2, 'ran': 3, 'skipped': 0, 'duplicates_copied': 2,
+                       'failed': []}
+    assert sorted(c['id'] for c in runner.calls) == sorted(['C_60_1_r050_none_s100_sortcython', *DUPLICATES.values()])
+    # Nothing outside the selection gets a run directory.
+    assert sorted(os.listdir(Path(cfg.profiling_dir, 'runs'))) == sorted(selected)
+
+
 def test_save_passes_cache_shaped_root_and_marks_results(tmp_path):
     cfg, videos = setup(tmp_path, sample_rates=[1], mistrack_tolerances=[None])
     runner = FakeRunner()

@@ -57,9 +57,10 @@ def group_tolerances(table: np.ndarray, mask: np.ndarray, tolerances: list[float
 def duplicates(cfg, configs: list) -> dict[str, str]:
     """Each duplicate configuration's id -> the id of the configuration that runs for it.
 
-    A configuration is a duplicate when its tolerance shares an identical-ILP group (for its tracker and sample
-    rate) with an earlier tolerance; it equals the group representative's configuration in every other parameter.
-    Empty when dedup_pruning is off or no tolerance is swept.  cfg is a profiling.config.SweepConfig.
+    Configurations that differ only in tolerances of one identical-ILP group (for their tracker and sample rate) are
+    one run; the first of them in configs (grid order) runs.  That is the group representative's configuration
+    unless a selection (profiling/config.py's `configurations`) left it out.  Empty when dedup_pruning is off or no
+    tolerance is swept.  cfg is a profiling.config.SweepConfig.
     """
     tolerances = [t for t in cfg.params.mistrack_tolerances if t is not None]
     if not cfg.params.dedup_pruning or not tolerances:
@@ -75,16 +76,19 @@ def duplicates(cfg, configs: list) -> dict[str, str]:
             for group in group_tolerances(table, mask, tolerances, s):
                 for t in group.tolerances:
                     representative[(tracker, s, t)] = group.representative
-    by_params = {_key(c.params): c.id for c in configs}
+    # Each run (the parameters with the group's representative tolerance) -> the first configuration that makes it.
+    runs_for: dict[tuple, str] = {}
     out = {}
     for c in configs:
         tol = c.params['mistrack_tolerance']
         if tol is None:
             continue
         rep = representative[(c.params['tracker'], c.params['sample_rate'], tol)]
-        if rep != tol:
-            # The representative's configuration: the same parameters with the representative tolerance.
-            out[c.id] = by_params[_key({**c.params, 'mistrack_tolerance': rep})]
+        run = _key({**c.params, 'mistrack_tolerance': rep})
+        if run in runs_for:
+            out[c.id] = runs_for[run]
+        else:
+            runs_for[run] = c.id
     return out
 
 

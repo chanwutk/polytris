@@ -13,11 +13,14 @@ One YAML per dataset, with no unknown keys allowed:
   evaluation          each video's reference tracks: <reference_dir>/<video file>/<reference_file>
   system              execution's system section, used for every configuration (prune's entry is dropped for
                       configurations without pruning, as execution requires)
+  configurations      optional: ids of the grid's configurations to run (default: all), e.g. a validation sweep's
+                      Pareto configurations on the test split (experiments/tools/profiling/make_test_configs.py)
 
 Every configuration's execution config is validated by execution.config.parse_config when the sweep loads, so the
 field rules exist once and a bad sweep fails before anything runs.
 """
 
+import dataclasses
 import hashlib
 import itertools
 import json
@@ -75,6 +78,7 @@ class SweepConfig:
     evaluation: Evaluation
     system: dict[str, Any]                          # execution's system section, as written
     raw: dict[str, Any]                             # the parsed YAML document, for the sweep's hash
+    selected: frozenset[str] | None = None          # ids of the grid's configurations to run; None = all
 
     @property
     def profiling_dir(self) -> str:
@@ -124,6 +128,12 @@ def execution_config(params: dict[str, Any], artifacts: Artifacts, canvas_format
 
 
 def configurations(cfg: SweepConfig) -> list[Configuration]:
+    """The sweep's configurations: the selected ones (or the whole grid), always in grid order."""
+    # Grid order, not the listed order, so dedup's choice of which configuration runs never depends on the listing.
+    return [c for c in grid(cfg) if cfg.selected is None or c.id in cfg.selected]
+
+
+def grid(cfg: SweepConfig) -> list[Configuration]:
     """Every configuration of the grid, in enumeration order (SWEPT's order, first parameter slowest)."""
     out = []
     lists = [getattr(cfg.params, name) for name, _ in SWEPT]
@@ -196,6 +206,19 @@ def _artifacts(data: Any, params: Params) -> Artifacts:
     )
 
 
+def _selected(data: Any, cfg: SweepConfig) -> frozenset[str]:
+    """A non-empty list of distinct ids, each a configuration of the grid."""
+    if not isinstance(data, list) or not data:
+        raise ConfigError('configurations: expected a non-empty list of configuration ids')
+    ids = [_check_type(v, str, f'configurations[{i}]') for i, v in enumerate(data)]
+    if len(set(ids)) != len(ids):
+        raise ConfigError('configurations: ids must be distinct')
+    unknown = sorted(set(ids) - {c.id for c in grid(cfg)})
+    if unknown:
+        raise ConfigError(f'configurations: {len(unknown)} ids are not configurations of the grid, e.g. {unknown[0]}')
+    return frozenset(ids)
+
+
 def _evaluation(data: Any) -> Evaluation:
     data = _keys(data, {'reference_dir', 'reference_file'}, 'evaluation')
     return Evaluation(reference_dir=_existing(data['reference_dir'], 'evaluation.reference_dir'),
@@ -204,7 +227,8 @@ def _evaluation(data: Any) -> Evaluation:
 
 def parse_sweep_config(data: Any) -> SweepConfig:
     """Validate a parsed sweep document, including every configuration's execution config."""
-    data = _keys(data, {'dataset', 'videoset', 'output_root', 'params', 'artifacts', 'evaluation', 'system'}, 'config')
+    data = _keys(data, {'dataset', 'videoset', 'output_root', 'params', 'artifacts', 'evaluation', 'system'}, 'config',
+                 {'configurations'})
     params = _params(data['params'])
     evaluation = _evaluation(data['evaluation'])
     output_root = os.path.abspath(_check_type(data['output_root'], str, 'output_root'))
@@ -225,6 +249,8 @@ def parse_sweep_config(data: Any) -> SweepConfig:
         system=data['system'],
         raw=data,
     )
+    if 'configurations' in data:
+        cfg = dataclasses.replace(cfg, selected=_selected(data['configurations'], cfg))
     # Every configuration must be a valid execution config; report the first bad one by its id.
     for c in configurations(cfg):
         try:

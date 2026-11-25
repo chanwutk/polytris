@@ -8,7 +8,11 @@
 # Each step runs in a throwaway polyis-polyis container on GPU 0 with the checkout at /polyis, the data and cache
 # read-only, and only <data>/polyis-data/profiling (the sweeps' output_root) and a scratch log directory writable.
 # Every sweep resumes (finished configurations are skipped), so rerunning this script continues where it stopped.
-# A failed step is logged and the next one still runs.  Progress: <data>/polyis-data/profiling/logs/.
+# A failed step is logged and the next one still runs.  Progress: <data>/polyis-data/profiling/logs/<config dir name>/.
+#
+# CONFIG_DIR (default experiments/configs/profiling, the validation sweeps) picks the sweep configs; the test-split
+# runs of the validation Pareto configurations use CONFIG_DIR=experiments/configs/profiling-test (written by
+# experiments/tools/profiling/make_test_configs.py; their output_root is inside the same writable directory).
 set -uo pipefail
 
 checkout=${1:?usage: profiling_all.sh <checkout path> [datasets...]}
@@ -19,9 +23,11 @@ if (( $# > 0 )); then
 else
   datasets=(caldot1-y05 caldot2-y05 ams-y05 jnc0 jnc2 jnc6 jnc7)
 fi
+configs=${CONFIG_DIR:-experiments/configs/profiling}
 data=${DATA_ROOT:-/data/cwkt/data}
 out=$data/polyis-data/profiling
-logs=$out/logs
+# One log directory per config directory, so validation and test logs never interleave.
+logs=$out/logs/${configs##*/}
 mkdir -p "$logs" "$data/profiling-script-logs"
 
 # One step in a throwaway container; tetris's script loggers write under /polyis-cache/LOGS, so that is scratch.
@@ -34,7 +40,7 @@ step() {
 }
 
 for d in "${datasets[@]}"; do
-  config=experiments/configs/profiling/$d.yaml
+  config=$configs/$d.yaml
   for cmd in "profiling.main --config $config" "profiling.evaluate --config $config --procs 16" \
              "profiling.aggregate --config $config"; do
     echo "== $(date -Is) $d: python -m $cmd" | tee -a "$logs/driver.log"

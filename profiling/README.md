@@ -21,6 +21,13 @@ python -m profiling.aggregate --config experiments/configs/profiling/<dataset>.y
    It never overlaps a timed run, and can be rerun alone (`--force`).
 3. `profiling.aggregate` combines each configuration's per-video results into the dataset HOTA (TrackEval's `combine_sequences`, as p110 and p111), and writes the Pareto fronts of every ablation condition in `tetris.ablation` (full, no sampling, no sampling or pruning): `configurations.json`, `pareto.json`, and `pareto.html` (click a point to get its execution YAML).
 
+## Test split
+
+The Pareto configurations chosen on the validation split are rerun on the test split by the same three steps.
+`python -m experiments.tools.profiling.make_test_configs` writes `experiments/configs/profiling-test/<dataset>.yaml` from each aggregated validation sweep: the same document with `videoset: test`, results under `/polyis-data/profiling/test`, and `configurations` listing the ids in its `pareto.json` (every ablation condition's front).
+A sweep config's optional `configurations` restricts any sweep to those ids of its grid (in grid order; dedup applies among them).
+The test sweep's `configurations.json` holds each configuration's test HOTA and end-to-end throughput, and its `pareto.json` the test-split fronts.
+
 ## Identical pruning runs once
 
 With `params.dedup_pruning` (default true), tolerances whose per-tile sampling gaps are identical on every tile the never-relevant mask allows give the same pruning ILP, so the same outputs and the same work (`profiling/reduction.py`).
