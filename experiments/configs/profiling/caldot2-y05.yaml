@@ -1,0 +1,64 @@
+# caldot2-y05 validation sweep: the grid of configs/global.yaml (written by experiments/tools/profiling/make_configs.py).
+dataset: caldot2-y05
+videoset: valid
+output_root: /polyis-data/profiling
+params:
+  classifier: ShuffleNet05
+  tile_size: 60
+  canvas_format: jpeg
+  sample_rates:
+  - 1
+  - 2
+  - 4
+  - 8
+  - 16
+  relevance_thresholds:
+  - 0.25
+  - 0.5
+  - 0.75
+  mistrack_tolerances:
+  - null
+  - 0.4
+  - 0.6
+  - 0.8
+  tile_paddings:
+  - none
+  - tr
+  - bl
+  - square
+  canvas_scales:
+  - 1.0
+  trackers:
+  - sortcython
+  - bytetrackcython
+  dedup_pruning: true
+artifacts:
+  classifier_weights: /polyis-cache/caldot2-y05/indexing/training/results/ShuffleNet05_60/model_best.pth
+  compilation_benchmark: /polyis-cache/caldot2-y05/indexing/training/results/ShuffleNet05_60/model_compilation.jsonl
+  never_relevant_bitmap: /polyis-cache/caldot2-y05/indexing/always_relevant/60_all.npy
+  max_rate_tables:
+    sortcython: /polyis-cache/caldot2-y05/indexing/track_rate/sortcython_60/max_rate_table.npy
+    bytetrackcython: /polyis-cache/caldot2-y05/indexing/track_rate/bytetrackcython_60/max_rate_table.npy
+  detector:
+    type: ultralytics
+    model_path: /polyis-data/training/ultralytics/caldot2/weights/yolov5x6/weights/best.pt
+evaluation:
+  reference_dir: /polyis-cache/caldot2-y05/execution
+  reference_file: 002_naive/tracking.jsonl
+system:
+  queue_maxsize: 2
+  stages:
+    decode:
+      procs: 2
+    classify:
+      procs: 1
+      gpu: 0
+    pack:
+      procs: 2
+    detect:
+      procs: 1
+      gpu: 0
+    track:
+      procs: 2
+    prune:
+      procs: 1
