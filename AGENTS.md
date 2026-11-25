@@ -60,8 +60,8 @@ FOR EACH STAGE OF REVIEW: output the explanation and pros and cons of each stage
 - Read and write tool calls may be executed directly on this local machine without syncing.
 
 ## System vs. experiments
-- The system: `tetris/` (library), `execution/` (pipeline-parallel engine, `python -m execution.main`), `profiling/` (validation sweep), `scripts/p011–p017` (tuning: classifier training, sampling limits), `configs/`, and `tests/`.
-- `experiments/` holds everything that produces the paper's numbers: the original per-stage pipeline (`experiments/scripts/p020–p060`), `preprocess/`, `evaluation/`, `measurements/`, `measurements_gpu/`, `measurements-results/`, `ablation/`, comparison `tools/`, and their `tests/` (including the scripts-vs-pipeline equivalence tests).
+- The system: `tetris/` (library), `execution/` (pipeline-parallel engine, `python -m execution.main`), `profiling/` (validation sweep: one `execution.main` run per configuration, then Pareto selection), `scripts/p011–p017` (tuning: classifier training, sampling limits), `configs/`, and `tests/`.
+- `experiments/` holds everything that produces the paper's numbers: the original per-stage pipeline (`experiments/scripts/p020–p060`), `preprocess/`, `evaluation/`, `measurements/`, `measurements_gpu/`, `measurements-results/`, `ablation/`, `fanout_profiling/` (the earlier fan-out sweep), comparison `tools/`, and their `tests/` (including the scripts-vs-pipeline equivalence tests).
 - Dependencies point one way: experiments import the system (`from tetris…`, `from execution…`); system code and `tests/` import nothing from `experiments/`.
 - Import experiment code by its package path (`from experiments.evaluation.p110_accuracy_compute import …`) and run it from the repo root (`./run experiments/evaluation/<script>.py --help`).
 

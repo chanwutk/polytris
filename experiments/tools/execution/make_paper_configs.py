@@ -63,15 +63,25 @@ def build_params(dataset: str, p: dict, detectors: dict) -> dict:
         'never_relevant_bitmap': f'{index}/always_relevant/{p["tile_size"]}_all.npy',
         'detector': detector_spec(dataset, detectors),
     }
-    stages = {'decode': {'procs': 2}, 'classify': {'procs': 1, 'gpu': 0}, 'pack': {'procs': 2},
-              'detect': {'procs': 1, 'gpu': 0}, 'track': {'procs': 2}}
-    if p['mistrack_tolerance'] is not None:
+    pruned = p['mistrack_tolerance'] is not None
+    if pruned:
         artifacts['max_rate_table'] = f'{index}/track_rate/{p["tracker"]}_{p["tile_size"]}/max_rate_table.npy'
-        stages['prune'] = {'procs': 1}
     params = {k: p[k] for k in ('sample_rate', 'relevance_threshold', 'mistrack_tolerance', 'tile_padding',
                                 'tracker', 'tile_size', 'canvas_scale')}
-    return {'params': {**params, 'canvas_format': 'jpeg'}, 'artifacts': artifacts,
-            'system': {'queue_maxsize': 2, 'stages': stages}}
+    return {'params': {**params, 'canvas_format': 'jpeg'}, 'artifacts': artifacts, 'system': one_gpu_system(pruned)}
+
+
+def one_gpu_system(pruned: bool) -> dict:
+    """The paper's execution runs' system section: everything on GPU 0; prune's entry only when pruning.
+
+    Profiling sweeps use the same section (experiments/tools/profiling/make_configs.py), so the validation runtimes
+    are measured as the final execution runs are.
+    """
+    stages = {'decode': {'procs': 2}, 'classify': {'procs': 1, 'gpu': 0}, 'pack': {'procs': 2},
+              'detect': {'procs': 1, 'gpu': 0}, 'track': {'procs': 2}}
+    if pruned:
+        stages['prune'] = {'procs': 1}
+    return {'queue_maxsize': 2, 'stages': stages}
 
 
 def main() -> None:
