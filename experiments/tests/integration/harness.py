@@ -97,10 +97,10 @@ def require_detector(dataset: str) -> None:
 
 
 def scripts(tree: Tree, *names: str, **extra: str) -> None:
-    """Run scripts/<name>.py for the tree's split, restricted to its clips."""
+    """Run experiments/scripts/<name>.py for the tree's split, restricted to its clips."""
     flag = f'--{tree.split}'
     for name in names:
-        tree.run(f'scripts/{name}.py', flag, '--videos', *tree.videos, **extra)
+        tree.run(f'experiments/scripts/{name}.py', flag, '--videos', *tree.videos, **extra)
 
 
 def reference(tree: Tree) -> None:

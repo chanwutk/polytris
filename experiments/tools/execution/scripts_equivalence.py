@@ -110,7 +110,7 @@ def run_scripts(dataset: str, videos: list[str]) -> None:
     """The scripts on the small grid, restricted to one dataset and these validation videos."""
     env = {**os.environ, 'CONFIG': 'equivalence.yaml', 'POLYIS_DATASETS': dataset}
     for script in SCRIPTS:
-        cmd = ['python', f'scripts/{script}.py', '--valid', '--videos', *videos]
+        cmd = ['python', f'experiments/scripts/{script}.py', '--valid', '--videos', *videos]
         if script != 'p022_exec_prune_polyominoes':
             print('>>>', ' '.join(cmd), flush=True)
             subprocess.run(cmd, env=env, check=True)
