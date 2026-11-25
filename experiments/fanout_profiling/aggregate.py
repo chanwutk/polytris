@@ -27,20 +27,12 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from tetris.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
-from tetris.pareto import compute_pareto_front
+# The HOTA combination, Pareto union, and page are profiling/aggregate.py's (one copy, shared with the profiling sweep).
+from profiling.aggregate import combine_hota, hota_score, page, pareto_union  # noqa: F401  (re-exported for tests)
 from experiments.fanout_profiling.config import SweepConfig, load_sweep_config
 from experiments.fanout_profiling.reduction import sweep_groups
-
-# Branch keys -> the column names p135 / tetris.pareto use.
-COLUMNS = {'classifier': 'classifier', 'tile_size': 'tilesize', 'sample_rate': 'sample_rate',
-           'mistrack_tolerance': 'tracking_accuracy_threshold', 'relevance_threshold': 'relevance_threshold',
-           'tile_padding': 'tilepadding', 'canvas_scale': 'canvas_scale', 'tracker': 'tracker'}
-
-# Pinned Vega releases for the page.
-VEGA = 'https://cdn.jsdelivr.net/npm/vega@5.30.0'
-VEGA_LITE = 'https://cdn.jsdelivr.net/npm/vega-lite@5.21.0'
-VEGA_EMBED = 'https://cdn.jsdelivr.net/npm/vega-embed@6.26.0'
+from profiling.aggregate import COLUMNS  # noqa: F401  (Branch keys -> the column names p135 / tetris.pareto use)
+from profiling.config import Artifacts as ProfilingArtifacts, execution_config as profiling_execution_config
 
 
 def parse_args():
@@ -52,21 +44,6 @@ def parse_args():
 def branch_key(branch: dict) -> str:
     """A stable identifier for a configuration (its parameters as sorted JSON)."""
     return json.dumps(branch, sort_keys=True)
-
-
-def combine_hota(per_video: list[dict]) -> dict:
-    """TrackEval's combined HOTA over videos, from each video's raw HOTA result (lists from JSON)."""
-    # Through p110, which puts modules/TrackEval on sys.path before importing trackeval.
-    from tetris.trackeval.evaluate import HOTA
-    metric = HOTA()
-    arrays = {f'v{i}': {k: np.asarray(v, dtype=float) for k, v in r.items()} for i, r in enumerate(per_video)}
-    return metric.combine_sequences(arrays)
-
-
-def hota_score(combined: dict) -> float:
-    """p111's HOTA_HOTA: the mean over localization thresholds."""
-    values = list(np.asarray(combined['HOTA'], dtype=float))
-    return float(sum(values) / len(values))
 
 
 def times_per_configuration(records_path: str) -> dict[str, dict]:
@@ -84,25 +61,21 @@ def times_per_configuration(records_path: str) -> dict[str, dict]:
     return {branch_key(json.loads(k)): {'videos': v, 'charged_s': c, 'decode_s': d} for k, v, c, d in rows}
 
 
+# The execution config the page offers for each configuration: one GPU, as the paper's execution runs.
+ONE_GPU_SYSTEM = {'queue_maxsize': 2, 'stages': {
+    'decode': {'procs': 2}, 'classify': {'procs': 1, 'gpu': 0}, 'prune': {'procs': 1}, 'pack': {'procs': 2},
+    'detect': {'procs': 1, 'gpu': 0}, 'track': {'procs': 2}}}
+
+
 def execution_config(cfg: SweepConfig, branch: dict) -> dict:
-    """The execution config for one configuration: the sweep's artifacts, one GPU, JPEG/raw as swept."""
-    a, tol = cfg.artifacts, branch['mistrack_tolerance']
-    artifacts = {
-        'classifier': {'name': branch['classifier'], 'weights': a.classifier_weights,
-                       'compilation_benchmark': a.compilation_benchmark},
-        'never_relevant_bitmap': a.never_relevant_bitmap,
-        'detector': {'type': a.detector.type, **a.detector.options},
-    }
-    stages = {'decode': {'procs': 2}, 'classify': {'procs': 1, 'gpu': 0}, 'pack': {'procs': 2},
-              'detect': {'procs': 1, 'gpu': 0}, 'track': {'procs': 2}}
-    if tol is not None:
-        artifacts['max_rate_table'] = a.max_rate_tables[branch['tracker']]
-        stages['prune'] = {'procs': 1}
-    params = {'sample_rate': branch['sample_rate'], 'relevance_threshold': branch['relevance_threshold'],
-              'mistrack_tolerance': tol, 'tile_padding': branch['tile_padding'], 'tracker': branch['tracker'],
-              'tile_size': branch['tile_size'], 'canvas_scale': branch['canvas_scale'],
-              'canvas_format': cfg.params.canvas_format}
-    return {'params': params, 'artifacts': artifacts, 'system': {'queue_maxsize': 2, 'stages': stages}}
+    """The execution config for one configuration: the sweep's artifacts, one GPU, JPEG/raw as swept.
+
+    Built by profiling.config.execution_config (one copy of the document's shape).
+    """
+    a = cfg.artifacts
+    artifacts = ProfilingArtifacts(a.classifier_weights, a.compilation_benchmark, a.never_relevant_bitmap,
+                                   a.max_rate_tables, {'type': a.detector.type, **a.detector.options})
+    return profiling_execution_config(branch, artifacts, cfg.params.canvas_format, ONE_GPU_SYSTEM)
 
 
 def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
@@ -146,8 +119,9 @@ def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
         json.dump(configs, f, indent=1)
     with open(os.path.join(out_dir, 'pareto.json'), 'w') as f:
         json.dump(pareto, f, indent=1)
+    title = f'{cfg.dataset} ({cfg.videoset}): HOTA vs throughput, {len(configs)} configurations'
     with open(os.path.join(out_dir, 'pareto.html'), 'w') as f:
-        f.write(page(cfg, configs, pareto))
+        f.write(page(title, cfg.dataset, 'throughput (frames/s, charged time, decode excluded)', configs, pareto))
     return configs, pareto
 
 
@@ -166,82 +140,6 @@ def expand_tolerance_groups(cfg: SweepConfig, configs: list[dict]) -> list[dict]
         group = next(g for g in groups[(c['tracker'], c['sample_rate'])] if g.representative == tol)
         out += [{**c, 'tracking_accuracy_threshold': other, 'ran_as': tol} for other in group.tolerances[1:]]
     return out
-
-
-def pareto_union(configs: list[dict]) -> list[dict]:
-    """p135's rule: the union of each ablation condition's front (minimize time, maximize HOTA)."""
-    df = pd.DataFrame(configs)
-    on: dict[int, list[str]] = defaultdict(list)
-    for condition in ABLATION_CONDITIONS:
-        subset = filter_by_ablation_condition(df, condition)
-        if subset.empty:
-            continue
-        front = compute_pareto_front(subset, 'time', 'HOTA_HOTA', minx=True, miny=False)
-        for i in front['id']:
-            on[int(i)].append(condition.name)
-    return [{**c, 'pareto_conditions': on[c['id']]} for c in configs if c['id'] in on]
-
-
-def page(cfg: SweepConfig, configs: list[dict], pareto: list[dict]) -> str:
-    """The interactive HTML page (data and YAML embedded; Vega from a CDN)."""
-    on = {p['id']: p['pareto_conditions'] for p in pareto}
-    rows = [{**{k: v for k, v in c.items() if k != 'execution_yaml'},
-             'front': 'full Tetris front' if 'full' in on.get(c['id'], []) else
-                      ('other ablation front' if c['id'] in on else 'not on a front')} for c in configs]
-    yamls = {c['id']: c['execution_yaml'] for c in configs}
-    spec = {
-        '$schema': 'https://vega.github.io/schema/vega-lite/v5.json',
-        'title': f'{cfg.dataset} ({cfg.videoset}): HOTA vs throughput, {len(configs)} configurations',
-        'width': 760, 'height': 460, 'data': {'values': rows},
-        'params': [{'name': 'pick', 'select': {'type': 'point', 'fields': ['id'], 'on': 'click'}}],
-        'mark': {'type': 'point', 'filled': True, 'size': 60, 'cursor': 'pointer'},
-        'encoding': {
-            'x': {'field': 'throughput_fps', 'type': 'quantitative', 'scale': {'type': 'log'},
-                  'title': 'throughput (frames/s, charged time, decode excluded)'},
-            'y': {'field': 'HOTA_HOTA', 'type': 'quantitative', 'scale': {'zero': False}, 'title': 'HOTA'},
-            'color': {'field': 'front', 'type': 'nominal',
-                      'scale': {'domain': ['full Tetris front', 'other ablation front', 'not on a front'],
-                                'range': ['#d62728', '#ff9896', '#c7c7c7']}},
-            'opacity': {'condition': {'param': 'pick', 'value': 1}, 'value': 0.85},
-            'tooltip': [{'field': f} for f in ('sample_rate', 'relevance_threshold', 'tracking_accuracy_threshold',
-                                                 'tilepadding', 'canvas_scale', 'tracker', 'HOTA_HOTA',
-                                                 'throughput_fps', 'throughput_fps_with_decode')],
-        },
-    }
-    return f"""<!doctype html>
-<html><head><meta charset="utf-8"><title>{cfg.dataset} profiling</title>
-<script src="{VEGA}"></script><script src="{VEGA_LITE}"></script><script src="{VEGA_EMBED}"></script>
-<style>body{{font-family:sans-serif;margin:16px}}pre{{background:#f5f5f5;padding:8px;max-height:420px;overflow:auto}}
-button{{margin-right:8px}}</style></head>
-<body><div id="vis"></div>
-<h3 id="title">Click a point to get its execution config.</h3>
-<div><button id="copy" disabled>Copy YAML</button><button id="download" disabled>Download YAML</button></div>
-<pre id="yaml"></pre>
-<script>
-const SPEC = {json.dumps(spec)};
-const YAML = {json.dumps(yamls)};
-const ROWS = Object.fromEntries(SPEC.data.values.map(r => [r.id, r]));
-vegaEmbed('#vis', SPEC).then(result => {{
-  result.view.addSignalListener('pick', (name, value) => {{
-    if (!value || !value.id) return;
-    const id = value.id[0], r = ROWS[id], text = YAML[id];
-    document.getElementById('title').textContent =
-      `s=${{r.sample_rate}} T_r=${{r.relevance_threshold}} tol=${{r.tracking_accuracy_threshold}} ` +
-      `P=${{r.tilepadding}} scale=${{r.canvas_scale}} ${{r.tracker}}: HOTA ${{r.HOTA_HOTA.toFixed(4)}}, ` +
-      `${{r.throughput_fps.toFixed(1)}} fps`;
-    document.getElementById('yaml').textContent = text;
-    const copy = document.getElementById('copy'), dl = document.getElementById('download');
-    copy.disabled = dl.disabled = false;
-    copy.onclick = () => navigator.clipboard.writeText(text);
-    dl.onclick = () => {{
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([text], {{type: 'text/yaml'}}));
-      a.download = `{cfg.dataset}-config-${{id}}.yaml`; a.click();
-    }};
-  }});
-}});
-</script></body></html>
-"""
 
 
 def main() -> int:

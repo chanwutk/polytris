@@ -24,8 +24,6 @@ import time
 from collections import Counter
 from typing import Callable, Iterator
 
-import numpy as np
-
 from execution import frames
 from execution.config import ConfigError
 from execution.main import StartupError, VideoInfo, list_videos, probe
@@ -35,6 +33,8 @@ from experiments.fanout_profiling import stages as st
 from experiments.fanout_profiling.completion import VideoCompletion
 from experiments.fanout_profiling.config import SweepConfig, load_sweep_config
 from experiments.fanout_profiling.messages import Evaluated
+# TrackEval-to-JSON conversion and the reference check are profiling/evaluate.py's (shared with the profiling sweep).
+from profiling.evaluate import missing_references, to_json  # noqa: F401  (to_json re-exported for tests)
 from tetris.io import store
 
 SHM_DIR = '/dev/shm'
@@ -53,11 +53,9 @@ def videos_dir(cfg: SweepConfig) -> str:
 
 def check_references(cfg: SweepConfig, videos: list[str]) -> None:
     """Every video needs its reference tracks, or evaluation would fail mid-run."""
-    missing = [v for v in videos if not os.path.exists(
-        os.path.join(cfg.evaluation.reference_dir, os.path.basename(v), cfg.evaluation.reference_file))]
+    missing = missing_references(cfg.evaluation.reference_dir, cfg.evaluation.reference_file, videos)
     if missing:
-        raise StartupError(f'reference tracks missing for {len(missing)} videos, e.g. '
-                           f'{os.path.join(cfg.evaluation.reference_dir, os.path.basename(missing[0]), cfg.evaluation.reference_file)}')
+        raise StartupError(f'reference tracks missing for {len(missing)} videos, e.g. {missing[0]}')
 
 
 def worst_case_shm_bytes(cfg: SweepConfig, infos: list[VideoInfo]) -> int:
@@ -87,19 +85,6 @@ def check_shm(cfg: SweepConfig, infos: list[VideoInfo], shm_dir: str = SHM_DIR) 
     if worst > free:
         raise StartupError(f'worst-case shared memory {worst / 2**30:.1f} GiB exceeds {free / 2**30:.1f} GiB free in '
                            f'{shm_dir}; lower system.max_videos_in_flight, queue_maxsize, or pack/detect procs')
-
-
-def to_json(value):
-    """TrackEval results hold numpy arrays and scalars; JSON gets lists and Python numbers."""
-    if isinstance(value, np.ndarray):
-        return value.tolist()
-    if isinstance(value, (np.floating, np.integer)):
-        return value.item()
-    if isinstance(value, dict):
-        return {k: to_json(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [to_json(v) for v in value]
-    return value
 
 
 def record_of(result: Evaluated) -> dict:

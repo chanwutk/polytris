@@ -30,6 +30,7 @@ from experiments.fanout_profiling.reduction import sweep_groups
 from experiments.fanout_profiling.completion import VideoCompletion
 from experiments.fanout_profiling.config import SweepConfig
 from experiments.fanout_profiling.messages import Branch, Decoded, Detected, Evaluated, Packed, Scored, StageTiming, Tracked
+from profiling.evaluate import trackeval_sequences
 from tetris.utilities import TILEPADDING_MAPS, is_tile_padding, save_tracking_results
 
 
@@ -234,31 +235,23 @@ def track(state: dict, d: Detected) -> list[Tracked]:
 # ---------------------------------------------------------------- evaluate
 
 def evaluate_setup(cfg: SweepConfig, worker: Worker) -> dict:
-    # p110's metric objects and evaluator (imported here: p110 loads TrackEval and the repo config).
-    from tetris.trackeval.evaluate import build_metric_objects, run_trackeval
-    from trackeval.metrics import Count
     scratch = tempfile.mkdtemp(prefix=f'profiling-evaluate-{worker.index}-')
     return {'scratch': scratch, 'reference_dir': cfg.evaluation.reference_dir,
-            'reference_file': cfg.evaluation.reference_file, 'metrics': build_metric_objects(['HOTA']),
-            'count': Count(), 'run_trackeval': run_trackeval}
+            'reference_file': cfg.evaluation.reference_file}
 
 
 def evaluate(state: dict, t: Tracked) -> Evaluated:
-    """TrackEval on this video's tracks vs its reference tracks, with p110's settings; raw per-video result."""
+    """TrackEval on this video's tracks vs its reference tracks, with p110's settings; raw per-video result.
+
+    The scoring is profiling.evaluate.trackeval_sequences (one copy, shared with the profiling sweep).
+    """
     start = time.time()
     seq = os.path.basename(t.video)
     track_dir = os.path.join(state['scratch'], 'tracks')
     os.makedirs(os.path.join(track_dir, seq), exist_ok=True)
     save_tracking_results(t.frame_tracks, os.path.join(track_dir, seq, 'tracking.jsonl'))
-    dataset_config = {
-        'output_fol': os.path.join(state['scratch'], 'trackeval'), 'output_sub_fol': 'profiling',
-        'input_gt': state['reference_file'], 'input_track': 'tracking.jsonl', 'skip': 1, 'tracker': 'profiling',
-        'seq_list': [seq], 'input_dir': track_dir, 'input_gt_dir': state['reference_dir'],
-        'input_track_dir': track_dir,
-    }
-    results = state['run_trackeval'](dataset_config, state['metrics'], dataset_config['output_fol'], 1)
-    vehicle = results[seq]['vehicle']
-    metrics = {m.get_name(): vehicle[m.get_name()] for m in [*state['metrics'], state['count']]}
+    metrics = trackeval_sequences(track_dir, [seq], state['reference_dir'], state['reference_file'],
+                                  state['scratch'])[seq]
     # Evaluation is measurement, not system work: recorded, not charged.
     return Evaluated(t.video, t.branch, t.timings + (_timing('evaluate', start, time.time(), charged=0.0),), metrics)
 

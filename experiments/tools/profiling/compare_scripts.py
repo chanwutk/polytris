@@ -102,19 +102,16 @@ def build_with_script_prune(cfg, prefix, completion) -> list:
 
 
 def hota_from_cache(cache_execution: str, video: str, tracks_param: str, reference_file: str, scratch: str) -> np.ndarray:
-    """tetris.trackeval.evaluate.run_trackeval on the scripts' cached tracks for one video."""
-    from tetris.trackeval.evaluate import build_metric_objects, run_trackeval
+    """The scripts' cached tracks for one video, scored as the sweeps score theirs (profiling.evaluate)."""
+    from profiling.evaluate import trackeval_sequences
     track_dir = os.path.join(scratch, 'cached', tracks_param)
     os.makedirs(os.path.join(track_dir, video), exist_ok=True)
     src = os.path.join(cache_execution, video, '060_uncompressed_tracks', tracks_param, 'tracking.jsonl')
     dst = os.path.join(track_dir, video, 'tracking.jsonl')
     if not os.path.exists(dst):
         os.symlink(src, dst)
-    results = run_trackeval({'output_fol': os.path.join(scratch, 'te'), 'output_sub_fol': 'x', 'input_gt': reference_file,
-                             'input_track': 'tracking.jsonl', 'skip': 1, 'tracker': 'x', 'seq_list': [video],
-                             'input_dir': track_dir, 'input_gt_dir': cache_execution, 'input_track_dir': track_dir},
-                            build_metric_objects(['HOTA']), os.path.join(scratch, 'te'), 1)
-    return np.asarray(results[video]['vehicle']['HOTA']['HOTA'], dtype=float)
+    results = trackeval_sequences(track_dir, [video], cache_execution, reference_file, os.path.join(scratch, 'te'))
+    return np.asarray(results[video]['HOTA']['HOTA'], dtype=float)
 
 
 def main_cli() -> None:
@@ -135,9 +132,43 @@ def main_cli() -> None:
     print(json.dumps(report['totals'], indent=1))
 
 
-def compare_with_scripts(output_root: str, ds: str, cache_root: str, reference_file: str) -> dict:
+def fanout_hota(output_root: str, ds: str) -> dict:
+    """(video file, tracks directory name) -> HOTA array, from the fan-out sweep's records.jsonl."""
+    from experiments.fanout_profiling.messages import Branch
+    out = {}
+    for line in open(os.path.join(output_root, ds, 'profiling', 'records.jsonl')):
+        r = json.loads(line)
+        b = Branch(tuple(r['branch'].items()))
+        param = b.param_str('sample_rate', 'mistrack_tolerance', 'relevance_threshold', 'tile_padding', 'canvas_scale',
+                            'tracker')
+        out[(r['video'], param)] = np.asarray(r['metrics']['HOTA']['HOTA'], dtype=float)
+    return out
+
+
+def profiling_hota(output_root: str, ds: str) -> dict:
+    """(video file, tracks directory name) -> HOTA array, from the profiling sweep's evaluation.json files.
+
+    A configuration's id is its tracks directory name, so each run's scores key directly.
+    """
+    runs = os.path.join(output_root, ds, 'profiling', 'runs')
+    out = {}
+    for run_id in os.listdir(runs):
+        path = os.path.join(runs, run_id, 'evaluation.json')
+        if not os.path.exists(path):
+            continue
+        for video, metrics in json.load(open(path)).items():
+            out[(video, run_id)] = np.asarray(metrics['HOTA']['HOTA'], dtype=float)
+    return out
+
+
+def compare_with_scripts(output_root: str, ds: str, cache_root: str, reference_file: str,
+                         ours_hota: dict | None = None) -> dict:
     """Every result a sweep saved under output_root vs the scripts' outputs under cache_root: per-stage rows and
-    totals ({'stages': ..., 'totals': ...}).  Shared by this CLI and experiments/tests/integration."""
+    totals ({'stages': ..., 'totals': ...}).  Shared by this CLI and experiments/tests/integration.
+
+    ours_hota maps (video file, tracks directory name) to the sweep's per-video HOTA array; by default it is read
+    from the fan-out sweep's records.jsonl (the profiling sweep passes profiling_hota(output_root, ds)).
+    """
     ours_ex = os.path.join(output_root, ds, 'execution')
     cache_ex = os.path.join(cache_root, ds, 'execution')
     report: dict = {'stages': {}}
@@ -179,14 +210,8 @@ def compare_with_scripts(output_root: str, ds: str, cache_root: str, reference_f
     report['stages']['050_uncompressed_detections'] = rows
 
     # 060 tracks and per-video HOTA.
-    records = [json.loads(l) for l in open(os.path.join(output_root, ds, 'profiling', 'records.jsonl'))]
-    ours_hota = {}
-    from experiments.fanout_profiling.messages import Branch
-    for r in records:
-        b = Branch(tuple(r['branch'].items()))
-        param = b.param_str('sample_rate', 'mistrack_tolerance', 'relevance_threshold', 'tile_padding', 'canvas_scale',
-                            'tracker')
-        ours_hota[(r['video'], param)] = np.asarray(r['metrics']['HOTA']['HOTA'], dtype=float)
+    if ours_hota is None:
+        ours_hota = fanout_hota(output_root, ds)
     rows = []
     scratch = os.path.join(output_root, 'hota-scratch')
     for ours in sorted(glob.glob(os.path.join(ours_ex, '*', '060_uncompressed_tracks', '*', 'tracking.jsonl'))):
