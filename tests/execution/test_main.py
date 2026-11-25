@@ -100,7 +100,7 @@ def test_single_video_still_times_one_interval(tmp_path):
     d.mkdir()
     write_video(d / 'only.avi', 4)
     summary = m.execute(cfg_with(tmp_path), str(d), str(tmp_path / 'out'), build=fs.fake_build)
-    assert summary['videos'] == 1 and os.listdir(tmp_path / 'out') == ['only.jsonl']
+    assert summary['videos'] == 1 and sorted(os.listdir(tmp_path / 'out')) == ['only.jsonl', 'summary.json']
 
 
 def test_list_videos_ignores_other_files_and_sorts(videos):
