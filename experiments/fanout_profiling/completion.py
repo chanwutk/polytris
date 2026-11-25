@@ -1,5 +1,5 @@
 """
-Count finished items per video across processes (profiling/PLAN.md 3'A).
+Count finished items per video across processes (experiments/fanout_profiling/PLAN.md 3'A).
 
 Pack frees a video's frames block when the last of that video's pack inputs is done.  Pack runs several
 worker processes and videos interleave, so the count lives in a Manager dict (video -> finished so far)

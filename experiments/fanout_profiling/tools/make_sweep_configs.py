@@ -1,9 +1,9 @@
 """
 Write one profiling sweep config per dataset of configs/global.yaml's EXEC.DATASETS: the validation grid from
 global.yaml, artifacts at the cache's standard paths, the dataset's detector from configs/detectors.yaml, and
-the ace process split (profiling/PLAN.md 19A).
+the ace process split (experiments/fanout_profiling/PLAN.md 19A).
 
-    python -m profiling.tools.make_sweep_configs          (in the polyis container; validates each config)
+    python -m experiments.fanout_profiling.tools.make_sweep_configs          (in the polyis container; validates each config)
 """
 
 from pathlib import Path
@@ -11,10 +11,10 @@ from pathlib import Path
 import yaml
 
 from experiments.tools.execution.make_paper_configs import detector_spec
-from profiling.config import load_sweep_config
+from experiments.fanout_profiling.config import load_sweep_config
 
-ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / 'profiling' / 'configs'
+ROOT = Path(__file__).resolve().parents[3]
+OUT = ROOT / 'experiments' / 'fanout_profiling' / 'configs'
 CACHE = '/polyis-cache'
 SYSTEM = {'queue_maxsize': 4, 'save_queue_maxsize': 256, 'max_videos_in_flight': 4, 'stages': {
     # One GPU, shared by the classifier and the detector (one detector process was faster than two in a
@@ -56,7 +56,7 @@ def main() -> None:
     for dataset in grid['DATASETS']:
         path = OUT / f'{dataset}.yaml'
         header = (f'# {dataset} validation sweep: the grid of configs/global.yaml (written by '
-                  f'profiling/tools/make_sweep_configs.py).\n# Run with the real cache read-only at /polyis-cache and a '
+                  f'experiments/fanout_profiling/tools/make_sweep_configs.py).\n# Run with the real cache read-only at /polyis-cache and a '
                   f'scratch directory at /polyis-profiling.\n')
         path.write_text(header + yaml.safe_dump(sweep_config(dataset, grid, detectors), sort_keys=False))
         load_sweep_config(str(path))   # every artifact must exist

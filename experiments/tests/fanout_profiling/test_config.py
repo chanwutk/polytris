@@ -1,4 +1,4 @@
-"""Sweep config validation (profiling/PLAN.md 9A)."""
+"""Sweep config validation (experiments/fanout_profiling/PLAN.md 9A)."""
 
 import copy
 
@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from execution.config import ConfigError
-from profiling.config import load_sweep_config, parse_sweep_config
+from experiments.fanout_profiling.config import load_sweep_config, parse_sweep_config
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 """
-Check a profiling sweep against the scripts' validation outputs (profiling/PLAN.md 14A, step 7).
+Check a profiling sweep against the scripts' validation outputs (experiments/fanout_profiling/PLAN.md 14A, step 7).
 
-Runs profiling.main on a small grid over a few validation videos into a scratch output_root, with prune's ILP
+Runs experiments.fanout_profiling.main on a small grid over a few validation videos into a scratch output_root, with prune's ILP
 replaced by the scripts' saved 022 grids (a solve stopped by its 0.1 s limit is not unique, so solving would
 make every pruned branch below it incomparable; the ILP is checked by execution's compare_scripts).  Then it
 compares every saved result with the scripts' cache (read only):
@@ -15,7 +15,7 @@ compares every saved result with the scripts' cache (read only):
   060 tracks           byte-identical, and equal up to track-id renaming
   HOTA per video       ours vs tetris.trackeval.evaluate.run_trackeval on the cached 060 tracks, same reference
 
-    python -m experiments.tools.profiling.compare_scripts --config profiling/configs/caldot1-y05.yaml \
+    python -m experiments.tools.profiling.compare_scripts --config experiments/fanout_profiling/configs/caldot1-y05.yaml \
         --videos va00.mp4 va01.mp4 --output-root /polyis-profiling-check --out /polyis-profiling-check/compare.json
 """
 
@@ -30,8 +30,8 @@ import numpy as np
 import yaml
 
 from experiments.tools.execution.compare_scripts import compare_detections, compare_track_lines
-from profiling import main as pmain
-from profiling.config import parse_sweep_config
+from experiments.fanout_profiling import main as pmain
+from experiments.fanout_profiling.config import parse_sweep_config
 from tetris.io import store
 
 # The small grid: sample rates x T_r x (no pruning + 2 tolerances x 2 trackers) x 2 paddings.
@@ -72,7 +72,7 @@ def detection_rows(path: str) -> list[tuple[int, list]]:
 
 
 def script_solve(dataset: str, state: dict, sc, tracker: str, tolerance: float, relevance_threshold: float) -> tuple:
-    """Test-only stand-in for profiling.stages.solve_ilp: the scripts' saved 022 grids for this branch."""
+    """Test-only stand-in for experiments.fanout_profiling.stages.solve_ilp: the scripts' saved 022 grids for this branch."""
     from tetris.utilities import load_pruned_classification_results
     b = sc.branch
     idx, grid = grids(load_pruned_classification_results(dataset, os.path.basename(sc.video), b['tile_size'],
@@ -87,7 +87,7 @@ def script_solve(dataset: str, state: dict, sc, tracker: str, tolerance: float, 
 def script_prune_setup(cfg, worker) -> dict:
     """profiling's prune setup, with the ILP solve swapped for script_solve."""
     from functools import partial
-    from profiling import stages as st
+    from experiments.fanout_profiling import stages as st
     state = st.prune_setup(cfg, worker)
     state['solve'] = partial(script_solve, cfg.dataset)
     return state
@@ -96,7 +96,7 @@ def script_prune_setup(cfg, worker) -> dict:
 def build_with_script_prune(cfg, prefix, completion) -> list:
     """profiling's stages with prune's solve reading the scripts' grids (fan-out and labels unchanged)."""
     from functools import partial
-    from profiling import stages as st
+    from experiments.fanout_profiling import stages as st
     return [s._replace(setup=partial(script_prune_setup, cfg)) if s.name == 'prune' else s
             for s in st.build_stages(cfg, prefix, completion)]
 
@@ -181,7 +181,7 @@ def compare_with_scripts(output_root: str, ds: str, cache_root: str, reference_f
     # 060 tracks and per-video HOTA.
     records = [json.loads(l) for l in open(os.path.join(output_root, ds, 'profiling', 'records.jsonl'))]
     ours_hota = {}
-    from profiling.messages import Branch
+    from experiments.fanout_profiling.messages import Branch
     for r in records:
         b = Branch(tuple(r['branch'].items()))
         param = b.param_str('sample_rate', 'mistrack_tolerance', 'relevance_threshold', 'tile_padding', 'canvas_scale',

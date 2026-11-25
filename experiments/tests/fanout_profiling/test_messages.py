@@ -1,10 +1,10 @@
-"""Branch: ordered, immutable parameters that build the scripts' directory names (profiling/PLAN.md 10A)."""
+"""Branch: ordered, immutable parameters that build the scripts' directory names (experiments/fanout_profiling/PLAN.md 10A)."""
 
 import pickle
 
 import pytest
 
-from profiling.messages import Branch
+from experiments.fanout_profiling.messages import Branch
 
 
 def base():

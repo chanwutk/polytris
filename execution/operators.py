@@ -1,5 +1,5 @@
 """
-The pipeline's computations as plain functions with explicit parameters (profiling/PLAN.md 8A).
+The pipeline's computations as plain functions with explicit parameters (experiments/fanout_profiling/PLAN.md 8A).
 
 Nothing here reads a Config or builds a pipeline message, and nothing frees a shared block it did not
 create: who frees what is the caller's policy.  execution/stages.py wraps these for one configuration;

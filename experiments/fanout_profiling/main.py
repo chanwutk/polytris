@@ -1,9 +1,9 @@
 #!/usr/local/bin/python
 """
 Run a profiling sweep: every configuration of a dataset's validation split in one pipeline
-(profiling/PLAN.md "Shape", step 5).
+(experiments/fanout_profiling/PLAN.md "Shape", step 5).
 
-    python -m profiling.main --config profiling/configs/<dataset>.yaml
+    python -m experiments.fanout_profiling.main --config experiments/fanout_profiling/configs/<dataset>.yaml
 
 Writes, under <output_root>/<dataset>/:
   execution/...                    every non-pixel result, in the scripts' formats and paths (the savers)
@@ -31,10 +31,10 @@ from execution.config import ConfigError
 from execution.main import StartupError, VideoInfo, list_videos, probe
 from execution.operators import frame_selection
 from execution.pipeline import Stage, run
-from profiling import stages as st
-from profiling.completion import VideoCompletion
-from profiling.config import SweepConfig, load_sweep_config
-from profiling.messages import Evaluated
+from experiments.fanout_profiling import stages as st
+from experiments.fanout_profiling.completion import VideoCompletion
+from experiments.fanout_profiling.config import SweepConfig, load_sweep_config
+from experiments.fanout_profiling.messages import Evaluated
 from tetris.io import store
 
 SHM_DIR = '/dev/shm'

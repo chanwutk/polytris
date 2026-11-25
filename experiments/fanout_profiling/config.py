@@ -1,5 +1,5 @@
 """
-Load and validate a profiling sweep config (profiling/PLAN.md 9A).
+Load and validate a profiling sweep config (experiments/fanout_profiling/PLAN.md 9A).
 
 One YAML per dataset, with no unknown keys allowed:
 
@@ -39,7 +39,7 @@ class Params:
     canvas_scales: tuple[float, ...]
     trackers: tuple[str, ...]
     prune_time_limit_s: float = 0.1       # p022's solve limit; raise only for equivalence tests
-    reduce_search_space: bool = False     # run one tolerance per identical-ILP group (profiling/reduction.py);
+    reduce_search_space: bool = False     # run one tolerance per identical-ILP group (experiments/fanout_profiling/reduction.py);
                                           # off by default so a sweep runs every tolerance, as the scripts do
 
 

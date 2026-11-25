@@ -102,11 +102,11 @@ throwaway containers, so the Figure 8 job running from `/work/cwkt/projects/tetr
    On the ace checkout, 1435 of 1437 tests pass (1 skipped; the 1 failure needs a `experiments/measurements-results/` export the checkout does not have), and `compare_scripts` on caldot1-y05 te00-te02 is unchanged for both configs: classify, prune, pack identical; bit-identical in p040's order; end-to-end tracks equal up to id renaming.
    The ace checkout needs, besides `./sync --config <copy with path /work/cwkt/projects/tetris-profiling>`: the compiled `.so` files (copied from the main checkout by exact list) and `modules/` (darknet, TrackEval, lap).
 2. ~~Engine: list outputs, per-worker GPUs, saver processes, shared per-video counter; tests [13A]~~: done.
-   `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution/pipeline.py`; `profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution`, `tests/profiling`, golden).
-3. ~~Sweep config, `Branch`, messages~~: done (`profiling/config.py`, `profiling/messages.py`; tests in `tests/profiling`).
-4. ~~Profiling stages (decode, classify-once with charging, prune, pack with freeing, detect, track, evaluate)~~: done (`profiling/stages.py`, `profiling/save.py`; p110's `run_trackeval`).
-5. ~~`profiling/main.py`: admission control, memory check, savers writing the scripts' formats~~: done (`python -m profiling.main --config ...`; tests in `tests/profiling/test_main.py`).
-6. ~~Aggregator: dataset HOTA, runtime sums, Pareto JSON, interactive page; tests [15A]~~: done (`python -m profiling.aggregate --config ...`).
+   `Stage(fan_out=True, gpu=(...), save=fn, savers=n)` in `execution/pipeline.py`; `experiments/fanout_profiling/completion.py` (`VideoCompletion`); 155 tests pass (`tests/execution`, `experiments/tests/fanout_profiling`, golden).
+3. ~~Sweep config, `Branch`, messages~~: done (`experiments/fanout_profiling/config.py`, `experiments/fanout_profiling/messages.py`; tests in `experiments/tests/fanout_profiling`).
+4. ~~Profiling stages (decode, classify-once with charging, prune, pack with freeing, detect, track, evaluate)~~: done (`experiments/fanout_profiling/stages.py`, `experiments/fanout_profiling/save.py`; p110's `run_trackeval`).
+5. ~~`experiments/fanout_profiling/main.py`: admission control, memory check, savers writing the scripts' formats~~: done (`python -m experiments.fanout_profiling.main --config ...`; tests in `experiments/tests/fanout_profiling/test_main.py`).
+6. ~~Aggregator: dataset HOTA, runtime sums, Pareto JSON, interactive page; tests [15A]~~: done (`python -m experiments.fanout_profiling.aggregate --config ...`).
 7. Equivalence tool [14A] on validation videos; then a first full-dataset run timed against the scripts.
    - Equivalence (2026-11-21, `experiments/measurements-results/profiling-check/caldot1-y05.json`): caldot1-y05 va00-va02, grid
      s {1,4} x T_r {0.25,0.5} x (none, {0.4,0.8} x 2 trackers) x P {none,tr}, solve limit 10 s.

@@ -1,5 +1,5 @@
 """
-Search-space reduction for pruning (the author's proposal, profiling/DECISIONS.md A1-A3).
+Search-space reduction for pruning (the author's proposal, experiments/fanout_profiling/DECISIONS.md A1-A3).
 
 Two tolerances give the same pruning ILP, hence the same result, when their per-tile gaps
 max(table[:, :, tol] // s, 1) agree on every tile the never-relevant mask allows (other tiles always score

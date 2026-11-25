@@ -149,9 +149,9 @@ def config_name(b: dict) -> str:
 
 def run_execution(dataset: str, videos: list[str], out_dir: str, gpus: list[int], skip_done: bool = False) -> None:
     """execution's compare tool for every configuration, one configuration per free GPU at a time."""
-    from profiling.aggregate import execution_config
-    from profiling.config import load_sweep_config
-    sweep = load_sweep_config(f'profiling/configs/{dataset}.yaml')
+    from experiments.fanout_profiling.aggregate import execution_config
+    from experiments.fanout_profiling.config import load_sweep_config
+    sweep = load_sweep_config(f'experiments/fanout_profiling/configs/{dataset}.yaml')
     out = Path(out_dir) / dataset
     (out / 'configs').mkdir(parents=True, exist_ok=True)
     jobs = []

@@ -21,7 +21,7 @@ Each output goes downstream first, then to the stage's saver queue.  A full save
 Question: is backpressure from slow saving acceptable, or should saving never slow the pipeline (unbounded
 queue, memory risk)?  Guess: backpressure is the safer default.
 
-### D3. The per-video counter lives in `profiling/completion.py`, not in the engine
+### D3. The per-video counter lives in `experiments/fanout_profiling/completion.py`, not in the engine
 It is profiling-specific (pack freeing frames).  A Manager dict + Manager lock, created by main.
 
 ### D4. One classifier and one tile size per sweep
@@ -42,7 +42,7 @@ p110's default `--metrics` is HOTA; the evaluate stage uses the same, plus Count
 Question: add CLEAR / Identity?  Guess: not needed for the Pareto selection.
 
 ### D8. Message modules avoid importing the detector stack
-`profiling/messages.py` imports execution.operators' types only under TYPE_CHECKING, so tests and tools that
+`experiments/fanout_profiling/messages.py` imports execution.operators' types only under TYPE_CHECKING, so tests and tools that
 only need messages do not load ultralytics/darknet (which need a GPU driver to import).
 
 ### D9. p040's per-canvas detections are not saved
@@ -186,7 +186,7 @@ datasets) and per-video ILP hashing (unmeasured; constraint building lives in gu
 | jnc2 | 5 | 4,691 | 432 | 2,890 s | 74 |
 | jnc6 | 5 | 5,194 | 420 | 2,256 s | 77 |
 | jnc7 | 5 | 5,226 | 432 | 1,426 s | 72 |
-Wall clock is profiling.main's (`run.json` `wall_s`), excluding the aggregator.  The detector weights are
+Wall clock is experiments.fanout_profiling.main's (`run.json` `wall_s`), excluding the aggregator.  The detector weights are
 mounted from the main checkout (`weights/` is not synced to the profiling checkout).  Results under
 `experiments/measurements-results/profiling-sweep/<dataset>-reduced/`.
 

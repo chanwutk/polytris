@@ -29,7 +29,7 @@ def read_then_finish(completion, state, msg):
 
 def emit_results(n, state, video):
     """Stand-in for the whole sweep: n Evaluated results for the video."""
-    from profiling.messages import Branch, Evaluated, StageTiming
+    from experiments.fanout_profiling.messages import Branch, Evaluated, StageTiming
     return [Evaluated(video, Branch().with_(classifier='F', tile_size=10, sample_rate=i + 1),
                       (StageTiming('detect', 0.0, 1.0, 1.0),), {'HOTA': {'HOTA': np.array([0.5, 0.7])}})
             for i in range(n)]
@@ -39,6 +39,6 @@ def fake_sweep_build(cfg, prefix, completion):
     """build_stages replacement: one fan-out stage emitting expected_results(cfg) per video."""
     from functools import partial
     from execution.pipeline import Stage
-    from profiling.stages import expected_results
+    from experiments.fanout_profiling.stages import expected_results
     from tests.execution.fake_stages import worker_setup
     return [Stage('emit', worker_setup, partial(emit_results, expected_results(cfg)), 2, fan_out=True)]

@@ -9,10 +9,10 @@ import pytest
 
 from execution import frames, operators as ops
 from execution.config import Detector
-from profiling import save, stages as st
-from profiling.completion import VideoCompletion
-from profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
-from profiling.messages import Branch, Decoded, Detected, Packed, Scored, StageTiming, Tracked
+from experiments.fanout_profiling import save, stages as st
+from experiments.fanout_profiling.completion import VideoCompletion
+from experiments.fanout_profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
+from experiments.fanout_profiling.messages import Branch, Decoded, Detected, Packed, Scored, StageTiming, Tracked
 
 N, H, W, TS = 20, 60, 80, 10
 
@@ -229,7 +229,7 @@ AXIS_VALUES = [16, 12, 10, 8, 8, 8, 4, 2, 1]
 
 
 def test_reduction_groups_identical_gaps_and_counts_follow(tmp_path):
-    from profiling.reduction import sweep_groups
+    from experiments.fanout_profiling.reduction import sweep_groups
     cfg = make_cfg(tmp_path, tolerances=(None, 0.4, 0.6, 0.8), sample_rates=(1, 8, 16), reduce=True,
                    table_values=AXIS_VALUES)
     g = sweep_groups(cfg)
@@ -244,7 +244,7 @@ def test_reduction_groups_identical_gaps_and_counts_follow(tmp_path):
 
 
 def test_reduction_ignores_tiles_the_mask_excludes(tmp_path):
-    from profiling.reduction import group_tolerances
+    from experiments.fanout_profiling.reduction import group_tolerances
     table = np.broadcast_to(np.array(AXIS_VALUES), (2, 2, 9)).copy()
     table[0, 0, 1] = 99          # 0.4 differs from 0.6/0.8 only on tile (0, 0)
     table[0, 0, 3] = 1

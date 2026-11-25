@@ -23,7 +23,7 @@ GRID = {'sample_rates': [1, 4], 'relevance_thresholds': [0.25, 0.5], 'mistrack_t
 
 def sweep_config(tree: harness.Tree, path: Path, output_root: Path) -> Path:
     """The dataset's sweep config with the test's grid, the scratch cache, and its own output root."""
-    raw = (harness.REPO / 'profiling' / 'configs' / f'{tree.dataset}.yaml').read_text()
+    raw = (harness.REPO / 'experiments' / 'fanout_profiling' / 'configs' / f'{tree.dataset}.yaml').read_text()
     # Artifacts and the reference tracks live in the scratch cache.
     config = yaml.safe_load(raw.replace('/polyis-cache/', f'{tree.cache}/'))
     config['output_root'] = str(output_root)
@@ -42,7 +42,7 @@ def test_profiling_matches_the_scripts(dataset, tmp_path):
     # The reference tracks the sweep's evaluate stage and HOTA score against.
     harness.reference(tree)
     # The pipeline first: it saves every stage's results and each ILP's status.
-    tree.run('-m', 'profiling.main', '--config', str(sweep_config(tree, tmp_path / 'sweep.yaml', output_root)))
+    tree.run('-m', 'experiments.fanout_profiling.main', '--config', str(sweep_config(tree, tmp_path / 'sweep.yaml', output_root)))
     # Then the scripts, p022 through the mirror.
     harness.scripts(tree, 'p020_exec_classify')
     harness.mirror_p022(tree, output_root / dataset / 'execution', tmp_path / 'mirror.json')

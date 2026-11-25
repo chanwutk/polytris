@@ -1,4 +1,4 @@
-"""profiling.main: startup checks, admission, records, never overwriting (PLAN step 5).  Fake pipeline."""
+"""experiments.fanout_profiling.main: startup checks, admission, records, never overwriting (PLAN step 5).  Fake pipeline."""
 
 import json
 import threading
@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from execution.main import StartupError
-from profiling import main as m, stages as st
+from experiments.fanout_profiling import main as m, stages as st
 from tests.profiling import fake_stages as pfs
 from tests.profiling.test_stages import make_cfg
 

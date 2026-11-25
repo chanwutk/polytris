@@ -1,4 +1,4 @@
-"""Aggregator: dataset HOTA as TrackEval combines it, times, Pareto union, YAML, page (profiling/PLAN.md 15A)."""
+"""Aggregator: dataset HOTA as TrackEval combines it, times, Pareto union, YAML, page (experiments/fanout_profiling/PLAN.md 15A)."""
 
 import json
 import re
@@ -9,8 +9,8 @@ import pytest
 import yaml
 
 from execution.config import parse_config
-from profiling import aggregate as ag, stages as st
-from profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
+from experiments.fanout_profiling import aggregate as ag, stages as st
+from experiments.fanout_profiling.config import Artifacts, Evaluation, Params, StageSystem, SweepConfig, System
 from execution.config import Detector
 from tetris.utilities import save_tracking_results
 
@@ -41,7 +41,7 @@ def tracks(shift: float, n: int = 20) -> dict:
 
 def per_video_hota(cfg: SweepConfig, tmp_path: Path, shifts: dict[str, float]) -> dict[str, dict]:
     """Each video's raw HOTA result from the evaluate stage (reference = unshifted tracks)."""
-    from profiling.messages import Branch, Tracked
+    from experiments.fanout_profiling.messages import Branch, Tracked
     state = st.evaluate_setup(cfg, type('W', (), {'index': 0})())
     out = {}
     for video, shift in shifts.items():
@@ -154,7 +154,7 @@ def test_combine_hota_works_in_a_fresh_process():
     # Regression: combine_hota must not rely on another module having put TrackEval on sys.path first.
     import subprocess
     import sys
-    code = ("from profiling.aggregate import combine_hota\n"
+    code = ("from experiments.fanout_profiling.aggregate import combine_hota\n"
             "r = {'HOTA_TP': [5] * 19, 'HOTA_FN': [1] * 19, 'HOTA_FP': [1] * 19, 'AssRe': [0.9] * 19,"
             " 'AssPr': [0.9] * 19, 'AssA': [0.8] * 19, 'LocA': [0.9] * 19}\n"
             "print(round(float(combine_hota([r, r])['DetA'][0]), 4))\n")

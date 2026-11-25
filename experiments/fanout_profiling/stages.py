@@ -1,5 +1,5 @@
 """
-The profiling sweep's stages (profiling/PLAN.md "Stages").  Each runs its operator (execution/operators.py)
+The profiling sweep's stages (experiments/fanout_profiling/PLAN.md "Stages").  Each runs its operator (execution/operators.py)
 for every value of its own parameters, given the branch it receives, and emits one message per new branch:
 
   decode    once per video, every frame                                             1 per video
@@ -25,11 +25,11 @@ import numpy as np
 from execution import frames, operators as ops
 from execution.config import MISTRACK_TOLERANCES
 from execution.pipeline import Stage, Worker
-from profiling import save
-from profiling.reduction import sweep_groups
-from profiling.completion import VideoCompletion
-from profiling.config import SweepConfig
-from profiling.messages import Branch, Decoded, Detected, Evaluated, Packed, Scored, StageTiming, Tracked
+from experiments.fanout_profiling import save
+from experiments.fanout_profiling.reduction import sweep_groups
+from experiments.fanout_profiling.completion import VideoCompletion
+from experiments.fanout_profiling.config import SweepConfig
+from experiments.fanout_profiling.messages import Branch, Decoded, Detected, Evaluated, Packed, Scored, StageTiming, Tracked
 from tetris.utilities import TILEPADDING_MAPS, is_tile_padding, save_tracking_results
 
 

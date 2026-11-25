@@ -1,5 +1,5 @@
 """
-Messages between profiling stages (profiling/PLAN.md 10A).
+Messages between profiling stages (experiments/fanout_profiling/PLAN.md 10A).
 
 Every message carries the video, a Branch (the parameters chosen so far, in pipeline order), and the
 StageTiming records of every stage that produced it.  Pixels never travel: frames and canvases stay in shared

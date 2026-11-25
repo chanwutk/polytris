@@ -1,6 +1,6 @@
 """
 Savers: every non-pixel result, in the scripts' formats, at the cache's relative paths under output_root
-(profiling/PLAN.md 2A, 18B).  Each runs in its stage's saver processes, after the worker's timing.
+(experiments/fanout_profiling/PLAN.md 2A, 18B).  Each runs in its stage's saver processes, after the worker's timing.
 
   classify  020_relevancy/<clf>_<ts>_<s>/score/score.jsonl                       (p020's rows)
   prune     022_pruned_polyominoes/<clf>_<ts>_<s>_<tol>_<T_r>_<tracker>/score/score.jsonl   (p022's rows)

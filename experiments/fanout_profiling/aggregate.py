@@ -1,8 +1,8 @@
 """
 Aggregate a profiling sweep into per-configuration results, the Pareto front, and an interactive page
-(profiling/PLAN.md "Aggregator", 5A, 7A).
+(experiments/fanout_profiling/PLAN.md "Aggregator", 5A, 7A).
 
-    python -m profiling.aggregate --config profiling/configs/<dataset>.yaml
+    python -m experiments.fanout_profiling.aggregate --config experiments/fanout_profiling/configs/<dataset>.yaml
 
 Reads <output_root>/<dataset>/profiling/{records.jsonl, run.json}; writes next to them:
   configurations.json   every configuration: parameters, dataset HOTA, charged time, throughput (with and
@@ -29,8 +29,8 @@ import yaml
 
 from tetris.ablation import ABLATION_CONDITIONS, filter_by_ablation_condition
 from tetris.pareto import compute_pareto_front
-from profiling.config import SweepConfig, load_sweep_config
-from profiling.reduction import sweep_groups
+from experiments.fanout_profiling.config import SweepConfig, load_sweep_config
+from experiments.fanout_profiling.reduction import sweep_groups
 
 # Branch keys -> the column names p135 / tetris.pareto use.
 COLUMNS = {'classifier': 'classifier', 'tile_size': 'tilesize', 'sample_rate': 'sample_rate',
@@ -153,7 +153,7 @@ def aggregate(cfg: SweepConfig) -> tuple[list[dict], list[dict]]:
 
 def expand_tolerance_groups(cfg: SweepConfig, configs: list[dict]) -> list[dict]:
     """One row per configuration of the grid: each pruned representative's result is copied to every other
-    tolerance of its group (identical ILP, so identical results; profiling/reduction.py).  `ran_as` names the
+    tolerance of its group (identical ILP, so identical results; experiments/fanout_profiling/reduction.py).  `ran_as` names the
     tolerance that ran; duplicates carry its measured time (DECISIONS.md Q2)."""
     # The run merged groups (run.json says so), whatever the config's flag says now.
     groups = sweep_groups(replace(cfg, params=replace(cfg.params, reduce_search_space=True)))

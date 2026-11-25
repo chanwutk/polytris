@@ -183,7 +183,7 @@ def test_worker_usage_counts_add_up():
     assert per_stage == {'a': 60, 'b': 60}
 
 
-# ---------------------------------------------------------------- fan-out, GPU tuples, savers (profiling/PLAN.md 13A)
+# ---------------------------------------------------------------- fan-out, GPU tuples, savers (experiments/fanout_profiling/PLAN.md 13A)
 
 def fan_inputs(ns):
     return [{'id': i, 'path': [], 'n': n} for i, n in enumerate(ns)]

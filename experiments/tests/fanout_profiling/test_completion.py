@@ -1,4 +1,4 @@
-"""VideoCompletion: frames freed exactly once, at a video's last child, across workers (profiling/PLAN.md 13A)."""
+"""VideoCompletion: frames freed exactly once, at a video's last child, across workers (experiments/fanout_profiling/PLAN.md 13A)."""
 
 import multiprocessing as mp
 from collections import Counter
@@ -8,7 +8,7 @@ import pytest
 
 from execution import frames
 from execution.pipeline import PipelineError, Stage, run
-from profiling.completion import VideoCompletion
+from experiments.fanout_profiling.completion import VideoCompletion
 from tests.execution import fake_stages as efs
 from tests.profiling import fake_stages as pfs
 
