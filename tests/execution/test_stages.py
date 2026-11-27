@@ -150,7 +150,7 @@ def test_one_frame_video_is_rejected():
 
 def test_decode_stores_exactly_the_needed_frames(tmp_path, video, prefix):
     cfg = make_cfg(tmp_path, sample_rate=4)
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
     reference = read_all(video)
     assert (d.width, d.height, d.frame_count) == (W, H, N_FRAMES)
     assert np.array_equal(d.sampled, stages.frame_selection(N_FRAMES, 4)[0]) and d.sampled[-1] == N_FRAMES - 1
@@ -210,9 +210,9 @@ def test_decode_rejects_unreadable_files(tmp_path, prefix):
     bad = tmp_path / 'notes.mp4'
     bad.write_text('not a video')
     with pytest.raises(OSError, match='could not open'):
-        stages.decode(stages.decode_setup(make_cfg(tmp_path), prefix, None), str(bad))
+        stages.decode(stages.decode_setup(make_cfg(tmp_path), frames.Stores(prefix, prefix), None), str(bad))
     with pytest.raises(OSError, match='could not open'):
-        stages.decode(stages.decode_setup(make_cfg(tmp_path), prefix, None), str(tmp_path / 'missing.mp4'))
+        stages.decode(stages.decode_setup(make_cfg(tmp_path), frames.Stores(prefix, prefix), None), str(tmp_path / 'missing.mp4'))
 
 
 # ---------------------------------------------------------------- classify
@@ -227,7 +227,7 @@ def fake_classifier(monkeypatch):
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
 def test_classify_matches_p020_batching(tmp_path, video, prefix, fake_classifier):
     cfg = make_cfg(tmp_path, sample_rate=2)
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
     c = stages.classify(stages.classify_setup(cfg, None), d)
     frames.unlink(d.frames)
 
@@ -252,6 +252,33 @@ def test_classify_matches_p020_batching(tmp_path, video, prefix, fake_classifier
     assert c.scores.dtype == np.uint8 and np.array_equal(c.scores, np.concatenate(expected))
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='pinned memory needs CUDA')
+def test_classify_staging_buffer_is_pinned_reused_and_remade_for_another_frame_size():
+    state = {}
+    first = operators._staging(state, (H, W, 3))
+    assert first.is_pinned() and tuple(first.shape) == (2 * operators.CLASSIFY_BATCH, H, W, 3)
+    assert operators._staging(state, (H, W, 3)) is first
+    other = operators._staging(state, (H * 2, W, 3))
+    assert other is not first and tuple(other.shape[1:]) == (H * 2, W, 3) and state['staging'] is other
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
+def test_classify_reads_pooled_frames_like_fresh_ones(tmp_path, video, prefix, fake_classifier):
+    cfg = make_cfg(tmp_path, sample_rate=1)
+    state = stages.classify_setup(cfg, None)
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
+    fresh = stages.classify(state, d).scores
+    frames.unlink(d.frames)
+    pool_prefix = frames.new_prefix()
+    try:
+        pool = frames.create_pool(pool_prefix, 'frames', 1, N_FRAMES * H * W * 3)
+        d = stages.decode(stages.decode_setup(cfg, frames.Stores(pool, prefix), None), video)
+        assert np.array_equal(stages.classify(state, d).scores, fresh)
+        frames.release(pool, d.frames)
+    finally:
+        frames.unlink_all(pool_prefix)
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='classify runs on the GPU')
 def test_classify_setup_optimizes_once_for_the_bitmaps_tile_count(tmp_path, video, prefix, monkeypatch):
     calls = []
@@ -267,7 +294,7 @@ def test_classify_setup_optimizes_once_for_the_bitmaps_tile_count(tmp_path, vide
     # One call, in setup, with the grid's tile count (6x8 here), as p020 passes its first video's grid.
     assert calls == [(TS, (H // TS) * (W // TS))]
     for _ in range(2):
-        d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
+        d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
         stages.classify(state, d)
         frames.unlink(d.frames)
     assert len(calls) == 1
@@ -279,7 +306,7 @@ def test_classify_rejects_a_mismatched_never_relevant_bitmap(tmp_path, video, pr
     # A different grid, and the transposed grid (same tile count, different shape), are both rejected.
     cfg = make_cfg(tmp_path)
     np.save(cfg.artifacts.never_relevant_bitmap, np.ones(bitmap_shape, dtype=np.uint8))
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
     try:
         with pytest.raises(ValueError, match=r'video grid \(6, 8\) does not match the never-relevant bitmap grid'):
             stages.classify(stages.classify_setup(cfg, None), d)
@@ -324,8 +351,8 @@ def test_prune_rejects_a_mismatched_rate_table(tmp_path):
 def test_packed_tiles_are_exact_copies_of_their_source_tiles(tmp_path, video, prefix):
     # Independent of p030: every tile an offset lookup places must equal its source tile pixel for pixel.
     cfg = make_cfg(tmp_path, sample_rate=1)
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
-    p = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(d, synthetic_scores(len(d.sampled))))
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
+    p = stages.pack_video(stages.pack_setup(cfg, frames.Stores(prefix, prefix), None), Classified(d, synthetic_scores(len(d.sampled))))
     reference = read_all(video)
     with frames.attach(p.canvases) as m:
         for k, lookup in enumerate(p.offset_lookups):
@@ -337,10 +364,46 @@ def test_packed_tiles_are_exact_copies_of_their_source_tiles(tmp_path, video, pr
     frames.unlink(p.canvases)
 
 
+@pytest.mark.parametrize('canvas_format', ['raw', 'jpeg'])
+def test_pooled_slots_give_the_same_frames_and_canvases_as_fresh_blocks(tmp_path, video, prefix, canvas_format):
+    # One slot per pool, so the second video reuses both slots; the dense video leaves canvas pixels behind
+    # that the sparse one's fewer collages must not show.
+    cfg = make_cfg(tmp_path, sample_rate=1, canvas_format=canvas_format)
+    fresh = frames.Stores(prefix, prefix)
+    pool_prefix = frames.new_prefix()
+    try:
+        n = N_FRAMES
+        pools = frames.Stores(frames.create_pool(pool_prefix, 'frames', 1, n * H * W * 3),
+                              frames.create_pool(pool_prefix, 'canvases', 1, n * H * W * 3))
+        sparse = synthetic_scores(n)
+        sparse[:, :, 2:] = 0
+        collages = []
+        for scores in (synthetic_scores(n), sparse):
+            got = {}
+            for name, stores in (('fresh', fresh), ('pooled', pools)):
+                d = stages.decode(stages.decode_setup(cfg, stores, None), video)
+                with frames.attach(d.frames) as m:
+                    decoded = m.array.copy()
+                p = stages.pack_video(stages.pack_setup(cfg, stores, None), Classified(d, scores))
+                with frames.attach(p.canvases) as m:
+                    got[name] = (decoded, m.array.copy(), p.index_maps, p.offset_lookups)
+                frames.free(stores.canvases, p.canvases)
+            (fd, fc, fm, fl), (pd, pc, pm, pl) = got['fresh'], got['pooled']
+            assert np.array_equal(fd, pd) and np.array_equal(fc, pc) and np.array_equal(fm, pm) and fl == pl
+            collages.append(len(pl))
+        # The reuse case is real: the sparse video draws fewer collages into the slot the dense one filled.
+        assert collages[0] > collages[1] > 0
+        # Pack gave the frames slot back and detect's stand-in the canvases slot.
+        frames.check_returned(pools.frames)
+        frames.check_returned(pools.canvases)
+    finally:
+        frames.unlink_all(pool_prefix)
+
+
 def test_pack_with_nothing_relevant_makes_zero_collages(tmp_path, video, prefix):
     cfg = make_cfg(tmp_path)
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
-    p = stages.pack_video(stages.pack_setup(cfg, prefix, None),
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
+    p = stages.pack_video(stages.pack_setup(cfg, frames.Stores(prefix, prefix), None),
                           Classified(d, np.zeros((len(d.sampled), H // TS, W // TS), np.uint8)))
     assert p.index_maps.shape[0] == 0 and p.offset_lookups == []
     frames.unlink(p.canvases)
@@ -350,8 +413,8 @@ def test_pack_with_nothing_relevant_makes_zero_collages(tmp_path, video, prefix)
 
 def test_detect_unpacks_into_every_frame_and_frees_canvases(tmp_path, video, prefix, monkeypatch):
     cfg = make_cfg(tmp_path, sample_rate=2)
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
-    p = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(d, synthetic_scores(len(d.sampled))))
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
+    p = stages.pack_video(stages.pack_setup(cfg, frames.Stores(prefix, prefix), None), Classified(d, synthetic_scores(len(d.sampled))))
     batches: list[int] = []
 
     def fake_detect_batch(images, detector):
@@ -365,7 +428,7 @@ def test_detect_unpacks_into_every_frame_and_frees_canvases(tmp_path, video, pre
         return out
 
     monkeypatch.setattr(operators, 'detect_batch', fake_detect_batch)
-    det = stages.detect({'detector': None, 'tile_size': TS}, p)
+    det = stages.detect({'detector': None, 'tile_size': TS, 'canvases': prefix}, p)
     assert frames.leftover(prefix) == []
     assert sorted(det.detections) == list(range(N_FRAMES))
     assert all(b <= stages.DETECT_BATCH for b in batches) and sum(batches) == len(p.offset_lookups)
@@ -388,9 +451,9 @@ def test_build_stages_wires_procs_gpus_and_optional_prune(tmp_path):
     system = System(2, {'decode': StageSystem(3, None), 'classify': StageSystem(1, 0), 'prune': StageSystem(1, None),
                         'pack': StageSystem(2, None), 'detect': StageSystem(1, 5), 'track': StageSystem(4, None)})
     no_prune = Config(base.params, base.artifacts, system)
-    got = stages.build_stages(no_prune, 'p-')
+    got = stages.build_stages(no_prune, frames.Stores('p-', 'p-'))
     assert [(s.name, s.procs, s.gpu) for s in got] == [
         ('decode', 3, None), ('classify', 1, 0), ('pack', 2, None), ('detect', 1, 5), ('track', 4, None)]
     pruning = make_cfg(tmp_path, mistrack_tolerance=0.4)
-    got = stages.build_stages(Config(pruning.params, pruning.artifacts, system), 'p-')
+    got = stages.build_stages(Config(pruning.params, pruning.artifacts, system), frames.Stores('p-', 'p-'))
     assert [s.name for s in got] == ['decode', 'classify', 'prune', 'pack', 'detect', 'track']

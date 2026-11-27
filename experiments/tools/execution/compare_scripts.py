@@ -187,7 +187,7 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
     path = str(store.dataset(dataset, videoset, video))
     info = main.probe(path)
     report: dict = {}
-    decoded = stages.decode(stages.decode_setup(cfg, prefix, None), path)
+    decoded = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), path)
     try:
         # classify
         ours = stages.classify(states['classify'], decoded)
@@ -205,7 +205,7 @@ def isolated(cfg: Config, states: dict, dataset: str, videoset: str, video: str,
             report['prune'] = {'frames_match': pidx == decoded.sampled.tolist(), **compare_grids(pruned.scores, ptheirs, None)}
             pack_input = ptheirs
         # pack (frees the frames block)
-        packed = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(decoded, pack_input))
+        packed = stages.pack_video(stages.pack_setup(cfg, frames.Stores(prefix, prefix), None), Classified(decoded, pack_input))
         decoded = None
     finally:
         if decoded is not None:
@@ -259,11 +259,11 @@ def script_prune(state: dict, c: Classified) -> Classified:
     return c._replace(scores=grid)
 
 
-def build_with_script_prune(dataset: str, aliases: dict[str, str], cfg: Config, prefix: str) -> list[Stage]:
+def build_with_script_prune(dataset: str, aliases: dict[str, str], cfg: Config, stores: frames.Stores) -> list[Stage]:
     """execution's stages with prune replaced by script_prune (same process count)."""
     return [s._replace(setup=partial(script_prune_setup, cfg, dataset, aliases), process=script_prune)
             if s.name == 'prune'
-            else s for s in stages.build_stages(cfg, prefix)]
+            else s for s in stages.build_stages(cfg, stores)]
 
 
 def chained(cfg: Config, dataset: str, videoset: str, videos: list[str], tmp: Path) -> dict:
@@ -287,9 +287,10 @@ def main_cli() -> None:
     args = parse_args()
     cfg = load_config(args.config)
     # Models are loaded once and reused across videos, as the pipeline's workers do.
-    states = {'classify': stages.classify_setup(cfg, None), 'detect': stages.detect_setup(cfg, None),
-              'prune': stages.prune_setup(cfg, None) if cfg.use_prune else None}
     prefix = frames.new_prefix()
+    states = {'classify': stages.classify_setup(cfg, None),
+              'detect': stages.detect_setup(cfg, frames.Stores(prefix, prefix), None),
+              'prune': stages.prune_setup(cfg, None) if cfg.use_prune else None}
     report: dict = {'config': args.config, 'dataset': args.dataset, 'params': dataclasses.asdict(cfg.params),
                     'isolated': {}}
     try:

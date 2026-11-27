@@ -103,6 +103,49 @@ def test_single_video_still_times_one_interval(tmp_path):
     assert summary['videos'] == 1 and sorted(os.listdir(tmp_path / 'out')) == ['only.jsonl', 'summary.json']
 
 
+@pytest.fixture
+def run_prefixes(monkeypatch) -> list[str]:
+    """The shared-memory prefixes execute() makes, recorded."""
+    made = []
+    real = m.frames.new_prefix
+
+    def recording():
+        made.append(real())
+        return made[-1]
+
+    monkeypatch.setattr(m.frames, 'new_prefix', recording)
+    return made
+
+
+def test_execute_sizes_its_pools_from_the_budget_and_frees_them(tmp_path, videos, monkeypatch, run_prefixes):
+    created = []
+    real = m.frames.create_pool
+
+    def recording(prefix, kind, count, slot_bytes):
+        created.append((kind, count, slot_bytes))
+        return real(prefix, kind, count, slot_bytes)
+
+    monkeypatch.setattr(m.frames, 'create_pool', recording)
+    cfg = cfg_with(tmp_path)
+    m.execute(cfg, str(videos), str(tmp_path / 'out'), build=fs.fake_build)
+    infos = [m.probe(v) for v in m.list_videos(str(videos))]
+    frames_size, canvases_size = m.pool_sizes(cfg, infos)
+    assert created == [('frames', *frames_size), ('canvases', *canvases_size)]
+    # The pools are the /dev/shm budget, and nothing of the run is left in shared memory.
+    assert frames_size.count * frames_size.slot_bytes + canvases_size.count * canvases_size.slot_bytes == \
+        m.worst_case_shm_bytes(cfg, infos)
+    assert m.frames.leftover(run_prefixes[0]) == []
+
+
+def test_a_slot_never_released_fails_the_run_and_the_pools_are_freed(tmp_path, videos, monkeypatch, run_prefixes):
+    # The leaking stage keeps one slot per video (3 videos + the dummy); give it enough slots not to wait.
+    monkeypatch.setattr(m, 'videos_holding_frames', lambda cfg: 10)
+    with pytest.raises(RuntimeError, match='4 frames slots were never released'):
+        m.execute(cfg_with(tmp_path), str(videos), str(tmp_path / 'out'), build=fs.fake_build_leaking_a_slot)
+    assert m.frames.leftover(run_prefixes[0]) == []
+    assert not (tmp_path / 'out' / 'summary.json').exists()
+
+
 def test_list_videos_ignores_other_files_and_sorts(videos):
     assert [Path(v).name for v in m.list_videos(str(videos))] == ['a.avi', 'b.avi', 'c.avi']
 

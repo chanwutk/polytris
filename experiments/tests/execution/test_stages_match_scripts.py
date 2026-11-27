@@ -95,9 +95,9 @@ def run_p030(monkeypatch, tmp_path, cfg, video, scores, sampled) -> tuple[list, 
 def test_pack_matches_p030(monkeypatch, tmp_path, video, prefix, tile_padding, canvas_scale, sample_rate, canvas_format):
     cfg = make_cfg(tmp_path, tile_padding=tile_padding, canvas_scale=canvas_scale, sample_rate=sample_rate,
                    canvas_format=canvas_format)
-    d = stages.decode(stages.decode_setup(cfg, prefix, None), video)
+    d = stages.decode(stages.decode_setup(cfg, frames.Stores(prefix, prefix), None), video)
     scores = synthetic_scores(len(d.sampled))
-    p = stages.pack_video(stages.pack_setup(cfg, prefix, None), Classified(d, scores))
+    p = stages.pack_video(stages.pack_setup(cfg, frames.Stores(prefix, prefix), None), Classified(d, scores))
     assert frames.leftover(prefix) == [p.canvases.name], 'pack must free the frames block'
     canvases, maps, lookups = run_p030(monkeypatch, tmp_path, cfg, video, scores, d.sampled)
 

@@ -11,6 +11,8 @@ the machine with the timed run, so such a run's runtime is marked saved.  Timing
 first as a dummy (it also warms every model up), each result's arrival time is recorded, and the
 runtime is the last arrival minus the first, so N real videos span N intervals.  The dummy's
 result is discarded and its copy deleted.  Outputs are written only after the last arrival.
+Every shared block of the run comes from two pools (frames, canvases) allocated before the dummy starts,
+so the timed run allocates no shared memory (execution/frames.py, "Pools").
 """
 
 import argparse
@@ -51,6 +53,11 @@ class VideoInfo(NamedTuple):
     width: int
     height: int
     frame_count: int
+
+
+class PoolSize(NamedTuple):
+    count: int
+    slot_bytes: int
 
 
 class StartupError(ValueError):
@@ -122,12 +129,17 @@ def canvases_block_bytes(info: VideoInfo, sample_rate: int, tile_size: int, canv
     return len(sampled) * canvas_h * canvas_w * 3
 
 
-def worst_case_shm_bytes(cfg: Config, infos: list[VideoInfo]) -> int:
-    """Every frames holder and every canvases holder occupied by the largest video."""
+def pool_sizes(cfg: Config, infos: list[VideoInfo]) -> tuple[PoolSize, PoolSize]:
+    """The frames and canvases pools: a slot per video that can hold that block at once, sized for the largest video."""
     p = cfg.params
     frames_max = max(frames_block_bytes(i, p.sample_rate) for i in infos)
     canvases_max = max(canvases_block_bytes(i, p.sample_rate, p.tile_size, p.canvas_scale) for i in infos)
-    return videos_holding_frames(cfg) * frames_max + videos_holding_canvases(cfg) * canvases_max
+    return PoolSize(videos_holding_frames(cfg), frames_max), PoolSize(videos_holding_canvases(cfg), canvases_max)
+
+
+def worst_case_shm_bytes(cfg: Config, infos: list[VideoInfo]) -> int:
+    """Every frames holder and every canvases holder occupied by the largest video: the pools' total size."""
+    return sum(size.count * size.slot_bytes for size in pool_sizes(cfg, infos))
 
 
 def check_shm_budget(cfg: Config, infos: list[VideoInfo], shm_dir: str = SHM_DIR) -> None:
@@ -143,7 +155,7 @@ def check_shm_budget(cfg: Config, infos: list[VideoInfo], shm_dir: str = SHM_DIR
 
 
 def execute(cfg: Config, videos_dir: str, out_dir: str,
-            build: Callable[[Config, str], list[Stage]] = build_stages, save_root: str | None = None,
+            build: Callable[[Config, frames.Stores], list[Stage]] = build_stages, save_root: str | None = None,
             savers: dict | None = None) -> dict:
     """Validate, run timed, then write outputs.  Returns the runtime summary (also written to summary.json).
 
@@ -155,23 +167,32 @@ def execute(cfg: Config, videos_dir: str, out_dir: str,
     os.makedirs(out_dir, exist_ok=True)
 
     tmp = tempfile.mkdtemp(prefix='execution-')
+    prefix = frames.new_prefix()
     try:
         # The dummy is the last video under another path, so the pipeline treats it as any other video.
         dummy = os.path.join(tmp, 'timing-dummy' + Path(videos[-1]).suffix)
         shutil.copyfile(videos[-1], dummy)
-        prefix = frames.new_prefix()
-        stages = build(cfg, prefix)
+        # Every frames and canvases block comes from these pools, allocated before anything is timed.
+        frames_size, canvases_size = pool_sizes(cfg, infos)
+        stores = frames.Stores(frames.create_pool(prefix, 'frames', *frames_size),
+                               frames.create_pool(prefix, 'canvases', *canvases_size))
+        stages = build(cfg, stores)
         # Saving is opt-in; the dummy's results are never saved.
         if save_root is not None:
             stages = with_savers(stages, cfg, save_root, skip=dummy, savers=savers or SAVERS)
         arrivals: list[float] = []
         results: dict[str, Tracked] = {}
-        for result in run(stages, [dummy, *videos], cfg.system.queue_maxsize, shm_prefix=prefix):
+        for result in run(stages, [dummy, *videos], cfg.system.queue_maxsize):
             arrivals.append(time.perf_counter())
             if result.video != dummy:
                 results[result.video] = result
+        # A clean run gives every slot back exactly once (a missing or double release is a lifetime bug).
+        frames.check_returned(stores.frames)
+        frames.check_returned(stores.canvases)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        # The pools (and, after a failure, anything else under the prefix) are freed whatever happened.
+        frames.unlink_all(prefix)
 
     # Every video must come back exactly once (the engine guarantees it; check before writing anything).
     if sorted(results) != videos or len(arrivals) != len(videos) + 1:

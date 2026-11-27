@@ -85,8 +85,11 @@ class Decoded(NamedTuple):
     frames: frames.Block        # BGR uint8 [len(needed), height, width, 3]
 
 
-def decode_video(video: str, prefix: str, sample_rate: int) -> Decoded:
-    """Read the video once, keeping only the frames sample_rate needs, into a new shared block (s=1: every frame)."""
+def decode_video(video: str, store: 'str | frames.Pool', sample_rate: int) -> Decoded:
+    """Read the video once, keeping only the frames sample_rate needs, into a shared block from store (s=1: every frame).
+
+    store is a run prefix (a new block) or a Pool (a reused slot); see frames.new_block.
+    """
     cap = cv2.VideoCapture(video)
     if not cap.isOpened():
         raise OSError(f'could not open video {video}')
@@ -95,11 +98,11 @@ def decode_video(video: str, prefix: str, sample_rate: int) -> Decoded:
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         sampled, partner, needed = frame_selection(frame_count, sample_rate)
-        with frames.create(prefix, (len(needed), height, width, 3), 'uint8') as m:
+        with frames.new_block(store, (len(needed), height, width, 3), 'uint8') as m:
             read = _read_needed(cap, m.array, needed, video)
         # p020 asserts every reported frame decodes; a short read would leave zero frames in the block.
         if read != frame_count:
-            frames.unlink(m.block)
+            frames.free(store, m.block)
             raise ValueError(f'{video}: read {read} frames but the container reports {frame_count}')
     finally:
         cap.release()
@@ -196,16 +199,36 @@ def classify_frames(state: dict, video: Decoded, time_batches: bool = False) -> 
         return torch.cat(scores, dim=0).cpu().numpy(), shares
 
 
+def _staging(state: dict, frame_shape: tuple[int, ...]) -> torch.Tensor:
+    """The worker's pinned host buffer for one batch's rows (at most 2 * CLASSIFY_BATCH), made on first use.
+
+    Reusing it means no fresh batch-sized array per batch (47 MB per ams batch, whose allocation stalled
+    in the kernel on a host short of free memory), and the GPU copy from pinned memory needs no extra copy.
+    A video with another frame size gets a new buffer.
+    """
+    shape = (2 * CLASSIFY_BATCH, *frame_shape)
+    buf = state.get('staging')
+    if buf is None or tuple(buf.shape) != shape:
+        buf = state['staging'] = torch.empty(shape, dtype=torch.uint8, pin_memory=True)
+    return buf
+
+
 def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray) -> torch.Tensor:
     """One batch through p020's classification, with its frames sent to the GPU in one transfer.
 
-    The batch's rows (sampled and partner frames, each row once) are gathered from the block by one
-    numpy indexing step (a copy, so no view outlives this call), sent together, and flipped BGR->RGB
+    The batch's rows (sampled and partner frames, each row once) are copied from the block into the
+    worker's pinned staging buffer (so no view outlives this call), sent together, and flipped BGR->RGB
     on the GPU: the same uint8 tensors p020 builds frame by frame, without 2x16 CPU flips and transfers.
     Returns the batch's uint8 scores [batch, grid_h, grid_w], still on the GPU.
     """
     rows, where = np.unique(np.concatenate([sampled_pos, partner_pos]), return_inverse=True)
-    batch = torch.from_numpy(block[rows]).to(DEVICE).flip(-1)
+    staging = _staging(state, block.shape[1:])
+    host = staging.numpy()
+    # Row by row into the reused buffer: no new batch-sized array per batch.
+    for i, row in enumerate(rows):
+        host[i] = block[row]
+    # A synchronous copy (non_blocking=False), so the next batch may overwrite the buffer once it returns.
+    batch = staging[:len(rows)].to(DEVICE, non_blocking=False).flip(-1)
     where = torch.from_numpy(where).to(DEVICE)
     grid_h, grid_w = state['grid']
     probs, _ = classify_batch_tensors(grid_w, grid_h, state['positions'], batch[where[:len(sampled_pos)]],
@@ -266,9 +289,9 @@ class Packed(NamedTuple):
     offset_lookups: list        # per collage: list of ((py, px), (oy, ox), frame_idx)
 
 
-def pack_collages(scores: np.ndarray, video: Decoded, prefix: str, tile_size: int, padding_mode: int,
+def pack_collages(scores: np.ndarray, video: Decoded, store: 'str | frames.Pool', tile_size: int, padding_mode: int,
                   canvas_scale: float, relevance_threshold: float, jpeg: bool) -> Packed:
-    """p030: group, best-fit pack, and draw every collage into one new shared block.
+    """p030: group, best-fit pack, and draw every collage into one shared block from store (a prefix or a Pool).
 
     scores is [len(video.sampled), grid_h, grid_w] for the sampled frames it lists (a subset of the video's
     stored frames is fine: positions are looked up in video.needed).  The frames block is only read.
@@ -294,7 +317,8 @@ def pack_collages(scores: np.ndarray, video: Decoded, prefix: str, tile_size: in
     index_maps = np.zeros((len(collages), dst_gh, dst_gw), dtype=np.uint16)
     offset_lookups: list = []
     with frames.attach(video.frames) as fm, \
-            frames.create(prefix, (len(collages), dst_gh * ts, dst_gw * ts, 3), 'uint8') as cm:
+            frames.new_block(store, (len(collages), dst_gh * ts, dst_gw * ts, 3), 'uint8') as cm:
+        # A reused slot holds the previous video's canvases, so clearing matters here too.
         cm.array[...] = 0
         for k, collage in enumerate(collages):
             assert len(collage) > 0, f'collage {k} is empty'

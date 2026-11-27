@@ -142,6 +142,24 @@ def test_blocks_flow_between_stages_and_are_freed():
     assert frames.leftover(prefix) == []
 
 
+def test_pooled_blocks_are_reused_across_inputs_without_mixing_pixels():
+    # Fewer slots than inputs, so every slot is reused; each reader must still see its own input's pixels.
+    prefix = frames.new_prefix()
+    try:
+        # One slot per message that can be held at once: 2 makers + 1 queue of 2 + 2 readers.
+        pool = frames.create_pool(prefix, 'frames', 2 + 2 + 2, 16)
+        stages = [stage('make', partial(fs.make_from_store, pool), procs=2),
+                  stage('use', partial(fs.read_and_free_to_store, pool), procs=2)]
+        results = list(run(stages, inputs(30), queue_maxsize=2))
+        assert sorted(r['value'] for r in results) == list(range(30))
+        assert {r['block'].name for r in results} <= set(pool.slots)
+        # No shared memory beyond the pool's slots was created, and every slot came back exactly once.
+        assert frames.leftover(prefix) == sorted(pool.slots)
+        frames.check_returned(pool)
+    finally:
+        frames.unlink_all(prefix)
+
+
 def test_unfreed_blocks_fail_a_clean_run_and_are_swept():
     prefix = frames.new_prefix()
     stages = [stage('make', partial(fs.make_block, prefix)), stage('use', fs.read_and_keep_block)]

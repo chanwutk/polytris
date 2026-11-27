@@ -27,18 +27,24 @@ main ─q→ decode ─q→ classify ─q→ [prune] ─q→ pack ─q→ detect
 
 - `frames.py` is the one module that creates, opens and frees named shared-memory blocks. Pixels are written and read through numpy views; only handles (name, shape, dtype) and small metadata travel through queues. Nothing large is pickled.
 - Frame block, one per video:
-  - Decode creates it.
-  - Classify reads it and copies frames to its GPU.
+  - Decode takes it.
+  - Classify reads it and copies frames to its GPU through a pinned staging buffer it reuses for every batch.
   - Prune never sees it; the handle just passes through.
   - Pack reads it and frees it.
-- Canvas block, one per video: pack creates it, detect reads it and frees it.
+- Canvas block, one per video: pack takes it (and clears it), detect reads it and frees it.
 - Detect gets CPU numpy BGR from the block directly, so there is no GPU-to-CPU canvas copy.
-- Blocks are keyed by the video's full path.
 - Startup check [15A]:
   - The worst-case number of videos in flight is the queue sizes plus the process counts from decode to detect.
   - Worst-case bytes are that count × the largest video's frame-block plus canvas-block size, using OpenCV metadata.
   - `main` refuses to start if this exceeds free `/dev/shm`.
   - Container `shm_size` is to be raised in `docker-compose.yml`. Restarting the container is the author's call.
+- Pools (decided 2026-11-26), so the timed run allocates no shared memory:
+  - Before the timing dummy, `main` creates a frames pool and a canvases pool. Each has one slot per video the startup check counts for that block, sized for the largest video, with every page allocated then (`MADV_POPULATE_WRITE`). The pools are exactly the startup check's worst case.
+  - Decode and pack take a slot from a pool instead of creating a block. Pack and detect give it back instead of unlinking. Each process maps a slot once and keeps the mapping, so no page faults hit the timed run.
+  - Why: on ace (ZFS cache holding most of RAM), fresh blocks and per-batch arrays sent the stages into kernel reclaim and compaction. ams runs (1280x720) took 2-15x their normal time, varying run to run.
+  - A canvases block larger than its slot is an error. The bound (one collage per sampled frame) holds at `canvas_scale` >= 1, since a frame's tiles always fit one canvas at their own positions.
+  - After a clean run every slot must be free exactly once (`frames.check_returned`). The pools are unlinked whether or not the run succeeds.
+  - Operators take a store, either a run prefix (a new block) or a pool (a slot), so `experiments/` code that passes a prefix still gets fresh blocks.
 
 ## Decode [4A, 18A]
 

@@ -81,6 +81,21 @@ def read_and_keep_block(state, msg):
     return {**msg, 'value': value}
 
 
+def make_from_store(store, state, msg):
+    """Write the message id into a block from store (a prefix or a Pool) and pass the handle on."""
+    with frames.new_block(store, (4, 4), 'uint8') as m:
+        m.array[:] = msg['id']
+    return {**msg, 'block': m.block}
+
+
+def read_and_free_to_store(store, state, msg):
+    """Read the block back, give it back to its store, and report the value seen."""
+    with frames.attach(msg['block']) as m:
+        value = int(m.array.max())
+    frames.free(store, msg['block'])
+    return {**msg, 'value': value}
+
+
 def make_block_then_fail(prefix, target, state, msg):
     """Create a block, then fail on one input after the block exists."""
     out = make_block(prefix, state, msg)
@@ -109,7 +124,7 @@ def fake_tracked(state, video):
     return Tracked(video, {0: [[1.0, 0.0, 0.0, 10.0, float(n)]]})
 
 
-def fake_build(cfg, prefix):
+def fake_build(cfg, stores):
     """build_stages replacement for main tests: one two-process stage, no models."""
     from execution.pipeline import Stage
     return [Stage('fake', worker_setup, fake_tracked, 2)]
@@ -152,10 +167,24 @@ def none_in_fan_out(state, msg):
     return [tag(state, msg), None]
 
 
-def fake_build_track(cfg, prefix):
+def fake_build_track(cfg, stores):
     """fake_build with the stage named 'track', so execution's track saver attaches to it."""
     from execution.pipeline import Stage
     return [Stage('track', worker_setup, fake_tracked, 2)]
+
+
+def fake_build_leaking_a_slot(cfg, stores):
+    """fake_build whose one stage takes a frames slot per video and never gives it back."""
+    from functools import partial
+    from execution.pipeline import Stage
+    return [Stage('fake', worker_setup, partial(take_slot_then_track, stores.frames), 1)]
+
+
+def take_slot_then_track(pool, state, video):
+    """Take a frames slot and forget it (a lifetime bug), then answer like fake_tracked."""
+    with frames.acquire(pool, (1,), 'uint8'):
+        pass
+    return fake_tracked(state, video)
 
 
 def record_saved(directory, params, skip, msg):
