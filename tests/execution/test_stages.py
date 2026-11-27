@@ -252,6 +252,33 @@ def test_classify_matches_p020_batching(tmp_path, video, prefix, fake_classifier
     assert c.scores.dtype == np.uint8 and np.array_equal(c.scores, np.concatenate(expected))
 
 
+@pytest.mark.parametrize('rows', [[0, 1, 2], [3, 5, 6, 9], [7], [0, 9]])
+def test_gather_rows_copies_exactly_block_rows_into_the_buffer_and_leaves_the_rest(rows):
+    block = np.random.default_rng(0).integers(0, 256, (10, 4, 6, 3), dtype=np.uint8)
+    out = np.full((5, 4, 6, 3), 77, dtype=np.uint8)
+    rows = np.array(rows)
+    operators._gather_rows(block, rows, out)
+    assert np.array_equal(out[:len(rows)], block[rows])
+    # Rows past the batch keep whatever they held (a short batch reads only its own rows).
+    assert (out[len(rows):] == 77).all()
+
+
+@pytest.mark.parametrize('rows, out_rows, match', [
+    ([0, 10], 4, r'rows 0\.\.10 are outside the frames block of 10'),
+    ([-1, 2], 4, r'rows -1\.\.2 are outside the frames block of 10'),
+    ([0, 1, 2, 3, 4], 4, '5 rows do not fit a staging buffer of 4'),
+])
+def test_gather_rows_refuses_rows_that_clip_would_clamp_or_that_do_not_fit(rows, out_rows, match):
+    block = np.zeros((10, 2, 2, 3), dtype=np.uint8)
+    with pytest.raises(ValueError, match=match):
+        operators._gather_rows(block, np.array(rows), np.zeros((out_rows, 2, 2, 3), dtype=np.uint8))
+
+
+def test_gather_rows_refuses_a_buffer_for_another_frame_size():
+    with pytest.raises(ValueError, match='do not match frames'):
+        operators._gather_rows(np.zeros((4, 2, 2, 3), np.uint8), np.array([0]), np.zeros((4, 2, 3, 3), np.uint8))
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='pinned memory needs CUDA')
 def test_classify_staging_buffer_is_pinned_reused_and_remade_for_another_frame_size():
     state = {}

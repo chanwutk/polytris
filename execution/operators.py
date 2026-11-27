@@ -213,6 +213,22 @@ def _staging(state: dict, frame_shape: tuple[int, ...]) -> torch.Tensor:
     return buf
 
 
+def _gather_rows(block: np.ndarray, rows: np.ndarray, out: np.ndarray) -> None:
+    """Copy block[rows] into the first len(rows) rows of out, without an intermediate array.
+
+    np.take with mode='clip' writes straight into out (the default mode='raise' buffers the result in a
+    temporary array first), but it would silently clamp an out-of-range row, so the bounds and the
+    buffer's capacity are checked here instead.
+    """
+    if len(rows) > len(out):
+        raise ValueError(f'{len(rows)} rows do not fit a staging buffer of {len(out)}')
+    if len(rows) and (rows.min() < 0 or rows.max() >= len(block)):
+        raise ValueError(f'rows {rows.min()}..{rows.max()} are outside the frames block of {len(block)}')
+    if out.shape[1:] != block.shape[1:]:
+        raise ValueError(f'staging rows {out.shape[1:]} do not match frames {block.shape[1:]}')
+    np.take(block, rows, axis=0, out=out[:len(rows)], mode='clip')
+
+
 def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray, partner_pos: np.ndarray) -> torch.Tensor:
     """One batch through p020's classification, with its frames sent to the GPU in one transfer.
 
@@ -223,10 +239,7 @@ def _classify_one_batch(state: dict, block: np.ndarray, sampled_pos: np.ndarray,
     """
     rows, where = np.unique(np.concatenate([sampled_pos, partner_pos]), return_inverse=True)
     staging = _staging(state, block.shape[1:])
-    host = staging.numpy()
-    # Row by row into the reused buffer: no new batch-sized array per batch.
-    for i, row in enumerate(rows):
-        host[i] = block[row]
+    _gather_rows(block, rows, staging.numpy())
     # A synchronous copy (non_blocking=False), so the next batch may overwrite the buffer once it returns.
     batch = staging[:len(rows)].to(DEVICE, non_blocking=False).flip(-1)
     where = torch.from_numpy(where).to(DEVICE)
